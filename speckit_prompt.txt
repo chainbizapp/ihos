@@ -1,0 +1,278 @@
+/constitution
+You are building an enterprise-grade Motor Insurance Search and Quotation System.
+
+Follow these principles:
+
+1. Accuracy over automation
+   - Data correctness is more important than full automation
+   - Always allow human review for imported data
+
+2. Standardization is critical
+   - All incoming data must be normalized into a canonical model
+   - Never rely on raw input format directly
+
+3. Mapping-first design
+   - Vehicle model names and insurance plans may differ across companies
+   - Always resolve via mapping tables before usage
+
+4. Traceability
+   - Every record must be traceable back to its source file and import batch
+
+5. Safety-first data handling
+   - Never delete imported data directly
+   - Use soft delete and versioning
+
+6. Modular architecture
+   - Separate modules:
+     - Authentication
+     - Import
+     - Mapping
+     - Search
+     - Quotation
+     - Reporting
+
+7. Human-in-the-loop
+   - OCR and auto-mapping must always be reviewed before publishing
+
+8. Performance expectations
+   - Search response must be under 2 seconds
+
+9. Scalability
+   - System must support 30+ insurance companies
+
+10. Technology constraints
+   - Frontend: Angular
+   - Backend: .NET 10 Web API (Clean Architecture)
+   - Database: PostgreSQL
+   - Reporting: JasperReports
+
+11. Authentication & Security
+   - Use JWT for authentication
+   - Use Role-Based Access Control (RBAC)
+   - Roles:
+     - Admin
+     - Manager
+     - Senior Staff
+     - Staff
+   - Password must be securely hashed
+   - Token must have expiration
+   - All APIs must require authentication unless explicitly public
+   - Sensitive operations must be role-protected
+
+12. Audit & Compliance
+   - Log login, data import, approval, and mapping changes
+   - Ensure traceability of user actions
+
+Always follow these rules in all subsequent steps.
+
+
+/speckit-specify
+
+Build a Motor Insurance Search and Quotation System.
+
+Users:
+- Internal staff (3–7 users)
+- Future online users (200–500 users)
+
+Main Features:
+
+1. Authentication & User Management
+   - Users can register (controlled by approval or admin creation)
+   - Users can log in using username/email and password
+   - System issues JWT tokens after login
+   - Role-based access:
+     - Admin: full control
+     - Manager: approve data and users
+     - Senior Staff: upload and mapping
+     - Staff: search and generate quotation
+
+2. Search Insurance Plans
+   - Search by:
+     - Vehicle make, model, production year
+     - Insurance plan type (1, 2, 3, 2+, 3+)
+     - Repair type (garage / dealer)
+     - Optional filters (company, excess)
+
+3. Compare Plans
+   - Compare up to 3 plans side-by-side
+
+4. Generate Quotation
+   - Generate PDF quotation using JasperReports
+
+5. Data Import
+   - Import from Excel / CSV
+   - Upload PDF (manual entry + optional OCR)
+   - Normalize and map:
+     - Vehicle model
+     - Insurance plan
+     - Coverage fields
+
+6. Review & Approval
+   - Imported data must be reviewed before publishing
+   - Manager approval required
+
+7. Reporting
+   - Usage statistics
+   - Top models
+   - Import errors
+
+Key Business Logic:
+- Vehicle age = CurrentYear - ProductionYear + 1
+- Match using:
+  - Model mapping
+  - Year range eligibility
+
+Focus:
+- Reduce processing time
+- Improve accuracy
+- Support human validation
+
+Out of Scope:
+- Full OCR automation
+- AI recommendation
+- Real-time external API integration
+
+/clarify 
+Review the prd.md and design.md for the Motor Insurance System.
+
+Identify missing or unclear requirements.
+
+Focus on:
+
+1. Authentication & Security
+   - Is registration open or approval-based?
+   - Token expiration strategy?
+   - Need refresh token?
+   - Password policy?
+
+2. Authorization
+   - Exact permissions per role?
+   - Who can manage users?
+   - Who can approve data?
+
+3. Data Mapping
+   - How to handle unmatched models?
+   - How to handle duplicate mapping?
+
+4. Import Workflow
+   - What happens if parsing fails?
+   - Partial import handling?
+
+5. Search Logic
+   - Multiple matches behavior?
+   - Sorting priority?
+
+6. Edge Cases
+   - Missing mapping
+   - Overlapping year ranges
+
+Group findings:
+- Critical
+- Important
+- Optional
+
+Do not assume answers.
+
+
+
+/plan
+Create a technical implementation plan.
+
+Include:
+
+1. Architecture
+   - Angular frontend
+   - .NET 10 Web API (Clean Architecture)
+   - PostgreSQL database
+   - JasperReports
+
+2. Modules
+   - Authentication Module
+   - User Management Module
+   - Import Module
+   - Mapping Module
+   - Search Module
+   - Quotation Module
+   - Reporting Module
+
+3. Authentication Design
+   - JWT Bearer authentication
+   - Access token with expiration
+   - Optional refresh token
+   - Password hashing
+   - Role-based authorization
+
+4. Data Flow
+   Upload → Raw → Staging → Mapping → Review → Core → Search → Quote
+
+5. Security Design
+   - Protect APIs with JWT
+   - Role-based access control
+   - Audit logging
+
+6. Performance
+   - Indexed search
+   - Efficient filtering
+
+7. Risks
+   - Data inconsistency → mapping
+   - PDF complexity → manual review
+
+Output structured plan.
+
+/tasks
+
+Break down development tasks.
+
+1. Backend (.NET)
+
+Authentication:
+- Create User entity
+- Create Role entity
+- Implement registration API
+- Implement login API
+- Implement JWT token service
+- Implement password hashing
+- Implement authorization policies
+
+Core:
+- Create vehicle tables
+- Create insurance tables
+- Implement import API
+- Implement mapping logic
+- Implement search API
+- Implement quotation generation
+
+2. Frontend (Angular)
+
+Authentication:
+- Login page
+- Register page
+- Auth service
+- Route guards
+- Logout flow
+
+Core UI:
+- Search page
+- Compare page
+- Mapping screen
+- Import screen
+- Approval screen
+
+3. Database
+- Users table
+- Roles table
+- Insurance tables
+- Mapping tables
+
+4. Integration
+- JasperReports
+
+5. Testing
+- Unit tests
+- Integration tests
+
+Each task must include:
+- description
+- dependency
+- priority

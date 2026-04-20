@@ -1,0 +1,29 @@
+{
+  "ConnectionStrings": {
+    "DefaultConnection": "Host=localhost;Port=5431;Database=ihos_dev;Username=ihos;Password=ihos_dev_password"
+  },
+  "Jwt": {
+    "SecretKey": "CHANGE_ME_TO_A_32_CHAR_OR_LONGER_SECRET_KEY_FOR_DEV",
+    "AccessTokenExpiryMinutes": 60,
+    "RefreshTokenExpiryDays": 7
+  },
+  "JasperReports": {
+    "BaseUrl": "http://localhost:7030/"
+  },
+  "Smtp": {
+    "Host": "localhost",
+    "Port": 1025,
+    "From": "noreply@ihos.local",
+    "EnableSsl": false
+  },
+  "AllowedOrigins": "http://localhost:4200",
+  "Serilog": {
+    "MinimumLevel": {
+      "Default": "Information",
+      "Override": {
+        "Microsoft": "Warning",
+        "Microsoft.EntityFrameworkCore": "Information"
+      }
+    }
+  }
+}

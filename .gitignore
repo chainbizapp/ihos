@@ -1,0 +1,50 @@
+# .NET / C#
+bin/
+obj/
+*.user
+*.suo
+*.userosscache
+*.sln.docstates
+.vs/
+packages/
+appsettings.Development.json
+appsettings.*.json
+!appsettings.json
+!appsettings.Development.json.example
+
+# Node.js / Angular
+frontend/node_modules/
+frontend/dist/
+frontend/.angular/
+frontend/.cache/
+*.log
+npm-debug.log*
+
+# Environment & secrets
+.env
+.env.*
+!.env.example
+*.key
+*.pem
+*.pfx
+
+# Docker
+docker/postgres/data/
+
+# JetBrains / VSCode
+.idea/
+.vscode/
+*.iml
+
+# macOS
+.DS_Store
+Thumbs.db
+
+# Build outputs
+*.tmp
+*.swp
+coverage/
+TestResults/
+
+# Reports (user-generated, not templates)
+reports/output/

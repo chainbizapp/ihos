@@ -1,0 +1,8 @@
+/* Tailwind v4 */
+@import "tailwindcss";
+
+@layer base {
+  body {
+    font-family: "Noto Sans Thai", sans-serif;
+  }
+}

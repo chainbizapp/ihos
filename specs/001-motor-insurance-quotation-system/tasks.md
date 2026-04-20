@@ -30,13 +30,13 @@ docker/                          ← Docker Compose config
 
 **Purpose**: Project scaffolding and infrastructure configuration. No user story work until this is complete.
 
-- [ ] T001 Create .NET 10 solution with four projects: `Ihos.Domain`, `Ihos.Application`, `Ihos.Infrastructure`, `Ihos.API` in `backend/`
-- [ ] T002 Create Angular 19 workspace with lazy-loaded feature modules: `auth`, `admin`, `import`, `mapping`, `search`, `quotation`, `reporting` in `frontend/`
-- [ ] T003 [P] Configure Docker Compose with PostgreSQL 16, JasperReports Server CE, and MailHog in `docker/docker-compose.yml`
-- [ ] T004 [P] Add NuGet packages to solution: `MediatR`, `FluentValidation.AspNetCore`, `Microsoft.AspNetCore.Authentication.JwtBearer`, `Npgsql.EntityFrameworkCore.PostgreSQL`, `ClosedXML`, `CsvHelper`, `Isopoh.Cryptography.Argon2`, `MailKit` in `backend/`
-- [ ] T005 [P] Configure Tailwind CSS and Angular Material in `frontend/` per `design.md` token values (primary #006874, secondary #8c4f00, tertiary #435d98)
-- [ ] T006 [P] Register MediatR pipeline with FluentValidation behavior and logging behavior in `backend/src/Ihos.API/Program.cs`
-- [ ] T007 [P] Configure `appsettings.Development.json.example` with JWT, DB, JasperReports, and SMTP placeholders in `backend/src/Ihos.API/`
+- [X] T001 Create .NET 10 solution with four projects: `Ihos.Domain`, `Ihos.Application`, `Ihos.Infrastructure`, `Ihos.API` in `backend/`
+- [X] T002 Create Angular 19 workspace with lazy-loaded feature modules: `auth`, `admin`, `import`, `mapping`, `search`, `quotation`, `reporting` in `frontend/`
+- [X] T003 [P] Configure Docker Compose with PostgreSQL 16, JasperReports Server CE, and MailHog in `docker/docker-compose.yml`
+- [X] T004 [P] Add NuGet packages to solution: `MediatR`, `FluentValidation.AspNetCore`, `Microsoft.AspNetCore.Authentication.JwtBearer`, `Npgsql.EntityFrameworkCore.PostgreSQL`, `ClosedXML`, `CsvHelper`, `Isopoh.Cryptography.Argon2`, `MailKit` in `backend/`
+- [X] T005 [P] Configure Tailwind CSS and Angular Material in `frontend/` per `design.md` token values (primary #006874, secondary #8c4f00, tertiary #435d98)
+- [X] T006 [P] Register MediatR pipeline with FluentValidation behavior and logging behavior in `backend/src/Ihos.API/Program.cs`
+- [X] T007 [P] Configure `appsettings.Development.json.example` with JWT, DB, JasperReports, and SMTP placeholders in `backend/src/Ihos.API/`
 
 ---
 
@@ -46,14 +46,14 @@ docker/                          ← Docker Compose config
 
 **⚠️ CRITICAL**: No user story work begins until this phase is complete.
 
-- [ ] T008 Create `BaseEntity` abstract class with `Id` (UUID), `CreatedAt`, `UpdatedAt`, `IsDeleted`, `CreatedBy` in `backend/src/Ihos.Domain/Common/BaseEntity.cs`
-- [ ] T009 [P] Create `ICurrentUserService` interface and `HttpContextCurrentUserService` implementation (reads JWT claims) in `backend/src/Ihos.Application/Common/Interfaces/ICurrentUserService.cs` and `backend/src/Ihos.Infrastructure/Services/CurrentUserService.cs`
-- [ ] T010 [P] Create `AuditLog` entity (no `IsDeleted`, immutable) and `IAuditLogRepository` interface in `backend/src/Ihos.Domain/Entities/AuditLog.cs` and `backend/src/Ihos.Application/Common/Interfaces/`
-- [ ] T011 Create `ApplicationDbContext` with `AuditLog` DbSet, `SaveChangesAsync` override for `UpdatedAt` auto-stamp, and `ICurrentUserService` injection in `backend/src/Ihos.Infrastructure/Persistence/ApplicationDbContext.cs`
-- [ ] T012 Create initial EF Core migration creating `audit_logs` table in `backend/src/Ihos.Infrastructure/Migrations/`
-- [ ] T013 [P] Configure JWT Bearer authentication (HS256, validate lifetime, validate issuer/audience) in `backend/src/Ihos.API/Program.cs`
-- [ ] T014 [P] Configure global error handling middleware (map domain exceptions to HTTP status codes), CORS policy, and Serilog request logging in `backend/src/Ihos.API/Middleware/`
-- [ ] T015 [P] Define `AuthorizationPolicies` constants and register role-based policies (`RequireAdmin`, `RequireManager`, `RequireSeniorStaff`) in `backend/src/Ihos.API/Authorization/AuthorizationPolicies.cs`
+- [X] T008 Create `BaseEntity` abstract class with `Id` (UUID), `CreatedAt`, `UpdatedAt`, `IsDeleted`, `CreatedBy` in `backend/src/Ihos.Domain/Common/BaseEntity.cs`
+- [X] T009 [P] Create `ICurrentUserService` interface and `HttpContextCurrentUserService` implementation (reads JWT claims) in `backend/src/Ihos.Application/Common/Interfaces/ICurrentUserService.cs` and `backend/src/Ihos.Infrastructure/Services/CurrentUserService.cs`
+- [X] T010 [P] Create `AuditLog` entity (no `IsDeleted`, immutable) and `IAuditLogRepository` interface in `backend/src/Ihos.Domain/Entities/AuditLog.cs` and `backend/src/Ihos.Application/Common/Interfaces/`
+- [X] T011 Create `ApplicationDbContext` with `AuditLog` DbSet, `SaveChangesAsync` override for `UpdatedAt` auto-stamp, and `ICurrentUserService` injection in `backend/src/Ihos.Infrastructure/Persistence/ApplicationDbContext.cs`
+- [X] T012 Create initial EF Core migration creating `audit_logs` table in `backend/src/Ihos.Infrastructure/Migrations/`
+- [X] T013 [P] Configure JWT Bearer authentication (HS256, validate lifetime, validate issuer/audience) in `backend/src/Ihos.API/Program.cs`
+- [X] T014 [P] Configure global error handling middleware (map domain exceptions to HTTP status codes), CORS policy, and Serilog request logging in `backend/src/Ihos.API/Middleware/`
+- [X] T015 [P] Define `AuthorizationPolicies` constants and register role-based policies (`RequireAdmin`, `RequireManager`, `RequireSeniorStaff`) in `backend/src/Ihos.API/Authorization/AuthorizationPolicies.cs`
 
 **Checkpoint**: Foundation ready — user story implementation can now begin in parallel.
 
@@ -67,36 +67,36 @@ docker/                          ← Docker Compose config
 
 ### Backend — US4
 
-- [ ] T016 [P] [US4] Create `User` domain entity (email, fullName, passwordHash, role enum, status enum, inviteTokenHash, inviteExpiresAt) extending `BaseEntity` in `backend/src/Ihos.Domain/Entities/User.cs`
-- [ ] T017 [P] [US4] Create `RefreshToken` entity (userId, tokenHash, expiresAt, revokedAt) in `backend/src/Ihos.Domain/Entities/RefreshToken.cs`
-- [ ] T018 [US4] Add `users` and `refresh_tokens` DbSets to `ApplicationDbContext` with Fluent API config (unique indexes on email, token_hash) and create EF Core migration in `backend/src/Ihos.Infrastructure/Migrations/`
-- [ ] T019 [US4] Implement `UserRepository` and `RefreshTokenRepository` implementing their respective interfaces in `backend/src/Ihos.Infrastructure/Repositories/`
-- [ ] T020 [P] [US4] Implement `Argon2idPasswordHasher` (hash + verify, OWASP params: memory=65536, iterations=3, parallelism=4) in `backend/src/Ihos.Infrastructure/Services/Argon2idPasswordHasher.cs`
-- [ ] T021 [P] [US4] Implement `JwtTokenService` (generate signed access JWT with sub/role/jti claims, generate + hash refresh UUID, validate + rotate refresh token) in `backend/src/Ihos.Infrastructure/Services/JwtTokenService.cs`
-- [ ] T022 [US4] Implement `LoginCommand` + handler (verify password, issue JWT pair, audit log success/failure, return 403 if Inactive/PendingInvite) in `backend/src/Ihos.Application/Auth/Commands/LoginCommand.cs`
-- [ ] T023 [US4] Implement `RefreshTokenCommand` + handler (validate hash, rotate, return new pair) in `backend/src/Ihos.Application/Auth/Commands/RefreshTokenCommand.cs`
-- [ ] T024 [US4] Implement `LogoutCommand` + handler (revoke refresh token, audit log) in `backend/src/Ihos.Application/Auth/Commands/LogoutCommand.cs`
-- [ ] T025 [US4] Implement `InviteUserCommand` + handler (create user with status PendingInvite, generate UUID token, hash + store, send email with invite link via `IEmailService`) in `backend/src/Ihos.Application/Users/Commands/InviteUserCommand.cs`
-- [ ] T026 [US4] Implement `AcceptInviteCommand` + handler (validate token hash + expiry, set passwordHash, clear token, set status Active, auto-login) in `backend/src/Ihos.Application/Users/Commands/AcceptInviteCommand.cs`
-- [ ] T027 [US4] Implement `SelfRegisterCommand` + handler (create user status PendingApproval, no auto-login) in `backend/src/Ihos.Application/Auth/Commands/SelfRegisterCommand.cs`
-- [ ] T028 [US4] Implement `ApproveRegistrationCommand` + `RejectRegistrationCommand` handlers (set status Active/Rejected, audit log with approver identity) in `backend/src/Ihos.Application/Users/Commands/`
-- [ ] T029 [US4] Implement `ChangeUserRoleCommand` + `DeactivateUserCommand` handlers (Admin only, audit log) in `backend/src/Ihos.Application/Users/Commands/`
-- [ ] T030 [US4] Implement `GetUsersQuery` (paginated, filterable by role/status) and `GetPendingRegistrationsQuery` in `backend/src/Ihos.Application/Users/Queries/`
-- [ ] T031 [US4] Implement `MailKitEmailService` (SMTP invite link delivery, configurable host/port/from) in `backend/src/Ihos.Infrastructure/Services/MailKitEmailService.cs`
-- [ ] T032 [US4] Create `AuthController` (POST login, POST refresh, POST logout, POST register, POST invite/accept) with correct role guards in `backend/src/Ihos.API/Controllers/AuthController.cs`
-- [ ] T033 [US4] Create `UsersController` (GET list, POST invite, PUT role, PUT status, GET registrations/pending, PUT registrations/{id}/approve, PUT registrations/{id}/reject) in `backend/src/Ihos.API/Controllers/UsersController.cs`
+- [X] T016 [P] [US4] Create `User` domain entity (email, fullName, passwordHash, role enum, status enum, inviteTokenHash, inviteExpiresAt) extending `BaseEntity` in `backend/src/Ihos.Domain/Entities/User.cs`
+- [X] T017 [P] [US4] Create `RefreshToken` entity (userId, tokenHash, expiresAt, revokedAt) in `backend/src/Ihos.Domain/Entities/RefreshToken.cs`
+- [X] T018 [US4] Add `users` and `refresh_tokens` DbSets to `ApplicationDbContext` with Fluent API config (unique indexes on email, token_hash) and create EF Core migration in `backend/src/Ihos.Infrastructure/Migrations/`
+- [X] T019 [US4] Implement `UserRepository` and `RefreshTokenRepository` implementing their respective interfaces in `backend/src/Ihos.Infrastructure/Repositories/`
+- [X] T020 [P] [US4] Implement `Argon2idPasswordHasher` (hash + verify, OWASP params: memory=65536, iterations=3, parallelism=4) in `backend/src/Ihos.Infrastructure/Services/Argon2idPasswordHasher.cs`
+- [X] T021 [P] [US4] Implement `JwtTokenService` (generate signed access JWT with sub/role/jti claims, generate + hash refresh UUID, validate + rotate refresh token) in `backend/src/Ihos.Infrastructure/Services/JwtTokenService.cs`
+- [X] T022 [US4] Implement `LoginCommand` + handler (verify password, issue JWT pair, audit log success/failure, return 403 if Inactive/PendingInvite) in `backend/src/Ihos.Application/Auth/Commands/LoginCommand.cs`
+- [X] T023 [US4] Implement `RefreshTokenCommand` + handler (validate hash, rotate, return new pair) in `backend/src/Ihos.Application/Auth/Commands/RefreshTokenCommand.cs`
+- [X] T024 [US4] Implement `LogoutCommand` + handler (revoke refresh token, audit log) in `backend/src/Ihos.Application/Auth/Commands/LogoutCommand.cs`
+- [X] T025 [US4] Implement `InviteUserCommand` + handler (create user with status PendingInvite, generate UUID token, hash + store, send email with invite link via `IEmailService`) in `backend/src/Ihos.Application/Users/Commands/InviteUserCommand.cs`
+- [X] T026 [US4] Implement `AcceptInviteCommand` + handler (validate token hash + expiry, set passwordHash, clear token, set status Active, auto-login) in `backend/src/Ihos.Application/Users/Commands/AcceptInviteCommand.cs`
+- [X] T027 [US4] Implement `SelfRegisterCommand` + handler (create user status PendingApproval, no auto-login) in `backend/src/Ihos.Application/Auth/Commands/SelfRegisterCommand.cs`
+- [X] T028 [US4] Implement `ApproveRegistrationCommand` + `RejectRegistrationCommand` handlers (set status Active/Rejected, audit log with approver identity) in `backend/src/Ihos.Application/Users/Commands/`
+- [X] T029 [US4] Implement `ChangeUserRoleCommand` + `DeactivateUserCommand` handlers (Admin only, audit log) in `backend/src/Ihos.Application/Users/Commands/`
+- [X] T030 [US4] Implement `GetUsersQuery` (paginated, filterable by role/status) and `GetPendingRegistrationsQuery` in `backend/src/Ihos.Application/Users/Queries/`
+- [X] T031 [US4] Implement `MailKitEmailService` (SMTP invite link delivery, configurable host/port/from) in `backend/src/Ihos.Infrastructure/Services/MailKitEmailService.cs`
+- [X] T032 [US4] Create `AuthController` (POST login, POST refresh, POST logout, POST register, POST invite/accept) with correct role guards in `backend/src/Ihos.API/Controllers/AuthController.cs`
+- [X] T033 [US4] Create `UsersController` (GET list, POST invite, PUT role, PUT status, GET registrations/pending, PUT registrations/{id}/approve, PUT registrations/{id}/reject) in `backend/src/Ihos.API/Controllers/UsersController.cs`
 
 ### Frontend — US4
 
-- [ ] T034 [P] [US4] Create `AuthService` (Angular Signal for currentUser, login(), logout(), refreshToken(), hasRole()) in `frontend/src/app/core/auth.service.ts`
-- [ ] T035 [P] [US4] Create `JwtInterceptor` (attach Bearer token, handle 401 → attempt refresh → redirect to login on failure) in `frontend/src/app/core/jwt.interceptor.ts`
-- [ ] T036 [US4] Create login page component (email + password form, error states) in `frontend/src/app/auth/login/login.component.ts`
-- [ ] T037 [US4] Create accept-invite page (token from URL, set password form, auto-login on success) in `frontend/src/app/auth/accept-invite/accept-invite.component.ts`
-- [ ] T038 [US4] Create self-registration page (name, email, password form, pending confirmation message) in `frontend/src/app/auth/register/register.component.ts`
-- [ ] T039 [US4] Create `AuthGuard` (redirect to login if no token) and `RoleGuard` (redirect to 403 if insufficient role) in `frontend/src/app/core/guards/`
-- [ ] T040 [US4] Create user management page (paginated user table, invite modal with role selector, role change action) in `frontend/src/app/admin/users/users.component.ts`
-- [ ] T041 [US4] Create pending registrations component (list with approve/reject buttons and reason modal) in `frontend/src/app/admin/registrations/registrations.component.ts`
-- [ ] T042 [US4] Configure app routing (lazy modules, AuthGuard on all protected routes, role constraints) in `frontend/src/app/app.routes.ts`
+- [X] T034 [P] [US4] Create `AuthService` (Angular Signal for currentUser, login(), logout(), refreshToken(), hasRole()) in `frontend/src/app/core/auth.service.ts`
+- [X] T035 [P] [US4] Create `JwtInterceptor` (attach Bearer token, handle 401 → attempt refresh → redirect to login on failure) in `frontend/src/app/core/jwt.interceptor.ts`
+- [X] T036 [US4] Create login page component (email + password form, error states) in `frontend/src/app/auth/login/login.component.ts`
+- [X] T037 [US4] Create accept-invite page (token from URL, set password form, auto-login on success) in `frontend/src/app/auth/accept-invite/accept-invite.component.ts`
+- [X] T038 [US4] Create self-registration page (name, email, password form, pending confirmation message) in `frontend/src/app/auth/register/register.component.ts`
+- [X] T039 [US4] Create `AuthGuard` (redirect to login if no token) and `RoleGuard` (redirect to 403 if insufficient role) in `frontend/src/app/core/guards/`
+- [X] T040 [US4] Create user management page (paginated user table, invite modal with role selector, role change action) in `frontend/src/app/admin/users/users.component.ts`
+- [X] T041 [US4] Create pending registrations component (list with approve/reject buttons and reason modal) in `frontend/src/app/admin/registrations/registrations.component.ts`
+- [X] T042 [US4] Configure app routing (lazy modules, AuthGuard on all protected routes, role constraints) in `frontend/src/app/app.routes.ts`
 
 **Checkpoint**: US4 complete — login, invite, and user management are fully functional and testable independently.
 
@@ -110,25 +110,25 @@ docker/                          ← Docker Compose config
 
 ### Backend — US5
 
-- [ ] T043 [P] [US5] Create `InsuranceCompany` entity (name, shortCode, isActive) in `backend/src/Ihos.Domain/Entities/InsuranceCompany.cs`
-- [ ] T044 [P] [US5] Create `VehicleMake` and `VehicleModel` entities (make→model 1:N, subModel optional) in `backend/src/Ihos.Domain/Entities/`
-- [ ] T045 [P] [US5] Create `VehicleModelMapping` entity (companyId, rawName, canonicalModelId, isAutoSuggested) and `PlanTypeMapping` entity (companyId, rawName, canonicalPlanType enum) in `backend/src/Ihos.Domain/Entities/`
-- [ ] T046 [P] [US5] Create `ImportBatch` entity (companyId, sourceFileName, sourceFilePath, uploadedBy, status enum, row counts) and `ImportRecord` entity (batchId, rowNumber, rawData JSONB, mappingStatus, reviewStatus) in `backend/src/Ihos.Domain/Entities/`
-- [ ] T047 [US5] Add all new entities to `ApplicationDbContext`, define unique constraints (`(companyId, rawName)` on mapping tables, `(companyId, rawName)` unique), create EF Core migration in `backend/src/Ihos.Infrastructure/Migrations/`
-- [ ] T048 [US5] Implement `ImportBatchRepository` and `ImportRecordRepository` in `backend/src/Ihos.Infrastructure/Repositories/`
-- [ ] T049 [US5] Implement `ExcelImportParser` using ClosedXML (column mapping per company config, structured error on parse fail with row+column+reason) in `backend/src/Ihos.Infrastructure/Import/ExcelImportParser.cs`
-- [ ] T050 [US5] Implement `CsvImportParser` using CsvHelper (same error contract as Excel parser) in `backend/src/Ihos.Infrastructure/Import/CsvImportParser.cs`
-- [ ] T051 [US5] Implement `MappingResolverService` (exact match lookup → Levenshtein auto-suggest ≤2 distance → mark PendingMapping if unresolved) in `backend/src/Ihos.Application/Import/Services/MappingResolverService.cs`
-- [ ] T052 [US5] Implement `UploadImportFileCommand` + handler (select parser by extension, parse, create ImportBatch + ImportRecords with mapping resolution, return batch summary) in `backend/src/Ihos.Application/Import/Commands/UploadImportFileCommand.cs`
-- [ ] T053 [US5] Implement `GetImportBatchesQuery` (paginated, filterable by company/status/date) and `GetImportBatchDetailQuery` (batch + paginated records) in `backend/src/Ihos.Application/Import/Queries/`
-- [ ] T054 [US5] Create `ImportsController` (POST upload multipart, GET batches, GET batches/{id}, GET batches/{id}/records) in `backend/src/Ihos.API/Controllers/ImportsController.cs`
+- [X] T043 [P] [US5] Create `InsuranceCompany` entity (name, shortCode, isActive) in `backend/src/Ihos.Domain/Entities/InsuranceCompany.cs`
+- [X] T044 [P] [US5] Create `VehicleMake` and `VehicleModel` entities (make→model 1:N, subModel optional) in `backend/src/Ihos.Domain/Entities/`
+- [X] T045 [P] [US5] Create `VehicleModelMapping` entity (companyId, rawName, canonicalModelId, isAutoSuggested) and `PlanTypeMapping` entity (companyId, rawName, canonicalPlanType enum) in `backend/src/Ihos.Domain/Entities/`
+- [X] T046 [P] [US5] Create `ImportBatch` entity (companyId, sourceFileName, sourceFilePath, uploadedBy, status enum, row counts) and `ImportRecord` entity (batchId, rowNumber, rawData JSONB, mappingStatus, reviewStatus) in `backend/src/Ihos.Domain/Entities/`
+- [X] T047 [US5] Add all new entities to `ApplicationDbContext`, define unique constraints (`(companyId, rawName)` on mapping tables, `(companyId, rawName)` unique), create EF Core migration in `backend/src/Ihos.Infrastructure/Migrations/`
+- [X] T048 [US5] Implement `ImportBatchRepository` and `ImportRecordRepository` in `backend/src/Ihos.Infrastructure/Repositories/`
+- [X] T049 [US5] Implement `ExcelImportParser` using ClosedXML (column mapping per company config, structured error on parse fail with row+column+reason) in `backend/src/Ihos.Infrastructure/Import/ExcelImportParser.cs`
+- [X] T050 [US5] Implement `CsvImportParser` using CsvHelper (same error contract as Excel parser) in `backend/src/Ihos.Infrastructure/Import/CsvImportParser.cs`
+- [X] T051 [US5] Implement `MappingResolverService` (exact match lookup → Levenshtein auto-suggest ≤2 distance → mark PendingMapping if unresolved) in `backend/src/Ihos.Application/Import/Services/MappingResolverService.cs`
+- [X] T052 [US5] Implement `UploadImportFileCommand` + handler (select parser by extension, parse, create ImportBatch + ImportRecords with mapping resolution, return batch summary) in `backend/src/Ihos.Application/Import/Commands/UploadImportFileCommand.cs`
+- [X] T053 [US5] Implement `GetImportBatchesQuery` (paginated, filterable by company/status/date) and `GetImportBatchDetailQuery` (batch + paginated records) in `backend/src/Ihos.Application/Import/Queries/`
+- [X] T054 [US5] Create `ImportsController` (POST upload multipart, GET batches, GET batches/{id}, GET batches/{id}/records) in `backend/src/Ihos.API/Controllers/ImportsController.cs`
 
 ### Frontend — US5
 
-- [ ] T055 [P] [US5] Create `ImportApiService` (typed HTTP wrapper: upload, getBatches, getBatchDetail, getRecords) in `frontend/src/app/core/import-api.service.ts`
-- [ ] T056 [US5] Create import upload page (company selector dropdown, file drag-and-drop, upload progress, parse error display with row/column table) in `frontend/src/app/import/upload/upload.component.ts`
-- [ ] T057 [US5] Create import batch list page (paginated table with company, date, status, row counts) in `frontend/src/app/import/batch-list/batch-list.component.ts`
-- [ ] T058 [US5] Create import batch detail page (batch header + virtual-scrolled records table showing rawData, resolvedValue, mappingStatus, reviewStatus) in `frontend/src/app/import/batch-detail/batch-detail.component.ts`
+- [X] T055 [P] [US5] Create `ImportApiService` (typed HTTP wrapper: upload, getBatches, getBatchDetail, getRecords) in `frontend/src/app/core/import-api.service.ts`
+- [X] T056 [US5] Create import upload page (company selector dropdown, file drag-and-drop, upload progress, parse error display with row/column table) in `frontend/src/app/import/upload/upload.component.ts`
+- [X] T057 [US5] Create import batch list page (paginated table with company, date, status, row counts) in `frontend/src/app/import/batch-list/batch-list.component.ts`
+- [X] T058 [US5] Create import batch detail page (batch header + virtual-scrolled records table showing rawData, resolvedValue, mappingStatus, reviewStatus) in `frontend/src/app/import/batch-detail/batch-detail.component.ts`
 
 **Checkpoint**: US5 complete — upload, parse errors, and batch browsing are fully functional.
 
@@ -142,21 +142,21 @@ docker/                          ← Docker Compose config
 
 ### Backend — US6
 
-- [ ] T059 [P] [US6] Create `InsurancePlan` entity (companyId, vehicleModelId, planType, repairType, minYear, maxYear, sumInsured, premiumTotal, excessAmount, coverageDetails JSONB, sourceImportRecordId, sourceBatchId, isPublished) in `backend/src/Ihos.Domain/Entities/InsurancePlan.cs`
-- [ ] T060 [US6] Add `insurance_plans` DbSet to context, define unique constraint `(companyId, vehicleModelId, planType, repairType, minYear, maxYear)` and partial search indexes (`WHERE is_published AND NOT is_deleted`), create EF Core migration in `backend/src/Ihos.Infrastructure/Migrations/`
-- [ ] T061 [US6] Implement `InsurancePlanRepository` in `backend/src/Ihos.Infrastructure/Repositories/InsurancePlanRepository.cs`
-- [ ] T062 [US6] Implement `ApproveImportRecordCommand` handler (set reviewStatus=Approved, audit log) — reject if mappingStatus=PendingMapping, return 409 in `backend/src/Ihos.Application/Import/Commands/ApproveImportRecordCommand.cs`
-- [ ] T063 [US6] Implement `RejectImportRecordCommand` handler (set reviewStatus=Rejected, optional reason, audit log) in `backend/src/Ihos.Application/Import/Commands/RejectImportRecordCommand.cs`
-- [ ] T064 [US6] Implement `PublishImportBatchCommand` handler (verify no Pending/Unresolved records remain → 409 if any, create/update InsurancePlan records with is_published=true, set batch status=Published, audit log) in `backend/src/Ihos.Application/Import/Commands/PublishImportBatchCommand.cs`
-- [ ] T065 [US6] Add approve, reject, and publish endpoints to `ImportsController` in `backend/src/Ihos.API/Controllers/ImportsController.cs`
-- [ ] T066 [US6] Implement `GetVehicleModelMappingsQuery`, `CreateVehicleModelMappingCommand`, `UpdateVehicleModelMappingCommand` and plan-type equivalents in `backend/src/Ihos.Application/Mapping/`
-- [ ] T067 [US6] Create `MappingsController` (GET/POST/PUT vehicle-models, GET/POST/PUT plan-types) with Senior Staff minimum role in `backend/src/Ihos.API/Controllers/MappingsController.cs`
+- [X] T059 [P] [US6] Create `InsurancePlan` entity (companyId, vehicleModelId, planType, repairType, minYear, maxYear, sumInsured, premiumTotal, excessAmount, coverageDetails JSONB, sourceImportRecordId, sourceBatchId, isPublished) in `backend/src/Ihos.Domain/Entities/InsurancePlan.cs`
+- [X] T060 [US6] Add `insurance_plans` DbSet to context, define unique constraint `(companyId, vehicleModelId, planType, repairType, minYear, maxYear)` and partial search indexes (`WHERE is_published AND NOT is_deleted`), create EF Core migration in `backend/src/Ihos.Infrastructure/Migrations/`
+- [X] T061 [US6] Implement `InsurancePlanRepository` in `backend/src/Ihos.Infrastructure/Repositories/InsurancePlanRepository.cs`
+- [X] T062 [US6] Implement `ApproveImportRecordCommand` handler (set reviewStatus=Approved, audit log) — reject if mappingStatus=PendingMapping, return 409 in `backend/src/Ihos.Application/Import/Commands/ApproveImportRecordCommand.cs`
+- [X] T063 [US6] Implement `RejectImportRecordCommand` handler (set reviewStatus=Rejected, optional reason, audit log) in `backend/src/Ihos.Application/Import/Commands/RejectImportRecordCommand.cs`
+- [X] T064 [US6] Implement `PublishImportBatchCommand` handler (verify no Pending/Unresolved records remain → 409 if any, create/update InsurancePlan records with is_published=true, set batch status=Published, audit log) in `backend/src/Ihos.Application/Import/Commands/PublishImportBatchCommand.cs`
+- [X] T065 [US6] Add approve, reject, and publish endpoints to `ImportsController` in `backend/src/Ihos.API/Controllers/ImportsController.cs`
+- [X] T066 [US6] Implement `GetVehicleModelMappingsQuery`, `CreateVehicleModelMappingCommand`, `UpdateVehicleModelMappingCommand` and plan-type equivalents in `backend/src/Ihos.Application/Mapping/`
+- [X] T067 [US6] Create `MappingsController` (GET/POST/PUT vehicle-models, GET/POST/PUT plan-types) with Senior Staff minimum role in `backend/src/Ihos.API/Controllers/MappingsController.cs`
 
 ### Frontend — US6
 
-- [ ] T068 [US6] Add approve/reject action buttons to each record row in batch detail, plus batch-level publish button (disabled while pending records exist) in `frontend/src/app/import/batch-detail/batch-detail.component.ts`
-- [ ] T069 [US6] Create vehicle model mapping page (paginated mapping table, create/edit mapping dialog with canonical model search) in `frontend/src/app/mapping/vehicle-models/vehicle-models.component.ts`
-- [ ] T070 [US6] Create plan type mapping page (table, create/edit mapping dialog with canonical plan type dropdown) in `frontend/src/app/mapping/plan-types/plan-types.component.ts`
+- [X] T068 [US6] Add approve/reject action buttons to each record row in batch detail, plus batch-level publish button (disabled while pending records exist) in `frontend/src/app/import/batch-detail/batch-detail.component.ts`
+- [X] T069 [US6] Create vehicle model mapping page (paginated mapping table, create/edit mapping dialog with canonical model search) in `frontend/src/app/mapping/vehicle-models/vehicle-models.component.ts`
+- [X] T070 [US6] Create plan type mapping page (table, create/edit mapping dialog with canonical plan type dropdown) in `frontend/src/app/mapping/plan-types/plan-types.component.ts`
 
 **Checkpoint**: US5 + US6 complete — full import pipeline from upload to published/searchable plans.
 
@@ -170,18 +170,18 @@ docker/                          ← Docker Compose config
 
 ### Backend — US1
 
-- [ ] T071 [US1] Implement `SearchPlansQuery` + handler (filter on vehicleModelId, planType, repairType, year eligibility `minYear ≤ age ≤ maxYear`, optional company/excess filters, default sort premiumTotal ASC, paginate 20/page) using partial indexes in `backend/src/Ihos.Application/Search/Queries/SearchPlansQuery.cs`
-- [ ] T072 [US1] Implement `GetPlanDetailQuery` + handler in `backend/src/Ihos.Application/Search/Queries/GetPlanDetailQuery.cs`
-- [ ] T073 [US1] Create `PlansController` (GET search, GET {id}) with Staff minimum role in `backend/src/Ihos.API/Controllers/PlansController.cs`
-- [ ] T074 [US1] Write xUnit integration test (Testcontainers) verifying: results within 2 seconds, year filter excludes ineligible plans, no-result case returns empty array, page 2 returns correct offset in `backend/tests/Ihos.API.IntegrationTests/Search/SearchPlansTests.cs`
+- [X] T071 [US1] Implement `SearchPlansQuery` + handler (filter on vehicleModelId, planType, repairType, year eligibility `minYear ≤ age ≤ maxYear`, optional company/excess filters, default sort premiumTotal ASC, paginate 20/page) using partial indexes in `backend/src/Ihos.Application/Search/Queries/SearchPlansQuery.cs`
+- [X] T072 [US1] Implement `GetPlanDetailQuery` + handler in `backend/src/Ihos.Application/Search/Queries/GetPlanDetailQuery.cs`
+- [X] T073 [US1] Create `PlansController` (GET search, GET {id}) with Staff minimum role in `backend/src/Ihos.API/Controllers/PlansController.cs`
+- [X] T074 [US1] Write xUnit integration test (Testcontainers) verifying: results within 2 seconds, year filter excludes ineligible plans, no-result case returns empty array, page 2 returns correct offset in `backend/tests/Ihos.API.IntegrationTests/Search/SearchPlansTests.cs`
 
 ### Frontend — US1
 
-- [ ] T075 [US1] Create `SearchApiService` (typed HTTP: search, getDetail) in `frontend/src/app/core/search-api.service.ts`
-- [ ] T076 [US1] Create cascading vehicle make/model selector (make dropdown → loads models, signals-based) in `frontend/src/app/shared/vehicle-selector/vehicle-selector.component.ts`
-- [ ] T077 [US1] Create search form component (make/model selector, year input, plan type select, repair type toggle, optional company/excess filters, submit button) in `frontend/src/app/search/search-form/search-form.component.ts`
-- [ ] T078 [US1] Create search results list component (plan cards with company, premium, sum insured, excess, coverage summary; sort toggle price/sum-insured; pagination; no-results empty state) in `frontend/src/app/search/results/results.component.ts`
-- [ ] T079 [US1] Create search page shell (form + results layout, routing) in `frontend/src/app/search/search.routes.ts`
+- [X] T075 [US1] Create `SearchApiService` (typed HTTP: search, getDetail) in `frontend/src/app/core/search-api.service.ts`
+- [X] T076 [US1] Create cascading vehicle make/model selector (make dropdown → loads models, signals-based) in `frontend/src/app/shared/vehicle-selector/vehicle-selector.component.ts`
+- [X] T077 [US1] Create search form component (make/model selector, year input, plan type select, repair type toggle, optional company/excess filters, submit button) in `frontend/src/app/search/search-form/search-form.component.ts`
+- [X] T078 [US1] Create search results list component (plan cards with company, premium, sum insured, excess, coverage summary; sort toggle price/sum-insured; pagination; no-results empty state) in `frontend/src/app/search/results/results.component.ts`
+- [X] T079 [US1] Create search page shell (form + results layout, routing) in `frontend/src/app/search/search.routes.ts`
 
 **Checkpoint**: US1 complete — search is fully functional end-to-end and meets the 2s SLA.
 
@@ -195,14 +195,14 @@ docker/                          ← Docker Compose config
 
 ### Backend — US2
 
-- [ ] T080 [US2] Implement `GetMultiplePlansQuery` + handler (fetch list by IDs, max 3, return full detail per plan) in `backend/src/Ihos.Application/Search/Queries/GetMultiplePlansQuery.cs`
-- [ ] T081 [US2] Add `GET /plans/compare?ids=id1,id2,id3` endpoint to `PlansController` in `backend/src/Ihos.API/Controllers/PlansController.cs`
+- [X] T080 [US2] Implement `GetMultiplePlansQuery` + handler (fetch list by IDs, max 3, return full detail per plan) in `backend/src/Ihos.Application/Search/Queries/GetMultiplePlansQuery.cs`
+- [X] T081 [US2] Add `GET /plans/compare?ids=id1,id2,id3` endpoint to `PlansController` in `backend/src/Ihos.API/Controllers/PlansController.cs`
 
 ### Frontend — US2
 
-- [ ] T082 [US2] Add plan selection state (Signal, max 3 with toast on overflow) and "Compare" button to search results in `frontend/src/app/search/results/results.component.ts`
-- [ ] T083 [US2] Create compare view component (side-by-side table, one column per plan, highlight differing cells, "Generate Quotation" button per plan column) in `frontend/src/app/search/compare/compare.component.ts`
-- [ ] T084 [US2] Add compare route and navigation from results to compare view in `frontend/src/app/search/search.routes.ts`
+- [X] T082 [US2] Add plan selection state (Signal, max 3 with toast on overflow) and "Compare" button to search results in `frontend/src/app/search/results/results.component.ts`
+- [X] T083 [US2] Create compare view component (side-by-side table, one column per plan, highlight differing cells, "Generate Quotation" button per plan column) in `frontend/src/app/search/compare/compare.component.ts`
+- [X] T084 [US2] Add compare route and navigation from results to compare view in `frontend/src/app/search/search.routes.ts`
 
 **Checkpoint**: US1 + US2 complete — search and compare work independently.
 
@@ -216,20 +216,20 @@ docker/                          ← Docker Compose config
 
 ### Backend — US3
 
-- [ ] T085 [P] [US3] Create `Quotation` entity (createdBy, planId, customerName, vehicleRegistration, vehicleMake, vehicleModelName, vehicleYear, premiumAtGeneration, generatedAt) in `backend/src/Ihos.Domain/Entities/Quotation.cs`
-- [ ] T086 [US3] Add `quotations` DbSet, create EF Core migration in `backend/src/Ihos.Infrastructure/Migrations/`
-- [ ] T087 [US3] Implement `JasperReportsClient` (HTTP Basic auth, POST to `/rest_v2/reports/reports/ihos/quotation.pdf` with parameters, return PDF byte stream, 10s timeout) in `backend/src/Ihos.Infrastructure/Reporting/JasperReportsClient.cs`
-- [ ] T088 [US3] Create `quotation.jrxml` report template (company name, plan type, repair type, premium, coverage summary, excess, validity period, agent name, generated date) in `reports/templates/quotation.jrxml`
-- [ ] T089 [US3] Implement `GenerateQuotationCommand` + handler (persist Quotation record with premium snapshot, call JasperReportsClient, return PDF blob + quotation ID) in `backend/src/Ihos.Application/Quotation/Commands/GenerateQuotationCommand.cs`
-- [ ] T090 [US3] Implement `GetQuotationPdfQuery` + `GetQuotationsQuery` (paginated history) in `backend/src/Ihos.Application/Quotation/Queries/`
-- [ ] T091 [US3] Create `QuotationsController` (POST generate, GET {id}/pdf as file stream, GET list for history) in `backend/src/Ihos.API/Controllers/QuotationsController.cs`
+- [X] T085 [P] [US3] Create `Quotation` entity (createdBy, planId, customerName, vehicleRegistration, vehicleMake, vehicleModelName, vehicleYear, premiumAtGeneration, generatedAt) in `backend/src/Ihos.Domain/Entities/Quotation.cs`
+- [X] T086 [US3] Add `quotations` DbSet, create EF Core migration in `backend/src/Ihos.Infrastructure/Migrations/`
+- [X] T087 [US3] Implement `JasperReportsClient` (HTTP Basic auth, POST to `/rest_v2/reports/reports/ihos/quotation.pdf` with parameters, return PDF byte stream, 10s timeout) in `backend/src/Ihos.Infrastructure/Reporting/JasperReportsClient.cs`
+- [X] T088 [US3] Create `quotation.jrxml` report template (company name, plan type, repair type, premium, coverage summary, excess, validity period, agent name, generated date) in `reports/templates/quotation.jrxml`
+- [X] T089 [US3] Implement `GenerateQuotationCommand` + handler (persist Quotation record with premium snapshot, call JasperReportsClient, return PDF blob + quotation ID) in `backend/src/Ihos.Application/Quotation/Commands/GenerateQuotationCommand.cs`
+- [X] T090 [US3] Implement `GetQuotationPdfQuery` + `GetQuotationsQuery` (paginated history) in `backend/src/Ihos.Application/Quotation/Queries/`
+- [X] T091 [US3] Create `QuotationsController` (POST generate, GET {id}/pdf as file stream, GET list for history) in `backend/src/Ihos.API/Controllers/QuotationsController.cs`
 
 ### Frontend — US3
 
-- [ ] T092 [US3] Create quotation form component (customer name input, optional vehicle registration, pre-filled plan summary card, Generate button) in `frontend/src/app/quotation/form/quotation-form.component.ts`
-- [ ] T093 [US3] Create `QuotationService` (HTTP: generate, downloadPdf as Blob, getHistory) in `frontend/src/app/quotation/quotation.service.ts`
-- [ ] T094 [US3] Create quotation success page (success message, Download PDF button triggering blob download, Back to Search link) in `frontend/src/app/quotation/success/quotation-success.component.ts`
-- [ ] T095 [US3] Wire "Generate Quotation" navigation from compare view (T083) and from search results plan card to quotation form in `frontend/src/app/quotation/quotation.routes.ts`
+- [X] T092 [US3] Create quotation form component (customer name input, optional vehicle registration, pre-filled plan summary card, Generate button) in `frontend/src/app/quotation/form/quotation-form.component.ts`
+- [X] T093 [US3] Create `QuotationService` (HTTP: generate, downloadPdf as Blob, getHistory) in `frontend/src/app/quotation/quotation.service.ts`
+- [X] T094 [US3] Create quotation success page (success message, Download PDF button triggering blob download, Back to Search link) in `frontend/src/app/quotation/success/quotation-success.component.ts`
+- [X] T095 [US3] Wire "Generate Quotation" navigation from compare view (T083) and from search results plan card to quotation form in `frontend/src/app/quotation/quotation.routes.ts`
 
 **Checkpoint**: US1 + US2 + US3 complete — search → compare → quotation end-to-end is fully operational.
 
@@ -243,19 +243,19 @@ docker/                          ← Docker Compose config
 
 ### Backend — US7
 
-- [ ] T096 [US7] Implement `GetUsageStatisticsQuery` + handler (quotation and search counts grouped by day/week/month for date range) in `backend/src/Ihos.Application/Reporting/Queries/GetUsageStatisticsQuery.cs`
-- [ ] T097 [US7] Implement `GetTopVehicleModelsQuery` + handler (models ranked by search + quotation frequency for date range) in `backend/src/Ihos.Application/Reporting/Queries/GetTopVehicleModelsQuery.cs`
-- [ ] T098 [US7] Implement `GetImportErrorsQuery` + handler (batches with unresolved/rejected/approved counts, filterable by company/date) in `backend/src/Ihos.Application/Reporting/Queries/GetImportErrorsQuery.cs`
-- [ ] T099 [US7] Implement `ReportExportService` (PDF via JasperReportsClient, Excel via ClosedXML workbook generation) for all three report types in `backend/src/Ihos.Infrastructure/Reporting/ReportExportService.cs`
-- [ ] T100 [US7] Create `ReportsController` (GET usage-statistics, GET top-vehicle-models, GET import-errors, GET {type}/export?format=pdf|xlsx) with Manager minimum role in `backend/src/Ihos.API/Controllers/ReportsController.cs`
+- [X] T096 [US7] Implement `GetUsageStatisticsQuery` + handler (quotation and search counts grouped by day/week/month for date range) in `backend/src/Ihos.Application/Reporting/Queries/GetUsageStatisticsQuery.cs`
+- [X] T097 [US7] Implement `GetTopVehicleModelsQuery` + handler (models ranked by search + quotation frequency for date range) in `backend/src/Ihos.Application/Reporting/Queries/GetTopVehicleModelsQuery.cs`
+- [X] T098 [US7] Implement `GetImportErrorsQuery` + handler (batches with unresolved/rejected/approved counts, filterable by company/date) in `backend/src/Ihos.Application/Reporting/Queries/GetImportErrorsQuery.cs`
+- [X] T099 [US7] Implement `ReportExportService` (PDF via JasperReportsClient, Excel via ClosedXML workbook generation) for all three report types in `backend/src/Ihos.Infrastructure/Reporting/ReportExportService.cs`
+- [X] T100 [US7] Create `ReportsController` (GET usage-statistics, GET top-vehicle-models, GET import-errors, GET {type}/export?format=pdf|xlsx) with Manager minimum role in `backend/src/Ihos.API/Controllers/ReportsController.cs`
 
 ### Frontend — US7
 
-- [ ] T101 [US7] Create `ReportingApiService` (typed HTTP: getUsageStatistics, getTopModels, getImportErrors, exportReport as Blob) in `frontend/src/app/core/reporting-api.service.ts`
-- [ ] T102 [US7] Create usage statistics report view (date range picker, granularity toggle, bar/line chart, Export button) in `frontend/src/app/reporting/usage-statistics/usage-statistics.component.ts`
-- [ ] T103 [US7] Create top vehicle models report view (date range picker, ranked table, Export button) in `frontend/src/app/reporting/top-models/top-models.component.ts`
-- [ ] T104 [US7] Create import errors report view (company filter, batch table with error counts, Export button) in `frontend/src/app/reporting/import-errors/import-errors.component.ts`
-- [ ] T105 [US7] Create reports dashboard page (3 report cards with entry links) in `frontend/src/app/reporting/dashboard/dashboard.component.ts`
+- [X] T101 [US7] Create `ReportingApiService` (typed HTTP: getUsageStatistics, getTopModels, getImportErrors, exportReport as Blob) in `frontend/src/app/core/reporting-api.service.ts`
+- [X] T102 [US7] Create usage statistics report view (date range picker, granularity toggle, bar/line chart, Export button) in `frontend/src/app/reporting/usage-statistics/usage-statistics.component.ts`
+- [X] T103 [US7] Create top vehicle models report view (date range picker, ranked table, Export button) in `frontend/src/app/reporting/top-models/top-models.component.ts`
+- [X] T104 [US7] Create import errors report view (company filter, batch table with error counts, Export button) in `frontend/src/app/reporting/import-errors/import-errors.component.ts`
+- [X] T105 [US7] Create reports dashboard page (3 report cards with entry links) in `frontend/src/app/reporting/dashboard/dashboard.component.ts`
 
 **Checkpoint**: All user stories US1–US7 complete.
 
@@ -265,12 +265,12 @@ docker/                          ← Docker Compose config
 
 **Purpose**: Shared UX shell, audit visibility, performance validation, and hardening.
 
-- [ ] T106 [P] Create global app shell (navigation sidebar with role-based menu items, breadcrumbs, loading skeleton states, 404 page) in `frontend/src/app/shared/shell/`
-- [ ] T107 [P] Create audit log viewer page for Admin (paginated, filterable by action_type and date) in `frontend/src/app/admin/audit-log/audit-log.component.ts`
-- [ ] T108 [P] Write k6 performance load test asserting p95 < 2000ms on `GET /api/plans/search` under 50 VUs for 60 seconds in `tests/performance/search_load.js`
-- [ ] T109 [P] Write xUnit integration tests for import pipeline: upload valid Excel → batch created → approve all records → publish → search returns plans; upload corrupt file → 400 with error details; parse-fail → no batch in DB in `backend/tests/Ihos.API.IntegrationTests/Import/`
-- [ ] T110 Create sample data seed script (5 insurance companies, 10 vehicle makes/models, sample mapping entries, sample import batch) in `docker/postgres/seed.sql`
-- [ ] T111 Run end-to-end quickstart.md validation (docker compose up → migrate → login as admin → upload sample file → map unresolved models → approve → publish → search → compare → generate PDF → verify download)
+- [X] T106 [P] Create global app shell (navigation sidebar with role-based menu items, breadcrumbs, loading skeleton states, 404 page) in `frontend/src/app/shared/shell/`
+- [X] T107 [P] Create audit log viewer page for Admin (paginated, filterable by action_type and date) in `frontend/src/app/admin/audit-log/audit-log.component.ts`
+- [X] T108 [P] Write k6 performance load test asserting p95 < 2000ms on `GET /api/plans/search` under 50 VUs for 60 seconds in `tests/performance/search_load.js`
+- [X] T109 [P] Write xUnit integration tests for import pipeline: upload valid Excel → batch created → approve all records → publish → search returns plans; upload corrupt file → 400 with error details; parse-fail → no batch in DB in `backend/tests/Ihos.API.IntegrationTests/Import/`
+- [X] T110 Create sample data seed script (5 insurance companies, 10 vehicle makes/models, sample mapping entries, sample import batch) in `docker/postgres/seed.sql`
+- [X] T111 Run end-to-end quickstart.md validation (docker compose up → migrate → login as admin → upload sample file → map unresolved models → approve → publish → search → compare → generate PDF → verify download)
 
 ---
 

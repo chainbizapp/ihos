@@ -1,0 +1,298 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<jasperReport xmlns="http://jasperreports.sourceforge.net/jasperreports"
+              xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+              xsi:schemaLocation="http://jasperreports.sourceforge.net/jasperreports
+                http://jasperreports.sourceforge.net/xsd/jasperreport.xsd"
+              name="quotation"
+              pageWidth="595"
+              pageHeight="842"
+              columnWidth="515"
+              leftMargin="40"
+              rightMargin="40"
+              topMargin="40"
+              bottomMargin="40"
+              uuid="a1b2c3d4-e5f6-7890-abcd-ef1234567890">
+
+  <!--
+    Parameters:
+      param1  = quotation UUID (string) — used as the WHERE condition
+      param2  = reserved / unused
+      param3  = reserved / unused
+
+    Data source: The Spring Boot report service provides a JDBC connection.
+    This report queries the ihos PostgreSQL database directly.
+  -->
+  <parameter name="param1" class="java.lang.String"/>
+  <parameter name="param2" class="java.lang.String"/>
+  <parameter name="param3" class="java.lang.String"/>
+
+  <queryString language="SQL"><![CDATA[
+    SELECT
+      q.id                                          AS quotation_id,
+      q.customer_name,
+      COALESCE(q.vehicle_registration, '—')         AS vehicle_registration,
+      q.vehicle_make,
+      q.vehicle_model_name,
+      q.vehicle_year,
+      q.premium_at_generation,
+      q.generated_at,
+      ic.name                                       AS company_name,
+      ip.plan_type,
+      ip.repair_type,
+      ip.sum_insured,
+      ip.excess_amount,
+      ip.coverage_details::text                     AS coverage_details,
+      ip.remarks,
+      u.full_name                                   AS agent_name
+    FROM quotations q
+    JOIN insurance_plans ip  ON ip.id = q.plan_id
+    JOIN insurance_companies ic ON ic.id = ip.company_id
+    LEFT JOIN users u         ON u.id  = q.created_by
+    WHERE q.id = $P{param1}::uuid
+      AND q.is_deleted = false
+  ]]></queryString>
+
+  <!-- Mapped fields from the query -->
+  <field name="quotation_id"        class="java.util.UUID"/>
+  <field name="customer_name"       class="java.lang.String"/>
+  <field name="vehicle_registration" class="java.lang.String"/>
+  <field name="vehicle_make"        class="java.lang.String"/>
+  <field name="vehicle_model_name"  class="java.lang.String"/>
+  <field name="vehicle_year"        class="java.lang.Integer"/>
+  <field name="premium_at_generation" class="java.math.BigDecimal"/>
+  <field name="generated_at"        class="java.sql.Timestamp"/>
+  <field name="company_name"        class="java.lang.String"/>
+  <field name="plan_type"           class="java.lang.String"/>
+  <field name="repair_type"         class="java.lang.String"/>
+  <field name="sum_insured"         class="java.math.BigDecimal"/>
+  <field name="excess_amount"       class="java.math.BigDecimal"/>
+  <field name="coverage_details"    class="java.lang.String"/>
+  <field name="remarks"             class="java.lang.String"/>
+  <field name="agent_name"          class="java.lang.String"/>
+
+  <title>
+    <band height="70" splitType="Stretch">
+      <rectangle>
+        <reportElement x="0" y="0" width="515" height="55" backcolor="#006874" forecolor="#006874" uuid="hdr-bg"/>
+        <graphicElement><pen lineWidth="0.0"/></graphicElement>
+      </rectangle>
+      <staticText>
+        <reportElement x="10" y="8" width="350" height="26" forecolor="#FFFFFF" uuid="t1"/>
+        <textElement><font size="18" isBold="true"/></textElement>
+        <text><![CDATA[Insurance Quotation]]></text>
+      </staticText>
+      <staticText>
+        <reportElement x="10" y="36" width="350" height="14" forecolor="#CCECEF" uuid="t2"/>
+        <textElement><font size="9"/></textElement>
+        <text><![CDATA[IHOS — Motor Insurance Management System]]></text>
+      </staticText>
+      <textField>
+        <reportElement x="340" y="8" width="165" height="14" forecolor="#FFFFFF" uuid="t3"/>
+        <textElement textAlignment="Right"><font size="8"/></textElement>
+        <textFieldExpression><![CDATA["Ref: " + $F{quotation_id}.toString().substring(0,8).toUpperCase()]]></textFieldExpression>
+      </textField>
+      <textField>
+        <reportElement x="340" y="24" width="165" height="14" forecolor="#CCECEF" uuid="t4"/>
+        <textElement textAlignment="Right"><font size="8"/></textElement>
+        <textFieldExpression><![CDATA[new java.text.SimpleDateFormat("dd MMM yyyy").format($F{generated_at})]]></textFieldExpression>
+      </textField>
+    </band>
+  </title>
+
+  <detail>
+    <band height="560" splitType="Stretch">
+
+      <!-- ── Customer Section ── -->
+      <staticText>
+        <reportElement x="0" y="10" width="515" height="16" forecolor="#006874" uuid="s1"/>
+        <textElement><font size="11" isBold="true"/></textElement>
+        <text><![CDATA[Customer Information]]></text>
+      </staticText>
+      <line><reportElement x="0" y="27" width="515" height="1" forecolor="#006874" uuid="l1"/></line>
+
+      <staticText>
+        <reportElement x="0" y="33" width="150" height="14" uuid="cl1"/>
+        <textElement><font size="9" isBold="true"/></textElement>
+        <text><![CDATA[Customer Name:]]></text>
+      </staticText>
+      <textField>
+        <reportElement x="155" y="33" width="360" height="14" uuid="cv1"/>
+        <textElement><font size="9"/></textElement>
+        <textFieldExpression><![CDATA[$F{customer_name}]]></textFieldExpression>
+      </textField>
+
+      <staticText>
+        <reportElement x="0" y="50" width="150" height="14" uuid="cl2"/>
+        <textElement><font size="9" isBold="true"/></textElement>
+        <text><![CDATA[Vehicle Registration:]]></text>
+      </staticText>
+      <textField>
+        <reportElement x="155" y="50" width="360" height="14" uuid="cv2"/>
+        <textElement><font size="9"/></textElement>
+        <textFieldExpression><![CDATA[$F{vehicle_registration}]]></textFieldExpression>
+      </textField>
+
+      <staticText>
+        <reportElement x="0" y="67" width="150" height="14" uuid="cl3"/>
+        <textElement><font size="9" isBold="true"/></textElement>
+        <text><![CDATA[Vehicle:]]></text>
+      </staticText>
+      <textField>
+        <reportElement x="155" y="67" width="360" height="14" uuid="cv3"/>
+        <textElement><font size="9"/></textElement>
+        <textFieldExpression><![CDATA[$F{vehicle_make} + " " + $F{vehicle_model_name} + " (" + $F{vehicle_year} + ")"]]></textFieldExpression>
+      </textField>
+
+      <!-- ── Plan Section ── -->
+      <staticText>
+        <reportElement x="0" y="100" width="515" height="16" forecolor="#006874" uuid="s2"/>
+        <textElement><font size="11" isBold="true"/></textElement>
+        <text><![CDATA[Plan Details]]></text>
+      </staticText>
+      <line><reportElement x="0" y="117" width="515" height="1" forecolor="#006874" uuid="l2"/></line>
+
+      <staticText>
+        <reportElement x="0" y="123" width="150" height="14" uuid="pl1"/>
+        <textElement><font size="9" isBold="true"/></textElement>
+        <text><![CDATA[Insurance Company:]]></text>
+      </staticText>
+      <textField>
+        <reportElement x="155" y="123" width="360" height="14" uuid="pv1"/>
+        <textElement><font size="9"/></textElement>
+        <textFieldExpression><![CDATA[$F{company_name}]]></textFieldExpression>
+      </textField>
+
+      <staticText>
+        <reportElement x="0" y="140" width="150" height="14" uuid="pl2"/>
+        <textElement><font size="9" isBold="true"/></textElement>
+        <text><![CDATA[Plan Type:]]></text>
+      </staticText>
+      <textField>
+        <reportElement x="155" y="140" width="360" height="14" uuid="pv2"/>
+        <textElement><font size="9"/></textElement>
+        <textFieldExpression><![CDATA[$F{plan_type}]]></textFieldExpression>
+      </textField>
+
+      <staticText>
+        <reportElement x="0" y="157" width="150" height="14" uuid="pl3"/>
+        <textElement><font size="9" isBold="true"/></textElement>
+        <text><![CDATA[Repair Type:]]></text>
+      </staticText>
+      <textField>
+        <reportElement x="155" y="157" width="360" height="14" uuid="pv3"/>
+        <textElement><font size="9"/></textElement>
+        <textFieldExpression><![CDATA[$F{repair_type}]]></textFieldExpression>
+      </textField>
+
+      <!-- ── Premium Box ── -->
+      <staticText>
+        <reportElement x="0" y="190" width="515" height="16" forecolor="#006874" uuid="s3"/>
+        <textElement><font size="11" isBold="true"/></textElement>
+        <text><![CDATA[Premium &amp; Coverage]]></text>
+      </staticText>
+      <line><reportElement x="0" y="207" width="515" height="1" forecolor="#006874" uuid="l3"/></line>
+
+      <rectangle>
+        <reportElement x="0" y="213" width="515" height="54" backcolor="#F0F9FA" forecolor="#CCECEF" uuid="pb"/>
+        <graphicElement><pen lineWidth="1.0"/></graphicElement>
+      </rectangle>
+      <staticText>
+        <reportElement x="10" y="222" width="200" height="14" uuid="pm1"/>
+        <textElement><font size="9" isBold="true"/></textElement>
+        <text><![CDATA[Annual Premium (THB):]]></text>
+      </staticText>
+      <textField>
+        <reportElement x="210" y="220" width="295" height="18" uuid="pm2"/>
+        <textElement><font size="13" isBold="true"/></textElement>
+        <textFieldExpression><![CDATA["฿ " + new java.text.DecimalFormat("#,##0").format($F{premium_at_generation})]]></textFieldExpression>
+      </textField>
+      <staticText>
+        <reportElement x="10" y="242" width="200" height="14" uuid="pm3"/>
+        <textElement><font size="9"/></textElement>
+        <text><![CDATA[Sum Insured (THB):]]></text>
+      </staticText>
+      <textField>
+        <reportElement x="210" y="242" width="295" height="14" uuid="pm4"/>
+        <textElement><font size="9"/></textElement>
+        <textFieldExpression><![CDATA["฿ " + new java.text.DecimalFormat("#,##0").format($F{sum_insured})]]></textFieldExpression>
+      </textField>
+
+      <staticText>
+        <reportElement x="0" y="276" width="150" height="14" uuid="ex1"/>
+        <textElement><font size="9" isBold="true"/></textElement>
+        <text><![CDATA[Excess Amount (THB):]]></text>
+      </staticText>
+      <textField>
+        <reportElement x="155" y="276" width="360" height="14" uuid="ex2"/>
+        <textElement><font size="9"/></textElement>
+        <textFieldExpression><![CDATA["฿ " + new java.text.DecimalFormat("#,##0").format($F{excess_amount})]]></textFieldExpression>
+      </textField>
+
+      <staticText>
+        <reportElement x="0" y="295" width="150" height="14" uuid="cd1"/>
+        <textElement><font size="9" isBold="true"/></textElement>
+        <text><![CDATA[Coverage Details:]]></text>
+      </staticText>
+      <textField isStretchWithOverflow="true">
+        <reportElement x="155" y="295" width="360" height="50" uuid="cd2"/>
+        <textElement><font size="8"/></textElement>
+        <textFieldExpression><![CDATA[$F{coverage_details} != null ? $F{coverage_details} : "—"]]></textFieldExpression>
+      </textField>
+
+      <!-- ── Validity & Agent ── -->
+      <staticText>
+        <reportElement x="0" y="365" width="515" height="16" forecolor="#006874" uuid="s4"/>
+        <textElement><font size="11" isBold="true"/></textElement>
+        <text><![CDATA[Validity &amp; Agent]]></text>
+      </staticText>
+      <line><reportElement x="0" y="382" width="515" height="1" forecolor="#006874" uuid="l4"/></line>
+
+      <staticText>
+        <reportElement x="0" y="388" width="150" height="14" uuid="va1"/>
+        <textElement><font size="9" isBold="true"/></textElement>
+        <text><![CDATA[Valid Until:]]></text>
+      </staticText>
+      <textField>
+        <reportElement x="155" y="388" width="360" height="14" uuid="va2"/>
+        <textElement><font size="9"/></textElement>
+        <textFieldExpression><![CDATA[new java.text.SimpleDateFormat("dd MMM yyyy").format(new java.util.Date($F{generated_at}.getTime() + 30L*24*60*60*1000))]]></textFieldExpression>
+      </textField>
+
+      <staticText>
+        <reportElement x="0" y="406" width="150" height="14" uuid="va3"/>
+        <textElement><font size="9" isBold="true"/></textElement>
+        <text><![CDATA[Prepared By:]]></text>
+      </staticText>
+      <textField>
+        <reportElement x="155" y="406" width="360" height="14" uuid="va4"/>
+        <textElement><font size="9"/></textElement>
+        <textFieldExpression><![CDATA[$F{agent_name} != null ? $F{agent_name} : "Staff"]]></textFieldExpression>
+      </textField>
+
+      <!-- ── Disclaimer ── -->
+      <staticText>
+        <reportElement x="0" y="460" width="515" height="36" forecolor="#888888" uuid="disc"/>
+        <textElement><font size="7"/></textElement>
+        <text><![CDATA[This quotation is valid for 30 days from the date of issue. Premiums are subject to change without notice. This document is for reference only and does not constitute a binding insurance contract.]]></text>
+      </staticText>
+
+    </band>
+  </detail>
+
+  <pageFooter>
+    <band height="28">
+      <line><reportElement x="0" y="0" width="515" height="1" forecolor="#CCCCCC" uuid="fl"/></line>
+      <staticText>
+        <reportElement x="0" y="6" width="300" height="14" forecolor="#888888" uuid="fs1"/>
+        <textElement><font size="7"/></textElement>
+        <text><![CDATA[IHOS — Internal Motor Insurance Management System]]></text>
+      </staticText>
+      <textField>
+        <reportElement x="300" y="6" width="215" height="14" forecolor="#888888" uuid="fp"/>
+        <textElement textAlignment="Right"><font size="7"/></textElement>
+        <textFieldExpression><![CDATA["Page " + $V{PAGE_NUMBER}]]></textFieldExpression>
+      </textField>
+    </band>
+  </pageFooter>
+
+</jasperReport>

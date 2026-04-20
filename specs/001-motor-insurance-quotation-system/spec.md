@@ -345,7 +345,10 @@ and an "Import Errors" report. Each report can be exported to PDF or Excel.
   providing customer name and (optionally) vehicle registration number.
 - **FR-016**: The generated PDF MUST include: insurance company name, plan type, repair
   type, premium amount, coverage summary, excess amount, validity period, and
-  generating staff member's name.
+  generating staff member's name. PDF generation is performed by a custom Spring Boot
+  service (`POST /report`) that wraps JasperReports library; the service accepts
+  `srcFile` (report template name), `outputType` (`PDF`), and up to 3 positional
+  parameters (`param1`–`param3`).
 - **FR-017**: Every generated quotation MUST be recorded in the system with the date,
   staff member, vehicle details, plan, and premium.
 
@@ -465,3 +468,12 @@ and an "Import Errors" report. Each report can be exported to PDF or Excel.
   payment processing are out of scope.
 - **Existing users at launch**: The Admin account will be provisioned during system
   setup; no bulk user migration is required.
+
+---
+
+## Clarifications
+
+### Session 2026-04-12
+
+- Q: What is the HTTP API contract for the custom JasperReports Spring Boot service? → A: `POST http://localhost:7030/report` with JSON body: `{ srcFile, outputFile, param1, param2, param3, outputType, forceDownload: true }`. Response is a file stream.
+- Q: How does the JasperReports template receive the 12+ fields needed for the quotation PDF given only 3 positional params exist? → A: The `.jrxml` template connects directly to the PostgreSQL database and runs its own SQL query. Parameters (`param1`–`param3`) act as query conditions (e.g., `param1` = quotation UUID). The report fetches all required fields via SQL JOIN across quotations, insurance_plans, companies, and vehicle_models tables. → A: `POST http://localhost:7030/report` with JSON body: `{ srcFile, outputFile, param1, param2, param3, outputType, forceDownload: true }`. Response is a file stream. The service is a custom Spring Boot application wrapping the JasperReports library — **not** JasperReports Server. Base URL is configurable (default `http://localhost:7030/`).

@@ -37,7 +37,7 @@ Edit `appsettings.Development.json` — minimum required values:
 ```json
 {
   "ConnectionStrings": {
-    "Default": "Host=localhost;Port=5432;Database=ihos_dev;Username=ihos;Password=ihos_dev_password"
+    "DefaultConnection": "Host=localhost;Port=5431;Database=ihos_dev;Username=ihos;Password=ihos_dev_password"
   },
   "Jwt": {
     "SecretKey": "CHANGE_ME_TO_A_32_CHAR_OR_LONGER_SECRET",
@@ -45,9 +45,7 @@ Edit `appsettings.Development.json` — minimum required values:
     "RefreshTokenExpiryDays": 7
   },
   "JasperReports": {
-    "BaseUrl": "http://localhost:8080/jasperserver",
-    "Username": "jasperadmin",
-    "Password": "jasperadmin"
+    "BaseUrl": "http://localhost:7030/"
   },
   "Smtp": {
     "Host": "localhost",
@@ -67,7 +65,7 @@ docker compose -f docker/docker-compose.yml up -d
 
 This starts:
 - **PostgreSQL 16** on port `5432`
-- **JasperReports Server** on port `8080` (first startup takes ~2 min)
+- **JasperReports Spring Boot API** on port `7030` (custom wrapper using JasperReports library; `POST /report` with `{srcFile, param1, param2, param3, outputType, forceDownload}`)
 - **MailHog** (SMTP catch-all) on port `1025`; web UI at `http://localhost:8025`
 
 Check services are ready:
@@ -128,9 +126,25 @@ The Angular dev server proxies `/api` to `https://localhost:7001`.
 
 1. Open `http://localhost:4200`
 2. Log in with `admin@ihos.local` / `Admin@1234!`
-3. Navigate to **Admin → Users** — confirm the Admin account is listed
-4. Navigate to **Import** — upload a sample file from `samples/excel/sample_rates.xlsx`
-5. Navigate to **Search** — confirm the search form loads
+3. Confirm the navigation sidebar shows all role-appropriate menu items
+4. Navigate to **Admin → Users** — confirm the Admin account is listed
+5. Navigate to **Import** → upload `docker/postgres/seed.sql` companion Excel, or any `.xlsx` with columns `vehicle_model, plan_type, repair_type, min_year, max_year, sum_insured, premium_total, excess_amount`
+6. Navigate to **Mapping** — resolve any `PendingMapping` records
+7. Back in **Import** → batch detail → approve all records → click **Publish**
+8. Navigate to **Search** → select a vehicle model + production year + plan type → click Search → results appear
+9. Select 2–3 plans → click **Compare** → side-by-side table with diffs highlighted
+10. Click **Generate Quotation** on one plan → fill customer name → click Generate → PDF downloads
+11. Navigate to **Reports → Usage Statistics** → load last 30 days → chart renders
+12. Navigate to **Reports → Top Vehicle Models** → ranked list renders
+13. Navigate to **Admin → Audit Log** → events for login / batch upload are visible
+
+**Seed sample data** (optional, for faster first run):
+
+```bash
+psql -U ihos -d ihos_dev -f docker/postgres/seed.sql
+```
+
+> Note: Seed users have placeholder Argon2id hashes — use the bootstrap account created by EF migrations for login, or register via Admin → Registrations.
 
 ---
 
@@ -231,10 +245,15 @@ Always include a rollback migration (EF Core supports `Down()` methods — imple
 
 ### Deploy JasperReports templates
 
-Place `.jrxml` files in `reports/templates/`, then:
+The JasperReports Spring Boot API (`localhost:7030`) reads `.jrxml` files from a configured directory.
+Place templates in `reports/templates/` and ensure the Spring Boot service mounts that path.
+The `srcFile` parameter sent by the backend maps to the template filename (without `.jrxml`).
+
+To verify the JasperReports service:
 
 ```bash
-docker exec -it ihos_jasper upload-reports.sh
+curl -s -X POST http://localhost:7030/report \
+  -H 'Content-Type: application/json' \
+  -d '{"srcFile":"quotation","param1":"<quotation-uuid>","outputType":"PDF","forceDownload":true}' \
+  -o test_quotation.pdf
 ```
-
-(Script pushes templates to JasperReports Server via its REST API.)
