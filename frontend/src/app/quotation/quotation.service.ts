@@ -4,7 +4,7 @@ import { firstValueFrom } from 'rxjs';
 import { environment } from '../../environments/environment';
 
 export interface GenerateQuotationRequest {
-  planId: string;
+  planIds: string[];   // 1–3 plan IDs; first is primary
   customerName: string;
   vehicleRegistration?: string;
   vehicleYear: number;

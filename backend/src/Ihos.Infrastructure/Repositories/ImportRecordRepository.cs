@@ -25,7 +25,7 @@ public class ImportRecordRepository : IImportRecordRepository
         Guid batchId, int page, int pageSize, bool issuesOnly = false, CancellationToken ct = default)
     {
         var query = _db.ImportRecords
-            .Include(r => r.VehicleModelMapping).ThenInclude(m => m!.CanonicalModel)
+            .Include(r => r.VehicleModelMapping).ThenInclude(m => m!.CanonicalModel).ThenInclude(c => c!.Make)
             .Include(r => r.PlanTypeMapping)
             .Where(r => r.BatchId == batchId && !r.IsDeleted);
 

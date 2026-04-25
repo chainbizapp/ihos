@@ -232,19 +232,23 @@ function svg(path: string, cls = 'w-4 h-4'): string {
           </div>
         </div>
 
-        <!-- Get Quote buttons -->
-        <div class="mt-5 grid gap-3" [style.grid-template-columns]="'13rem repeat(' + plans().length + ', 1fr)'">
-          <div class="flex items-center text-[12px] font-bold uppercase tracking-wide" style="color:#9aa5b4">
-            Ready to buy?
+        <!-- Generate comparison quotation -->
+        <div class="mt-5 flex items-center gap-4 rounded-2xl p-4"
+             style="background:#ffffff;box-shadow:0 2px 12px rgba(17,48,105,0.07);border:1px solid rgba(17,48,105,0.07)">
+          <div class="flex-1">
+            <div class="text-[13px] font-bold" style="color:#171c22">พร้อมสร้างใบเสนอราคา?</div>
+            <div class="text-[11px] mt-0.5" style="color:#9aa5b4">
+              PDF เดียวเปรียบเทียบ {{ plans().length }} บริษัทพร้อมกัน
+            </div>
           </div>
-          @for (plan of plans(); track plan.id) {
-            <button (click)="generateQuotation(plan.id)"
-                    class="py-3.5 rounded-xl font-bold text-[13px] text-white transition-all active:scale-[0.98]"
-                    style="background:linear-gradient(135deg,#f7941d,#e08419);box-shadow:0 3px 12px rgba(247,148,29,0.35)">
-              Get Quote<br>
-              <span class="text-[11px] font-semibold opacity-85">{{ plan.companyName }}</span>
-            </button>
-          }
+          <button (click)="generateQuotation()"
+                  class="py-3 px-6 rounded-xl font-bold text-[13px] text-white transition-all active:scale-[0.98] flex items-center gap-2"
+                  style="background:linear-gradient(135deg,#006874,#49b2c1);box-shadow:0 3px 12px rgba(0,104,116,0.3)">
+            <svg viewBox="0 0 256 256" fill="currentColor" style="width:16px;height:16px">
+              <path d="M213.66,82.34l-56-56A8,8,0,0,0,152,24H56A16,16,0,0,0,40,40V216a16,16,0,0,0,16,16H200a16,16,0,0,0,16-16V88A8,8,0,0,0,213.66,82.34ZM160,51.31,188.69,80H160ZM200,216H56V40h88V88a8,8,0,0,0,8,8h48V216Z"/>
+            </svg>
+            สร้างใบเสนอราคา
+          </button>
         </div>
 
       }
@@ -323,7 +327,8 @@ export class CompareComponent implements OnInit {
     return vals.length > 1 && vals.some(v => v !== vals[0]);
   }
 
-  generateQuotation(planId: string): void {
-    this.router.navigate(['/quotation/new'], { queryParams: { planId } });
+  generateQuotation(): void {
+    const planIds = this.plans().map(p => p.id).join(',');
+    this.router.navigate(['/quotation/new'], { queryParams: { planIds } });
   }
 }

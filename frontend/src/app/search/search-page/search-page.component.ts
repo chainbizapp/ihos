@@ -36,6 +36,25 @@ const REPAIR_OPTIONS = [
   { value: 'Dealer', label: 'ซ่อมศูนย์' },
 ];
 
+const ALL_PROVINCES: string[] = [
+  'กรุงเทพมหานคร','กระบี่','กาญจนบุรี','กาฬสินธุ์','กำแพงเพชร',
+  'ขอนแก่น','จันทบุรี','ฉะเชิงเทรา','ชลบุรี','ชัยนาท',
+  'ชัยภูมิ','ชุมพร','เชียงราย','เชียงใหม่','ตรัง',
+  'ตราด','ตาก','นครนายก','นครปฐม','นครพนม',
+  'นครราชสีมา','นครศรีธรรมราช','นครสวรรค์','นนทบุรี','นราธิวาส',
+  'น่าน','บึงกาฬ','บุรีรัมย์','ปทุมธานี','ประจวบคีรีขันธ์',
+  'ปราจีนบุรี','ปัตตานี','พระนครศรีอยุธยา','พะเยา','พังงา',
+  'พัทลุง','พิจิตร','พิษณุโลก','เพชรบุรี','เพชรบูรณ์',
+  'แพร่','ภูเก็ต','มหาสารคาม','มุกดาหาร','แม่ฮ่องสอน',
+  'ยโสธร','ยะลา','ร้อยเอ็ด','ระนอง','ระยอง',
+  'ราชบุรี','ลพบุรี','ลำปาง','ลำพูน','เลย',
+  'ศรีสะเกษ','สกลนคร','สงขลา','สตูล','สมุทรปราการ',
+  'สมุทรสงคราม','สมุทรสาคร','สระแก้ว','สระบุรี','สิงห์บุรี',
+  'สุโขทัย','สุพรรณบุรี','สุราษฎร์ธานี','สุรินทร์','หนองคาย',
+  'หนองบัวลำภู','อ่างทอง','อำนาจเจริญ','อุดรธานี','อุตรดิตถ์',
+  'อุทัยธานี','อุบลราชธานี',
+];
+
 // ── Step sidebar ──────────────────────────────────────────────────────────────
 
 const QUOTE_STEPS = [
@@ -224,6 +243,11 @@ function svg(path: string, cls = 'w-4 h-4'): string {
           @for (opt of excessOptions; track opt.label; let i = $index) { <option [value]="i">{{ opt.label }}</option> }
         </select>
 
+        <select [(ngModel)]="provinceValue" (ngModelChange)="onProvinceChange($event)" class="filter-select">
+          <option value="">จังหวัด: ทั้งหมด</option>
+          @for (p of allProvinces; track p) { <option [value]="p">{{ p }}</option> }
+        </select>
+
         <select [(ngModel)]="sortValue" (ngModelChange)="onSortChange($event)" class="filter-select">
           @for (opt of sortOptions; track opt.value) { <option [value]="opt.value">{{ opt.label }}</option> }
         </select>
@@ -292,6 +316,8 @@ export class SearchPageComponent implements OnInit {
   repairTypeValue  = 'Garage';
   excessIndex      = 0;
   sortValue        = 'price_asc';
+  provinceValue    = '';
+  readonly allProvinces = ALL_PROVINCES;
 
   vehicleDisplayName = computed(() => {
     const s = this.vehicleSelection();
@@ -317,6 +343,7 @@ export class SearchPageComponent implements OnInit {
       allVariants: savedPrefs.allVariants,
       year:        savedPrefs.vehicleYear,
     });
+    this.provinceValue = savedPrefs.province ?? '';
 
     const sameVehicle = savedResult && lastParams &&
       lastParams.vehicleModelId === savedPrefs.modelId &&
@@ -403,6 +430,11 @@ export class SearchPageComponent implements OnInit {
   }
   onSortChange(sort: string): void {
     this.currentSort.set(sort); this.currentPage.set(1); this.executeSearch();
+  }
+  onProvinceChange(province: string): void {
+    this.provinceValue = province;
+    const saved = this.prefs.load();
+    if (saved) this.prefs.save({ ...saved, province: province || undefined });
   }
   onPageChange(page: number): void {
     this.currentPage.set(page); this.executeSearch();

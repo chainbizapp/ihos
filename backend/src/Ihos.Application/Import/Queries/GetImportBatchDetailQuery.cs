@@ -15,6 +15,7 @@ public record ImportRecordDto(
     int RowNumber,
     string RawData,
     Guid? VehicleModelMappingId,
+    string? ResolvedVehicleMake,
     string? ResolvedVehicleModel,
     Guid? PlanTypeMappingId,
     string? ResolvedPlanType,
@@ -66,6 +67,7 @@ public class GetImportBatchDetailQueryHandler : IRequestHandler<GetImportBatchDe
         var recordDtos = recordItems.Select(r => new ImportRecordDto(
             r.Id, r.RowNumber, r.RawData,
             r.VehicleModelMappingId,
+            r.VehicleModelMapping?.CanonicalModel?.Make?.Name,
             r.VehicleModelMapping?.CanonicalModel?.Name,
             r.PlanTypeMappingId,
             r.PlanTypeMapping?.CanonicalPlanType.ToString(),

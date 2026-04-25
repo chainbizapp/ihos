@@ -11,6 +11,7 @@ export interface SearchPreferences {
   gearType?: string;
   allVariants?: boolean;
   vehicleYear?: number;
+  province?: string;
   planType: string;
   repairType: string;
 }

@@ -38,6 +38,9 @@ public class ApplicationDbContext : DbContext
     // Quotation module
     public DbSet<Quotation> Quotations => Set<Quotation>();
 
+    // Reference data
+    public DbSet<Province> Provinces => Set<Province>();
+
     public override async Task<int> SaveChangesAsync(CancellationToken cancellationToken = default)
     {
         var now = DateTime.UtcNow;
@@ -330,6 +333,8 @@ public class ApplicationDbContext : DbContext
             entity.Property(e => e.VehicleMake).HasMaxLength(100).IsRequired();
             entity.Property(e => e.VehicleModelName).HasMaxLength(200).IsRequired();
             entity.Property(e => e.PremiumAtGeneration).HasColumnType("numeric(15,2)").IsRequired();
+            entity.Property(e => e.PremiumAtGeneration2).HasColumnType("numeric(15,2)");
+            entity.Property(e => e.PremiumAtGeneration3).HasColumnType("numeric(15,2)");
             entity.Property(e => e.GeneratedAt).HasDefaultValueSql("now()");
 
             entity.HasOne(e => e.Plan)
@@ -337,9 +342,34 @@ public class ApplicationDbContext : DbContext
                 .HasForeignKey(e => e.PlanId)
                 .OnDelete(DeleteBehavior.Restrict);
 
+            entity.HasOne(e => e.Plan2)
+                .WithMany()
+                .HasForeignKey(e => e.PlanId2)
+                .OnDelete(DeleteBehavior.Restrict);
+
+            entity.HasOne(e => e.Plan3)
+                .WithMany()
+                .HasForeignKey(e => e.PlanId3)
+                .OnDelete(DeleteBehavior.Restrict);
+
             entity.HasIndex(e => e.CreatedBy);
             entity.HasIndex(e => e.PlanId);
             entity.HasIndex(e => e.GeneratedAt);
+        });
+
+        // ── Provinces (reference / seed) ─────────────────────────────────────
+        modelBuilder.Entity<Province>(entity =>
+        {
+            entity.ToTable("provinces");
+            entity.HasKey(e => e.Id);
+            entity.Property(e => e.Id).ValueGeneratedNever();
+            entity.Property(e => e.NameTh).HasMaxLength(100).IsRequired();
+            entity.Property(e => e.NameEn).HasMaxLength(100).IsRequired();
+            entity.Property(e => e.Region).HasConversion<string>().HasMaxLength(20).IsRequired();
+            entity.HasIndex(e => e.Region);
+            entity.HasIndex(e => e.NameTh).IsUnique();
+
+            entity.HasData(ProvinceSeeder.All);
         });
     }
 }

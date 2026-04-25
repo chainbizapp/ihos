@@ -77,23 +77,6 @@ interface SubModelOption {
         </select>
       </div>
 
-      <!-- Engine CC -->
-      <div [class]="layout() === 'horizontal' ? 'flex-1 min-w-[100px]' : ''">
-        <label class="block text-[11px] font-bold text-[#4a5568] mb-2 uppercase tracking-wide">
-          Engine CC
-        </label>
-        <select
-          [ngModel]="selectedCC()"
-          (ngModelChange)="onCCChange($event)"
-          [disabled]="!selectedModelName() || ccOptions().length === 0"
-          class="w-full bg-white border border-gray-200 rounded-lg px-3 py-2.5 text-[14px] font-medium text-[#2d3748] focus:outline-none focus:border-[#006874] transition-colors cursor-pointer appearance-none disabled:opacity-50 disabled:bg-gray-50 disabled:cursor-not-allowed">
-          <option value="">All CC</option>
-          @for (cc of ccOptions(); track cc) {
-            <option [value]="cc">{{ cc }} L</option>
-          }
-        </select>
-      </div>
-
       <!-- Gear Type -->
       <div [class]="layout() === 'horizontal' ? 'flex-1 min-w-[120px]' : ''" [style.display]="gearTypeOptions().length === 0 ? 'none' : 'block'">
         <label class="block text-[11px] font-bold text-[#4a5568] mb-2 uppercase tracking-wide">

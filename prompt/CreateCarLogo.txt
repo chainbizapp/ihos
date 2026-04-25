@@ -1,0 +1,45 @@
+Create a clean, flat car brand icon for: [BRAND NAME]
+
+STRICT REQUIREMENTS:
+- Canvas size: 128x128 pixels
+- Transparent background (true PNG, no background color)
+- The logo must fill 85–90% of the canvas
+- Center the logo perfectly
+
+REMOVE ALL OF THE FOLLOWING:
+- No border
+- No rounded rectangle
+- No container or card
+- No shadow (drop shadow, inner shadow)
+- No glow effect
+- No gradient
+- No 3D or metallic effect
+- No background shape of any kind
+
+STYLE:
+- Flat, solid color only
+- Use original brand colors (e.g. red for BYD)
+- Sharp edges, no blur
+- High contrast for small-size visibility
+
+IMPORTANT:
+- Output ONLY the logo itself (no UI, no decoration)
+- The logo must be large, clean, and dominant
+- No extra spacing around the logo
+
+OUTPUT:
+- Single PNG file
+- 128x128
+- Transparent background
+- Ready for UI usage
+
+The current icon still has unwanted border, shadow, or background.
+
+Fix it by:
+- Removing all shadow, glow, and effects
+- Removing any border or container
+- Keeping only the flat logo
+- Ensuring transparent background
+- Scaling the logo to fill most of the canvas
+
+Make it consistent with a flat icon system used in enterprise UI.

@@ -67,6 +67,7 @@ export interface ImportRecordDto {
   rowNumber: number;
   rawData: string;
   vehicleModelMappingId?: string;
+  resolvedVehicleMake?: string;
   resolvedVehicleModel?: string;
   planTypeMappingId?: string;
   resolvedPlanType?: string;

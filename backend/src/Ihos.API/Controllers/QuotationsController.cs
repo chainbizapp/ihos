@@ -16,13 +16,19 @@ public class QuotationsController : ControllerBase
     public QuotationsController(IMediator mediator) => _mediator = mediator;
 
     /// <summary>
-    /// Generate a new PDF quotation for a selected plan.
+    /// Generate a new PDF quotation for 1–3 selected plans.
     /// </summary>
     [HttpPost]
     public async Task<IActionResult> Generate([FromBody] GenerateQuotationRequest request, CancellationToken ct)
     {
-        if (request.PlanId == Guid.Empty)
-            return BadRequest(new { error = "planId is required." });
+        if (request.PlanIds == null || request.PlanIds.Count == 0)
+            return BadRequest(new { error = "At least one planId is required." });
+
+        if (request.PlanIds.Count > 3)
+            return BadRequest(new { error = "At most 3 plans can be included in a single quotation." });
+
+        if (request.PlanIds.Any(id => id == Guid.Empty))
+            return BadRequest(new { error = "All planIds must be valid GUIDs." });
 
         if (string.IsNullOrWhiteSpace(request.CustomerName))
             return BadRequest(new { error = "customerName is required." });
@@ -33,7 +39,7 @@ public class QuotationsController : ControllerBase
         try
         {
             var result = await _mediator.Send(
-                new GenerateQuotationCommand(request.PlanId, request.CustomerName, request.VehicleRegistration, request.VehicleYear), ct);
+                new GenerateQuotationCommand(request.PlanIds, request.CustomerName, request.VehicleRegistration, request.VehicleYear), ct);
 
             return Ok(new { quotationId = result.QuotationId });
         }
@@ -77,7 +83,7 @@ public class QuotationsController : ControllerBase
 }
 
 public record GenerateQuotationRequest(
-    Guid PlanId,
+    List<Guid> PlanIds,
     string CustomerName,
     string? VehicleRegistration,
     int VehicleYear

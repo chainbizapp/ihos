@@ -279,7 +279,12 @@ function splitModelName(rawName: string): { modelRoot: string; subModel: string 
                     </td>
                     <td class="px-3 py-2">
                       @if (record.resolvedVehicleModel) {
-                        <span class="text-green-700">{{ record.resolvedVehicleModel }}</span>
+                        <div class="flex flex-col leading-tight">
+                          @if (record.resolvedVehicleMake) {
+                            <span class="text-xs text-gray-400 font-medium">{{ record.resolvedVehicleMake }}</span>
+                          }
+                          <span class="text-green-700">{{ record.resolvedVehicleModel }}</span>
+                        </div>
                       } @else {
                         <span class="text-yellow-600 italic">Unresolved</span>
                       }
@@ -540,7 +545,13 @@ export class BatchDetailComponent implements OnInit {
         const rawName: string = raw['vehicle_model'] ?? '';
         if (!rawName) continue;
         if (!map.has(rawName)) {
-          const brandHint: string | undefined = raw['coverage_details']?.['brand_name'];
+          let brandHint: string | undefined;
+          try {
+            const cd = raw['coverage_details'];
+            // coverage_details is stored as a JSON string inside the outer JSON
+            const cdObj = typeof cd === 'string' ? JSON.parse(cd) : cd;
+            brandHint = cdObj?.['brand_name'] || undefined;
+          } catch { /* ignore parse errors */ }
           map.set(rawName, { rawName, count: 0, brandHint });
         }
         map.get(rawName)!.count++;

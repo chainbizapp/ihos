@@ -4,7 +4,7 @@ using Ihos.Application.Mediator;
 namespace Ihos.Application.Quotation.Commands;
 
 public record GenerateQuotationCommand(
-    Guid PlanId,
+    IReadOnlyList<Guid> PlanIds,   // 1–3 plans; first is primary
     string CustomerName,
     string? VehicleRegistration,
     int VehicleYear
@@ -36,26 +36,49 @@ public class GenerateQuotationCommandHandler : IRequestHandler<GenerateQuotation
 
     public async Task<GenerateQuotationResult> Handle(GenerateQuotationCommand request, CancellationToken ct)
     {
-        var plan = await _plans.GetByIdAsync(request.PlanId, ct)
-            ?? throw new KeyNotFoundException($"Plan {request.PlanId} not found or not published.");
+        // Load all requested plans (up to 3)
+        var plan1 = await _plans.GetByIdAsync(request.PlanIds[0], ct)
+            ?? throw new KeyNotFoundException($"Plan {request.PlanIds[0]} not found or not published.");
 
-        if (!plan.IsPublished)
+        if (!plan1.IsPublished)
             throw new InvalidOperationException("Cannot generate a quotation for an unpublished plan.");
 
+        Domain.Entities.InsurancePlan? plan2 = null;
+        Domain.Entities.InsurancePlan? plan3 = null;
+
+        if (request.PlanIds.Count >= 2)
+        {
+            plan2 = await _plans.GetByIdAsync(request.PlanIds[1], ct)
+                ?? throw new KeyNotFoundException($"Plan {request.PlanIds[1]} not found.");
+            if (!plan2.IsPublished)
+                throw new InvalidOperationException($"Plan {request.PlanIds[1]} is not published.");
+        }
+
+        if (request.PlanIds.Count >= 3)
+        {
+            plan3 = await _plans.GetByIdAsync(request.PlanIds[2], ct)
+                ?? throw new KeyNotFoundException($"Plan {request.PlanIds[2]} not found.");
+            if (!plan3.IsPublished)
+                throw new InvalidOperationException($"Plan {request.PlanIds[2]} is not published.");
+        }
+
         var generatedAt = DateTime.UtcNow;
-        var validUntil = generatedAt.AddDays(30);
 
         var quotation = new Domain.Entities.Quotation
         {
-            PlanId = plan.Id,
-            CustomerName = request.CustomerName,
+            PlanId  = plan1.Id,
+            PlanId2 = plan2?.Id,
+            PlanId3 = plan3?.Id,
+            CustomerName        = request.CustomerName,
             VehicleRegistration = request.VehicleRegistration,
-            VehicleMake = plan.VehicleModel?.Make?.Name ?? string.Empty,
-            VehicleModelName = plan.VehicleModel?.Name ?? string.Empty,
-            VehicleYear = request.VehicleYear,
-            PremiumAtGeneration = plan.PremiumTotal,
+            VehicleMake         = plan1.VehicleModel?.Make?.Name ?? string.Empty,
+            VehicleModelName    = plan1.VehicleModel?.Name ?? string.Empty,
+            VehicleYear         = request.VehicleYear,
+            PremiumAtGeneration  = plan1.PremiumTotal,
+            PremiumAtGeneration2 = plan2?.PremiumTotal,
+            PremiumAtGeneration3 = plan3?.PremiumTotal,
             GeneratedAt = generatedAt,
-            CreatedBy = _currentUser.UserId
+            CreatedBy   = _currentUser.UserId
         };
 
         await _quotations.AddAsync(quotation, ct);
@@ -66,7 +89,7 @@ public class GenerateQuotationCommandHandler : IRequestHandler<GenerateQuotation
         var parameters = new Dictionary<string, string>
         {
             ["srcFile"] = "quotation",
-            ["param1"] = quotation.Id.ToString()
+            ["param1"]  = quotation.Id.ToString()
         };
 
         var pdfBytes = await _jasper.GenerateQuotationPdfAsync(parameters, ct);

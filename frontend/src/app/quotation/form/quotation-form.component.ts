@@ -8,11 +8,11 @@ import { QuotationService } from '../quotation.service';
 // ── shared sidebar helpers ────────────────────────────────────────────────────
 
 const QUOTE_STEPS = [
-  { icon: 'car',    label: 'Vehicle Info',   sub: 'Tell us about your car',   active: false },
-  { icon: 'shield', label: 'Coverage Plan',  sub: 'Choose your protection',   active: false },
-  { icon: 'user',   label: 'Driver Details', sub: 'Age, experience & record', active: true  },
-  { icon: 'list',   label: 'Quotation Review', sub: 'Review your quote',        active: false },
-  { icon: 'check',  label: 'Review & Pay',   sub: 'Confirm & complete',       active: false },
+  { icon: 'car', label: 'Vehicle Info', sub: 'Tell us about your car', active: false },
+  { icon: 'shield', label: 'Coverage Plan', sub: 'Choose your protection', active: false },
+  { icon: 'user', label: 'Driver Details', sub: 'Age, experience & record', active: true },
+  { icon: 'list', label: 'Quotation Review', sub: 'Review your quote', active: false },
+  { icon: 'check', label: 'Review & Pay', sub: 'Confirm & complete', active: false },
 ];
 
 const TRUST_ITEMS = [
@@ -24,11 +24,11 @@ const TRUST_ITEMS = [
 
 function stepIcon(name: string): string {
   const icons: Record<string, string> = {
-    car:    `<path d="M240,112H229.2L201.42,49.5A16,16,0,0,0,186.8,40H69.2a16,16,0,0,0-14.62,9.5L26.8,112H16a8,8,0,0,0,0,16h8v80a16,16,0,0,0,16,16H64a16,16,0,0,0,16-16V192h96v16a16,16,0,0,0,16,16h24a16,16,0,0,0,16-16V128h8a8,8,0,0,0,0-16ZM69.2,56H186.8l24.89,56H44.31ZM64,208H40V192H64Zm128,0V192h24v16Zm24-32H40V128H216ZM72,160a12,12,0,1,1,12,12A12,12,0,0,1,72,160Zm100,0a12,12,0,1,1,12,12A12,12,0,0,1,172,160Z"/>`,
-    user:   `<path d="M230.92,212c-15.23-26.33-38.7-45.21-66.09-54.16a72,72,0,1,0-73.66,0C63.78,166.78,40.31,185.66,25.08,212a8,8,0,1,0,13.85,8C56.32,191.66,80.77,176,128,176s71.68,15.66,89.07,44a8,8,0,1,0,13.85-8ZM72,96a56,56,0,1,1,56,56A56.06,56.06,0,0,1,72,96Z"/>`,
+    car: `<path d="M240,112H229.2L201.42,49.5A16,16,0,0,0,186.8,40H69.2a16,16,0,0,0-14.62,9.5L26.8,112H16a8,8,0,0,0,0,16h8v80a16,16,0,0,0,16,16H64a16,16,0,0,0,16-16V192h96v16a16,16,0,0,0,16,16h24a16,16,0,0,0,16-16V128h8a8,8,0,0,0,0-16ZM69.2,56H186.8l24.89,56H44.31ZM64,208H40V192H64Zm128,0V192h24v16Zm24-32H40V128H216ZM72,160a12,12,0,1,1,12,12A12,12,0,0,1,72,160Zm100,0a12,12,0,1,1,12,12A12,12,0,0,1,172,160Z"/>`,
+    user: `<path d="M230.92,212c-15.23-26.33-38.7-45.21-66.09-54.16a72,72,0,1,0-73.66,0C63.78,166.78,40.31,185.66,25.08,212a8,8,0,1,0,13.85,8C56.32,191.66,80.77,176,128,176s71.68,15.66,89.07,44a8,8,0,1,0,13.85-8ZM72,96a56,56,0,1,1,56,56A56.06,56.06,0,0,1,72,96Z"/>`,
     shield: `<path d="M208,40H48A16,16,0,0,0,32,56V96c0,89.44,75.82,119.34,91,124.39a16,16,0,0,0,10,0C149.18,215.34,225,185.44,225,96V56A16,16,0,0,0,208,40Zm0,56c0,72.34-61.78,99.18-80,105.77C109.78,195.18,48,168.34,48,96V56H208Z"/>`,
-    list:   `<path d="M224,128a8,8,0,0,1-8,8H104a8,8,0,0,1,0-16H216A8,8,0,0,1,224,128ZM104,72H216a8,8,0,0,0,0-16H104a8,8,0,0,0,0,16ZM216,184H104a8,8,0,0,0,0,16H216a8,8,0,0,0,0-16ZM44,116a12,12,0,1,0,12,12A12,12,0,0,0,44,116Zm0-56a12,12,0,1,0,12,12A12,12,0,0,0,44,60Zm0,112a12,12,0,1,0,12,12A12,12,0,0,0,44,172Z"/>`,
-    check:  `<path d="M173.66,98.34a8,8,0,0,1,0,11.32l-56,56a8,8,0,0,1-11.32,0l-24-24a8,8,0,0,1,11.32-11.32L112,148.69l50.34-50.35A8,8,0,0,1,173.66,98.34ZM232,128A104,104,0,1,1,128,24,104.11,104.11,0,0,1,232,128Zm-16,0a88,88,0,1,0-88,88A88.1,88.1,0,0,0,216,128Z"/>`,
+    list: `<path d="M224,128a8,8,0,0,1-8,8H104a8,8,0,0,1,0-16H216A8,8,0,0,1,224,128ZM104,72H216a8,8,0,0,0,0-16H104a8,8,0,0,0,0,16ZM216,184H104a8,8,0,0,0,0,16H216a8,8,0,0,0,0-16ZM44,116a12,12,0,1,0,12,12A12,12,0,0,0,44,116Zm0-56a12,12,0,1,0,12,12A12,12,0,0,0,44,60Zm0,112a12,12,0,1,0,12,12A12,12,0,0,0,44,172Z"/>`,
+    check: `<path d="M173.66,98.34a8,8,0,0,1,0,11.32l-56,56a8,8,0,0,1-11.32,0l-24-24a8,8,0,0,1,11.32-11.32L112,148.69l50.34-50.35A8,8,0,0,1,173.66,98.34ZM232,128A104,104,0,1,1,128,24,104.11,104.11,0,0,1,232,128Zm-16,0a88,88,0,1,0-88,88A88.1,88.1,0,0,0,216,128Z"/>`,
   };
   const p = icons[name] ?? '';
   return `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 256 256" fill="currentColor" style="width:100%;height:100%">${p}</svg>`;
@@ -166,36 +166,35 @@ function svg(path: string, cls = 'w-4 h-4'): string {
 
       @if (!loadingPlan() && plan()) {
 
-        <!-- ── Selected plan summary ──────────────────────────────── -->
-        <div class="rounded-2xl p-4 mb-6 flex items-center gap-4 flex-wrap"
-             style="background:#ffffff;box-shadow:0 2px 12px rgba(17,48,105,0.07);border:1px solid rgba(17,48,105,0.07)">
-          <div class="flex items-center justify-center w-10 h-10 rounded-xl flex-shrink-0"
-               style="background:linear-gradient(135deg,#006874,#49b2c1)">
-            <svg viewBox="0 0 256 256" fill="white" style="width:20px;height:20px">
-              <path d="M208,40H48A16,16,0,0,0,32,56V96c0,89.44,75.82,119.34,91,124.39a16,16,0,0,0,10,0C149.18,215.34,225,185.44,225,96V56A16,16,0,0,0,208,40Zm0,56c0,72.34-61.78,99.18-80,105.77C109.78,195.18,48,168.34,48,96V56H208Z"/>
-            </svg>
-          </div>
-          <div class="flex-1 min-w-0">
-            <div class="text-[14px] font-extrabold truncate" style="color:#171c22;font-family:'Plus Jakarta Sans',sans-serif">
-              {{ plan()!.companyName }}
+        <!-- ── Selected plans summary (1–3 cards) ────────────────── -->
+        <div class="flex gap-3 mb-6 flex-wrap">
+          @for (p of plans(); track p.id) {
+            <div class="flex-1 min-w-[180px] rounded-2xl p-4 flex flex-col gap-2"
+                 style="background:#ffffff;box-shadow:0 2px 12px rgba(17,48,105,0.07);border:1px solid rgba(17,48,105,0.07)">
+              <div class="flex items-center gap-2">
+                <div class="w-7 h-7 rounded-lg flex items-center justify-center flex-shrink-0"
+                     style="background:linear-gradient(135deg,#006874,#49b2c1)">
+                  <svg viewBox="0 0 256 256" fill="white" style="width:14px;height:14px">
+                    <path d="M208,40H48A16,16,0,0,0,32,56V96c0,89.44,75.82,119.34,91,124.39a16,16,0,0,0,10,0C149.18,215.34,225,185.44,225,96V56A16,16,0,0,0,208,40Zm0,56c0,72.34-61.78,99.18-80,105.77C109.78,195.18,48,168.34,48,96V56H208Z"/>
+                  </svg>
+                </div>
+                <div class="text-[13px] font-extrabold leading-tight truncate" style="color:#171c22;font-family:'Plus Jakarta Sans',sans-serif">
+                  {{ p.companyName }}
+                </div>
+              </div>
+              <div class="flex items-center gap-1.5 flex-wrap">
+                <span class="text-[10px] font-bold px-2 py-0.5 rounded-full"
+                      style="background:rgba(0,104,116,0.08);color:#006874">{{ planLabel(p) }}</span>
+                <span class="text-[10px] font-semibold" style="color:#9aa5b4">
+                  {{ p.repairType === 'Dealer' ? 'ซ่อมศูนย์' : 'ซ่อมอู่' }}
+                </span>
+              </div>
+              <div class="text-[18px] font-black mt-auto" style="color:#006874;font-family:'Plus Jakarta Sans',sans-serif">
+                ฿{{ p.premiumTotal | number:'1.0-0' }}
+                <span class="text-[10px] font-normal ml-1" style="color:#9aa5b4">/ ปี</span>
+              </div>
             </div>
-            <div class="flex items-center gap-2 mt-0.5 flex-wrap">
-              <span class="text-[11px] font-bold px-2 py-0.5 rounded-full"
-                    style="background:rgba(0,104,116,0.08);color:#006874">{{ planLabel(plan()!) }}</span>
-              <span class="text-[11px] font-semibold" style="color:#9aa5b4">
-                {{ plan()!.repairType === 'Dealer' ? 'ซ่อมศูนย์' : 'ซ่อมอู่' }}
-              </span>
-              <span class="text-[11px]" style="color:#b0b9c6">
-                {{ plan()!.vehicleMake }} {{ plan()!.vehicleModel }}
-              </span>
-            </div>
-          </div>
-          <div class="text-right flex-shrink-0">
-            <div class="text-[20px] font-black" style="color:#006874;font-family:'Plus Jakarta Sans',sans-serif">
-              ฿{{ plan()!.premiumTotal | number:'1.0-0' }}
-            </div>
-            <div class="text-[11px]" style="color:#9aa5b4">per year · ทุน ฿{{ plan()!.sumInsured | number:'1.0-0' }}</div>
-          </div>
+          }
         </div>
 
         <!-- ── Driver Info form ───────────────────────────────────── -->
@@ -224,31 +223,11 @@ function svg(path: string, cls = 'w-4 h-4'): string {
                   Full Name / ชื่อ-นามสกุล <span style="color:#e53e3e">*</span>
                 </label>
                 <input type="text" name="customerName" [(ngModel)]="customerName" required maxlength="255"
-                       placeholder="e.g. สมชาย ใจดี"
+                       placeholder="e.g. สมชาย ใจดี" 
                        [class]="'field-input' + (f.submitted && !customerName ? ' invalid' : '')" />
                 @if (f.submitted && !customerName) {
                   <p class="text-[11px] mt-1" style="color:#e53e3e">Full name is required.</p>
                 }
-              </div>
-
-              <!-- Date of Birth -->
-              <div>
-                <label class="block text-[11px] font-bold uppercase tracking-wide mb-1.5" style="color:#6b7a8d">
-                  Date of Birth / วันเกิด
-                </label>
-                <input type="date" name="dateOfBirth" [(ngModel)]="dateOfBirth"
-                       [max]="maxDob"
-                       class="field-input" />
-              </div>
-
-              <!-- Age (auto from DOB or manual) -->
-              <div>
-                <label class="block text-[11px] font-bold uppercase tracking-wide mb-1.5" style="color:#6b7a8d">
-                  Age / อายุ <span style="color:#9aa5b4">(ปี)</span>
-                </label>
-                <input type="number" name="age" [(ngModel)]="age" min="18" max="99"
-                       placeholder="e.g. 35"
-                       class="field-input" />
               </div>
 
               <!-- Phone -->
@@ -281,6 +260,43 @@ function svg(path: string, cls = 'w-4 h-4'): string {
                 </label>
                 <input type="text" name="licenseNumber" [(ngModel)]="licenseNumber" maxlength="50"
                        placeholder="e.g. 12-3456789-12"
+                       class="field-input" />
+              </div>
+            </div>
+
+            <div class="section-divider"></div>
+
+            <!-- Section: Previous Insurance -->
+            <div class="flex items-center gap-2.5 mb-5">
+              <div class="w-7 h-7 rounded-lg flex items-center justify-center flex-shrink-0"
+                   style="background:rgba(0,104,116,0.1)">
+                <svg viewBox="0 0 256 256" fill="#006874" style="width:14px;height:14px">
+                  <path d="M208,40H48A16,16,0,0,0,32,56V96c0,89.44,75.82,119.34,91,124.39a16,16,0,0,0,10,0C149.18,215.34,225,185.44,225,96V56A16,16,0,0,0,208,40Zm0,56c0,72.34-61.78,99.18-80,105.77C109.78,195.18,48,168.34,48,96V56H208Z"/>
+                </svg>
+              </div>
+              <div>
+                <div class="text-[13px] font-extrabold" style="color:#171c22">Previous Insurance</div>
+                <div class="text-[11px]" style="color:#9aa5b4">ข้อมูลประกันเดิม</div>
+              </div>
+            </div>
+
+            <div class="grid grid-cols-1 sm:grid-cols-2 gap-4 mb-6">
+              <!-- Previous Company -->
+              <div>
+                <label class="block text-[11px] font-bold uppercase tracking-wide mb-1.5" style="color:#6b7a8d">
+                  Previous Insurer / บริษัทเดิม
+                </label>
+                <input type="text" name="previousCompany" [(ngModel)]="previousCompany" maxlength="255"
+                       placeholder="e.g. วิริยะประกันภัย"
+                       class="field-input" />
+              </div>
+
+              <!-- Previous Policy Expiry -->
+              <div>
+                <label class="block text-[11px] font-bold uppercase tracking-wide mb-1.5" style="color:#6b7a8d">
+                  Policy Expiry / วันหมดอายุ
+                </label>
+                <input type="date" name="previousPolicyExpiry" [(ngModel)]="previousPolicyExpiry"
                        class="field-input" />
               </div>
             </div>
@@ -375,54 +391,69 @@ function svg(path: string, cls = 'w-4 h-4'): string {
   `
 })
 export class QuotationFormComponent implements OnInit {
-  private readonly route            = inject(ActivatedRoute);
-  private readonly router           = inject(Router);
-  private readonly searchApi        = inject(SearchApiService);
+  private readonly route = inject(ActivatedRoute);
+  private readonly router = inject(Router);
+  private readonly searchApi = inject(SearchApiService);
   private readonly quotationService = inject(QuotationService);
 
-  plan        = signal<InsurancePlanDetail | null>(null);
+  /** Primary plan (required — drives validation & vehicle info) */
+  plan = signal<InsurancePlanDetail | null>(null);
+  /** All selected plans (1–3) */
+  plans = signal<InsurancePlanDetail[]>([]);
   loadingPlan = signal(true);
-  generating  = signal(false);
-  error       = signal<string | null>(null);
+  generating = signal(false);
+  error = signal<string | null>(null);
 
   // Personal info
-  customerName  = '';
-  dateOfBirth   = '';
-  age: number | null = null;
-  phone         = '';
-  email         = '';
+  customerName = '';
+  phone = '';
+  email = '';
   licenseNumber = '';
+
+  // Previous insurance
+  previousCompany = '';
+  previousPolicyExpiry = '';
 
   // Vehicle info
   vehicleRegistration = '';
   vehicleYear: number | null = null;
 
-  readonly currentYear = new Date().getFullYear();
-  readonly maxDob      = `${this.currentYear - 18}-12-31`;
+  readonly quoteSteps = QUOTE_STEPS;
+  readonly trustItems = TRUST_ITEMS;
+  readonly stepIcon = stepIcon;
+  readonly svg = svg;
+  readonly SAVE_PATH = SAVE_PATH;
+  readonly avatarColors = ['#006874', '#f7941d', '#435d98', '#49b2c1'];
+  readonly avatarInitials = ['A', 'B', 'C', 'D'];
 
-  readonly quoteSteps    = QUOTE_STEPS;
-  readonly trustItems    = TRUST_ITEMS;
-  readonly stepIcon      = stepIcon;
-  readonly svg           = svg;
-  readonly SAVE_PATH     = SAVE_PATH;
-  readonly avatarColors  = ['#006874','#f7941d','#435d98','#49b2c1'];
-  readonly avatarInitials = ['A','B','C','D'];
-
-  private planId = '';
+  private planIds: string[] = [];
 
   async ngOnInit(): Promise<void> {
-    this.planId = this.route.snapshot.queryParamMap.get('planId') ?? '';
-    if (!this.planId) { this.loadingPlan.set(false); return; }
+    const qp = this.route.snapshot.queryParamMap;
+    const raw = qp.get('planIds') ?? '';
+    this.planIds = raw.split(',').map(s => s.trim()).filter(Boolean).slice(0, 3);
+
+    // Restore fields when returning from the review page
+    this.customerName        = qp.get('customerName')        ?? '';
+    this.phone               = qp.get('phone')               ?? '';
+    this.email               = qp.get('email')               ?? '';
+    this.licenseNumber       = qp.get('licenseNumber')        ?? '';
+    this.previousCompany     = qp.get('previousCompany')      ?? '';
+    this.previousPolicyExpiry = qp.get('previousPolicyExpiry') ?? '';
+    this.vehicleRegistration = qp.get('vehicleRegistration')  ?? '';
+    const yrParam = qp.get('vehicleYear');
+    if (yrParam) this.vehicleYear = +yrParam;
+
+    if (this.planIds.length === 0) { this.loadingPlan.set(false); return; }
 
     try {
-      const plan = await this.searchApi.getDetail(this.planId);
-      this.plan.set(plan);
-      // Pre-fill vehicle year with midpoint of allowed range
-      if (plan) {
-        this.vehicleYear = plan.maxYear;
-      }
+      const loaded = await Promise.all(this.planIds.map(id => this.searchApi.getDetail(id)));
+      const valid = loaded.filter((p): p is InsurancePlanDetail => p !== null);
+      this.plans.set(valid);
+      this.plan.set(valid[0] ?? null);
+      if (valid[0] && !yrParam) this.vehicleYear = valid[0].maxYear;
     } catch {
-      // plan remains null
+      // plans remain empty
     } finally {
       this.loadingPlan.set(false);
     }
@@ -444,14 +475,25 @@ export class QuotationFormComponent implements OnInit {
 
     try {
       const result = await this.quotationService.generate({
-        planId:              this.planId,
-        customerName:        this.customerName,
+        planIds: this.planIds,
+        customerName: this.customerName,
         vehicleRegistration: this.vehicleRegistration || undefined,
-        vehicleYear:         this.vehicleYear,
+        vehicleYear: this.vehicleYear,
       });
 
       this.router.navigate(['/quotation/success'], {
-        queryParams: { quotationId: result.quotationId },
+        queryParams: {
+          quotationId:         result.quotationId,
+          planIds:             this.planIds.join(','),
+          customerName:        this.customerName,
+          phone:               this.phone,
+          ...(this.email               && { email:               this.email }),
+          ...(this.licenseNumber       && { licenseNumber:       this.licenseNumber }),
+          ...(this.previousCompany     && { previousCompany:     this.previousCompany }),
+          ...(this.previousPolicyExpiry && { previousPolicyExpiry: this.previousPolicyExpiry }),
+          ...(this.vehicleRegistration && { vehicleRegistration: this.vehicleRegistration }),
+          ...(this.vehicleYear         && { vehicleYear:         this.vehicleYear }),
+        },
       });
     } catch (err: any) {
       this.error.set(err?.error?.error ?? 'Failed to generate quotation. Please try again.');

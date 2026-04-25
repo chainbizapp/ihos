@@ -29,10 +29,67 @@ function saveRecent(v: RecentVehicle): void {
   localStorage.setItem(RECENT_KEY, JSON.stringify(list));
 }
 
+// ── Popular brands (matched by name against API) ──────────────────────────────
+const POPULAR_MAKE_NAMES = [
+  'Toyota', 'Honda', 'Isuzu', 'Mitsubishi', 'Nissan',
+  'Mazda', 'Ford', 'BYD', 'MG',
+];
+
+const MAKE_LOGO: Record<string, string> = {
+  toyota: 'logos/toyota.png',
+  honda: 'logos/honda.png',
+  isuzu: 'logos/isuzu.png',
+  mitsubishi: 'logos/mitsubishi.png',
+  nissan: 'logos/nissan.png',
+  mazda: 'logos/mazda.png',
+  ford: 'logos/ford.png',
+  byd: 'logos/byd.png',
+  mg: 'logos/mg.png',
+};
+
+// ── Province data ─────────────────────────────────────────────────────────────
+
+export interface Province { id: string; name: string; shortName: string; count: number }
+
+const POPULAR_PROVINCES: Province[] = [
+  { id: 'กรุงเทพมหานคร', name: 'กรุงเทพมหานคร', shortName: 'กทม.',       count: 10_244_144 },
+  { id: 'ชลบุรี',         name: 'ชลบุรี',         shortName: 'ชลบุรี',      count:  1_570_782 },
+  { id: 'เชียงใหม่',      name: 'เชียงใหม่',      shortName: 'เชียงใหม่',   count:  1_457_217 },
+  { id: 'นครราชสีมา',    name: 'นครราชสีมา',    shortName: 'โคราช',       count:  1_368_421 },
+  { id: 'ขอนแก่น',        name: 'ขอนแก่น',        shortName: 'ขอนแก่น',     count:    866_989 },
+  { id: 'สงขลา',          name: 'สงขลา',          shortName: 'สงขลา',       count:    829_239 },
+  { id: 'ระยอง',          name: 'ระยอง',          shortName: 'ระยอง',       count:    744_140 },
+  { id: 'อุบลราชธานี',   name: 'อุบลราชธานี',   shortName: 'อุบลฯ',       count:    738_943 },
+  { id: 'เชียงราย',       name: 'เชียงราย',       shortName: 'เชียงราย',    count:    738_735 },
+];
+
+const ALL_PROVINCES: string[] = [
+  'กรุงเทพมหานคร','กระบี่','กาญจนบุรี','กาฬสินธุ์','กำแพงเพชร',
+  'ขอนแก่น','จันทบุรี','ฉะเชิงเทรา','ชลบุรี','ชัยนาท',
+  'ชัยภูมิ','ชุมพร','เชียงราย','เชียงใหม่','ตรัง',
+  'ตราด','ตาก','นครนายก','นครปฐม','นครพนม',
+  'นครราชสีมา','นครศรีธรรมราช','นครสวรรค์','นนทบุรี','นราธิวาส',
+  'น่าน','บึงกาฬ','บุรีรัมย์','ปทุมธานี','ประจวบคีรีขันธ์',
+  'ปราจีนบุรี','ปัตตานี','พระนครศรีอยุธยา','พะเยา','พังงา',
+  'พัทลุง','พิจิตร','พิษณุโลก','เพชรบุรี','เพชรบูรณ์',
+  'แพร่','ภูเก็ต','มหาสารคาม','มุกดาหาร','แม่ฮ่องสอน',
+  'ยโสธร','ยะลา','ร้อยเอ็ด','ระนอง','ระยอง',
+  'ราชบุรี','ลพบุรี','ลำปาง','ลำพูน','เลย',
+  'ศรีสะเกษ','สกลนคร','สงขลา','สตูล','สมุทรปราการ',
+  'สมุทรสงคราม','สมุทรสาคร','สระแก้ว','สระบุรี','สิงห์บุรี',
+  'สุโขทัย','สุพรรณบุรี','สุราษฎร์ธานี','สุรินทร์','หนองคาย',
+  'หนองบัวลำภู','อ่างทอง','อำนาจเจริญ','อุดรธานี','อุตรดิตถ์',
+  'อุทัยธานี','อุบลราชธานี',
+];
+
 // ── Helpers ───────────────────────────────────────────────────────────────────
 
 function randomSearchId(): string {
   return 'MTR-' + Math.floor(1000 + Math.random() * 9000);
+}
+
+function makeAbbr(name: string): string {
+  return name.slice(0, 3).toUpperCase();
 }
 
 @Component({
@@ -40,165 +97,216 @@ function randomSearchId(): string {
   standalone: true,
   imports: [CommonModule, FormsModule],
   styles: [`
-    .field-label {
-      display: block; font-size: 10px; font-weight: 700;
-      letter-spacing: 0.08em; text-transform: uppercase;
-      color: #6b7a8d; margin-bottom: 6px;
-    }
-    .field-input, .field-select {
-      width: 100%; background: #ffffff;
-      border: 1.5px solid #e2e8f0; border-radius: 0.625rem;
-      padding: 0.625rem 0.875rem; font-size: 14px;
-      font-family: 'Noto Sans Thai', sans-serif; color: #171c22;
-      outline: none; transition: border-color 0.15s, box-shadow 0.15s;
-    }
-    .field-input:focus, .field-select:focus {
-      border-color: #006874; box-shadow: 0 0 0 3px rgba(0,104,116,0.1);
-    }
-    .field-input::placeholder { color: #b0b9c6; }
-    .field-select { appearance: none; -webkit-appearance: none; cursor: pointer;
-      background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 256 256' fill='%23006874'%3E%3Cpath d='M213.66,101.66l-80,80a8,8,0,0,1-11.32,0l-80-80A8,8,0,0,1,53.66,90.34L128,164.69l74.34-74.35a8,8,0,0,1,11.32,11.32Z'/%3E%3C/svg%3E");
-      background-repeat: no-repeat; background-position: right 0.75rem center; background-size: 14px;
-      padding-right: 2.5rem;
-    }
-    .field-select:disabled { background-color: #f8f9ff; color: #b0b9c6; cursor: not-allowed; }
-    .icon-input-wrap { position: relative; }
-    .icon-input-wrap .field-input,
-    .icon-input-wrap .field-select { padding-right: 2.75rem; }
-    .icon-input-wrap .field-icon {
-      position: absolute; right: 0.75rem; top: 50%; transform: translateY(-50%);
-      color: #9aa5b4; pointer-events: none;
-    }
+    .fl { display:block;font-size:10px;font-weight:700;letter-spacing:.08em;text-transform:uppercase;color:#6b7a8d;margin-bottom:6px }
+    .fs { width:100%;background:#fff;border:1.5px solid #e2e8f0;border-radius:.625rem;padding:.625rem .875rem;font-size:14px;font-family:'Noto Sans Thai',sans-serif;color:#171c22;outline:none;transition:border-color .15s,box-shadow .15s;appearance:none;-webkit-appearance:none;cursor:pointer;
+      background-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 256 256' fill='%23006874'%3E%3Cpath d='M213.66,101.66l-80,80a8,8,0,0,1-11.32,0l-80-80A8,8,0,0,1,53.66,90.34L128,164.69l74.34-74.35a8,8,0,0,1,11.32,11.32Z'/%3E%3C/svg%3E");
+      background-repeat:no-repeat;background-position:right .75rem center;background-size:14px;padding-right:2.5rem }
+    .fs:focus { border-color:#006874;box-shadow:0 0 0 3px rgba(0,104,116,.1) }
+    .fs:disabled { background-color:#f8f9ff;color:#b0b9c6;cursor:not-allowed }
+    /* ── Brand tiles ─── */
+    .brand-tile { display:flex;flex-direction:column;align-items:center;gap:8px;padding:18px 10px 14px;border-radius:18px;border:2px solid #edf1f7;background:#fff;cursor:pointer;transition:all .18s;position:relative;min-width:0 }
+    .brand-tile:hover { border-color:#006874;background:#f7fdfd;box-shadow:0 4px 14px rgba(0,104,116,.13);transform:translateY(-2px) }
+    .brand-tile.selected { border-color:#006874;background:#edf9fb;box-shadow:0 4px 16px rgba(0,104,116,.18) }
+    .brand-logo { width:64px;height:64px;border-radius:14px;display:flex;align-items:center;justify-content:center;background:#f4f7fd }
+    .brand-tile.selected .brand-logo { background:#ddf2f5 }
+    .brand-abbr { width:64px;height:64px;border-radius:14px;display:flex;align-items:center;justify-content:center;font-size:13px;font-weight:900;letter-spacing:.04em;background:#f4f7fd;color:#435d98 }
+    .brand-tile.selected .brand-abbr { background:#ddf2f5;color:#006874 }
+    .brand-name { font-size:12px;font-weight:700;color:#5a6270;text-align:center;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;max-width:100% }
+    .brand-tile.selected .brand-name { color:#006874;font-weight:800 }
+    .check-badge { position:absolute;top:7px;right:7px;width:18px;height:18px;border-radius:50%;background:#006874;display:flex;align-items:center;justify-content:center;box-shadow:0 2px 6px rgba(0,104,116,.4) }
+    /* ── Dialog ─── */
+    .dlg-overlay { position:fixed;inset:0;background:rgba(17,48,105,0.45);backdrop-filter:blur(3px);z-index:200;display:flex;align-items:center;justify-content:center;padding:16px;animation:fadeIn .15s ease }
+    .dlg-card { background:#fff;border-radius:20px;width:100%;max-width:580px;max-height:88vh;display:flex;flex-direction:column;box-shadow:0 24px 60px rgba(0,0,0,0.2);animation:slideUp .18s ease }
+    .dlg-search { width:100%;background:#f5f8ff;border:1.5px solid #e2e8f0;border-radius:10px;padding:.6rem .875rem .6rem 2.4rem;font-size:14px;font-family:'Noto Sans Thai',sans-serif;color:#171c22;outline:none;transition:border-color .15s }
+    .dlg-search:focus { border-color:#006874;background:#fff;box-shadow:0 0 0 3px rgba(0,104,116,.1) }
+    .dlg-search::placeholder { color:#b0b9c6 }
+@keyframes fadeIn { from { opacity:0 } to { opacity:1 } }
+    @keyframes slideUp { from { opacity:0;transform:translateY(12px) } to { opacity:1;transform:translateY(0) } }
   `],
   template: `
 <div style="background:#f0f4fd;font-family:'Noto Sans Thai',sans-serif;min-height:calc(100vh - 4rem)">
   <div class="max-w-6xl mx-auto px-6 py-10 md:py-14">
 
-    <!-- ── Hero headline + Search ID ─────────────────────────────────── -->
-    <div class="flex items-start justify-between gap-4 mb-8">
-      <div>
-        <h1 class="text-[36px] md:text-[44px] font-black leading-[1.1] mb-3"
-            style="color:#004d58;font-family:'Plus Jakarta Sans',sans-serif">
-          เลือกข้อมูลรถยนต์ของคุณ
-        </h1>
-        <p class="text-[14px] leading-relaxed max-w-md" style="color:#6b7a8d">
-          กรุณาเลือกยี่ห้อรถยนต์ที่คุณต้องการทำประกัน เพื่อรับข้อเสนอที่ดีที่สุด
-        </p>
+    <!-- ── Hero ──────────────────────────────────────────────────────── -->
+    <div class="mb-2">
+      <div class="flex items-center gap-1.5 mb-3 text-[12px] font-bold tracking-wide" style="color:#006874">
+        <svg viewBox="0 0 256 256" fill="currentColor" style="width:14px;height:14px">
+          <path d="M234.29,114.85l-45,38.83L203,211a16,16,0,0,1-23.84,17.49L128,198.29,76.88,228.46A16,16,0,0,1,53,211l13.76-57.32-45-38.83A16,16,0,0,1,31.08,86l58.34-5.06,22.76-54.71a16,16,0,0,1,29.64,0l22.76,54.71,58.34,5.06a16,16,0,0,1,9.17,28.86Z"/>
+        </svg>
+        เริ่มต้นการเช็คเบี้ยประกันที่แม่นยำ
       </div>
-      <div class="flex-shrink-0 mt-2">
-        <div class="text-[11px] font-bold tracking-widest px-4 py-2 rounded-lg"
-             style="background:white;color:#6b7a8d;border:1px solid #e2e8f0;white-space:nowrap">
-          SEARCH ID: {{ searchId }}
-        </div>
-      </div>
+      <h1 class="text-[34px] md:text-[42px] font-black leading-tight mb-2"
+          style="color:#004d58;font-family:'Plus Jakarta Sans',sans-serif">
+        เลือกข้อมูลรถยนต์ของคุณ
+      </h1>
+      <p class="text-[14px]" style="color:#6b7a8d">
+        กรุณาเลือกยี่ห้อรถยนต์ที่คุณต้องการทำประกัน เพื่อรับข้อเสนอที่ดีที่สุด
+      </p>
     </div>
 
-    <!-- ── 2-column: form + sidebar cards ────────────────────────────── -->
-    <div class="grid gap-5" style="grid-template-columns:1fr 280px;align-items:start">
+    <!-- ── 2-column: form + sidebar ──────────────────────────────────── -->
+    <div class="grid gap-5 mt-7" style="grid-template-columns:1fr 272px;align-items:start">
 
-      <!-- Form card -->
-      <div class="rounded-2xl p-7" style="background:#ffffff;box-shadow:0 2px 20px rgba(17,48,105,0.07)">
+      <!-- ── Form card ─────────────────────────────────────────────── -->
+      <div class="rounded-2xl p-6" style="background:#ffffff;box-shadow:0 2px 20px rgba(17,48,105,0.07)">
 
-        <!-- Card heading -->
-        <div class="flex items-center gap-2.5 mb-6">
-          <svg viewBox="0 0 256 256" fill="#f7941d" style="width:22px;height:22px">
-            <path d="M240,112H229.2L201.42,49.5A16,16,0,0,0,186.8,40H69.2a16,16,0,0,0-14.62,9.5L26.8,112H16a8,8,0,0,0,0,16h8v80a16,16,0,0,0,16,16H64a16,16,0,0,0,16-16V192h96v16a16,16,0,0,0,16,16h24a16,16,0,0,0,16-16V128h8a8,8,0,0,0,0-16ZM69.2,56H186.8l24.89,56H44.31ZM64,208H40V192H64Zm128,0V192h24v16Zm24-32H40V128H216ZM72,160a12,12,0,1,1,12,12A12,12,0,0,1,72,160Zm100,0a12,12,0,1,1,12,12A12,12,0,0,1,172,160Z"/>
-          </svg>
-          <h2 class="text-[18px] font-extrabold" style="color:#171c22;font-family:'Plus Jakarta Sans',sans-serif">
-            Vehicle Specifications
-          </h2>
+        <!-- Brand section header -->
+        <div class="mb-4">
+          <span class="text-[13px] font-extrabold" style="color:#171c22;font-family:'Plus Jakarta Sans',sans-serif">ยี่ห้อยอดนิยม</span>
         </div>
 
-        <div class="grid grid-cols-2 gap-x-5 gap-y-5">
-
-          <!-- Brand -->
-          <div>
-            <label class="field-label">Brand</label>
-            <select class="field-select" [(ngModel)]="selectedMakeId" (ngModelChange)="onMakeChange($event)">
-              <option value="">Select Manufacturer</option>
-              @for (m of makes(); track m.id) {
-                <option [value]="m.id">{{ m.name }}</option>
+        <!-- Popular brand grid -->
+        <div class="grid gap-3 mb-5" style="grid-template-columns:repeat(5,1fr)">
+          @for (m of popularMakes(); track m.id) {
+            <button class="brand-tile" [class.selected]="selectedMakeId === m.id"
+                    (click)="selectMake(m.id)">
+              @if (selectedMakeId === m.id) {
+                <span class="check-badge">
+                  <svg viewBox="0 0 20 20" fill="white" style="width:11px;height:11px">
+                    <path fill-rule="evenodd" d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z" clip-rule="evenodd"/>
+                  </svg>
+                </span>
               }
-            </select>
-          </div>
-
-          <!-- Model -->
-          <div>
-            <label class="field-label">Model</label>
-            <select class="field-select"
-                    [ngModel]="selectedModelName()"
-                    (ngModelChange)="onModelChange($event)"
-                    [disabled]="!selectedMakeId || loadingModels()">
-              <option value="">{{ loadingModels() ? 'Loading...' : 'e.g. Camry, Civic' }}</option>
-              @for (g of modelGroups(); track g.name) {
-                <option [value]="g.name">{{ g.name }}</option>
+              @if (makeLogo(m.name); as logo) {
+                <div class="brand-logo">
+                  <img [src]="logo" [alt]="m.name" style="width:48px;height:48px;object-fit:contain"/>
+                </div>
+              } @else {
+                <div class="brand-abbr">{{ makeAbbr(m.name) }}</div>
               }
-            </select>
-          </div>
-
-          <!-- Year -->
-          <div>
-            <label class="field-label">Year</label>
-            <div class="icon-input-wrap">
-              <select class="field-select"
-                      [ngModel]="selectedYear()"
-                      (ngModelChange)="selectedYear.set(+$event)"
-                      [disabled]="yearOptions().length === 0">
-                <option [value]="0">Manufacturing Year</option>
-                @for (yr of yearOptions(); track yr) {
-                  <option [value]="yr">{{ yr }}</option> 
-                }
-              </select>
-              <span class="field-icon">
-                <svg viewBox="0 0 256 256" fill="currentColor" style="width:16px;height:16px">
-                  <path d="M208,32H184V24a8,8,0,0,0-16,0v8H88V24a8,8,0,0,0-16,0v8H48A16,16,0,0,0,32,48V208a16,16,0,0,0,16,16H208a16,16,0,0,0,16-16V48A16,16,0,0,0,208,32ZM72,48v8a8,8,0,0,0,16,0V48h80v8a8,8,0,0,0,16,0V48h24V80H48V48ZM208,208H48V96H208V208Zm-96-88a8,8,0,1,1-8-8A8,8,0,0,1,112,120Zm48,0a8,8,0,1,1-8-8A8,8,0,0,1,160,120Zm-96,40a8,8,0,1,1-8-8A8,8,0,0,1,64,160Zm48,0a8,8,0,1,1-8-8A8,8,0,0,1,112,160Zm48,0a8,8,0,1,1-8-8A8,8,0,0,1,160,160Zm-96,40a8,8,0,1,1-8-8A8,8,0,0,1,64,200Zm48,0a8,8,0,1,1-8-8A8,8,0,0,1,112,200Z"/>
+              <span class="brand-name">{{ m.name }}</span>
+            </button>
+          }
+          <!-- ยี่ห้ออื่นๆ tile → opens dialog -->
+          <button class="brand-tile" [class.selected]="selectedMakeId && !isPopularMake()"
+                  (click)="openBrandDialog()">
+            @if (selectedMakeId && !isPopularMake()) {
+              <span class="check-badge">
+                <svg viewBox="0 0 20 20" fill="white" style="width:11px;height:11px">
+                  <path fill-rule="evenodd" d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z" clip-rule="evenodd"/>
                 </svg>
               </span>
-            </div>
-          </div>
-
-          <!-- Trim / Variant -->
-          <div>
-            <label class="field-label">Trim</label>
-            <select class="field-select"
-                    [ngModel]="selectedVariantId()"
-                    (ngModelChange)="selectedVariantId.set($event)"
-                    [disabled]="!selectedModelName()">
-              @for (v of variantOptions(); track v.id) {
-                <option [value]="v.id">{{ v.label }}</option>
-              }
-            </select>
-          </div>
-
-
+              <div class="brand-abbr">{{ makeAbbr(selectedMakeName()) }}</div>
+              <span class="brand-name">{{ selectedMakeName() }}</span>
+            } @else {
+              <div class="brand-abbr" style="font-size:22px;font-weight:400;letter-spacing:0">···</div>
+              <span class="brand-name">ยี่ห้ออื่นๆ</span>
+            }
+          </button>
         </div>
 
-        <!-- Explore button -->
+        <!-- Model + Year (show after brand selected) -->
+        @if (selectedMakeId) {
+          <div style="border-top:1px solid #f0f4fd;padding-top:16px">
+            <div class="grid grid-cols-3 gap-4 mb-4">
+              <div>
+                <label class="fl">เลือกรุ่น (MODEL)</label>
+                <select class="fs"
+                        [ngModel]="selectedModelName()"
+                        (ngModelChange)="onModelChange($event)"
+                        [disabled]="loadingModels()">
+                  <option value="">{{ loadingModels() ? 'กำลังโหลด...' : 'กรุณาเลือก' }}</option>
+                  @for (g of modelGroups(); track g.name) {
+                    <option [value]="g.name">{{ g.name }}</option>
+                  }
+                </select>
+              </div>
+              <div>
+                <label class="fl">ปีรถยนต์ (YEAR)</label>
+                <select class="fs"
+                        [ngModel]="selectedYear()"
+                        (ngModelChange)="selectedYear.set(+$event)"
+                        [disabled]="yearOptions().length === 0">
+                  <option [value]="0">{{ selectedModelName() ? 'ทุกปี' : 'กรุณาเลือกรุ่นก่อน' }}</option>
+                  @for (yr of yearOptions(); track yr) {
+                    <option [value]="yr">{{ yr }}</option>
+                  }
+                </select>
+              </div>
+              <div>
+                <label class="fl">รุ่นย่อย / Trim</label>
+                <select class="fs"
+                        [ngModel]="selectedVariantId()"
+                        (ngModelChange)="selectedVariantId.set($event)"
+                        [disabled]="!selectedModelName()">
+                  @if (!selectedModelName()) {
+                    <option value="">กรุณาเลือกรุ่นก่อน</option>
+                  }
+                  @for (v of variantOptions(); track v.id) {
+                    <option [value]="v.id">{{ v.label }}</option>
+                  }
+                </select>
+              </div>
+            </div>
+
+            <!-- ── Province section ─────────────────────────────────────── -->
+            <div style="border-top:1px solid #f0f4fd;padding-top:16px;margin-top:4px">
+              <div class="flex items-center gap-2 mb-3">
+                <span class="text-[13px] font-extrabold" style="color:#171c22;font-family:'Plus Jakarta Sans',sans-serif">จังหวัดจดทะเบียน</span>
+                <span class="text-[11px]" style="color:#9aa5b4">(ไม่บังคับ)</span>
+                @if (selectedProvinceId()) {
+                  <button (click)="selectedProvinceId.set('')"
+                          style="margin-left:auto;font-size:11px;color:#006874;font-weight:700;background:none;border:none;cursor:pointer;padding:0">
+                    ล้างการเลือก
+                  </button>
+                }
+              </div>
+
+              <div class="grid gap-3 mb-1" style="grid-template-columns:repeat(5,1fr)">
+                @for (p of popularProvinces; track p.id) {
+                  <button class="brand-tile" [class.selected]="selectedProvinceId() === p.id"
+                          (click)="selectProvince(p.id)">
+                    @if (selectedProvinceId() === p.id) {
+                      <span class="check-badge">
+                        <svg viewBox="0 0 20 20" fill="white" style="width:11px;height:11px">
+                          <path fill-rule="evenodd" d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z" clip-rule="evenodd"/>
+                        </svg>
+                      </span>
+                    }
+                    <span class="brand-name" style="font-size:13px;font-weight:700;white-space:normal;text-align:center;line-height:1.3">{{ p.shortName }}</span>
+                  </button>
+                }
+                <!-- อื่น ๆ tile → opens province dialog -->
+                <button class="brand-tile" [class.selected]="isOtherProvince()"
+                        (click)="openProvinceDialog()">
+                  @if (isOtherProvince()) {
+                    <span class="check-badge">
+                      <svg viewBox="0 0 20 20" fill="white" style="width:11px;height:11px">
+                        <path fill-rule="evenodd" d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z" clip-rule="evenodd"/>
+                      </svg>
+                    </span>
+                    <span class="brand-name" style="font-size:12px;font-weight:700;white-space:normal;text-align:center;line-height:1.3">{{ selectedProvinceId() }}</span>
+                  } @else {
+                    <span class="brand-name" style="font-size:13px;font-weight:700;white-space:normal;text-align:center;line-height:1.3">อื่น ๆ</span>
+                  }
+                </button>
+              </div>
+            </div>
+          </div>
+        }
+
+        <!-- Search button -->
         <button (click)="onSearch()" [disabled]="!selectedModelId()"
-                class="w-full mt-7 py-4 rounded-xl text-[15px] font-bold text-white flex items-center justify-center gap-3 transition-all disabled:opacity-40 disabled:cursor-not-allowed active:scale-[0.99]"
-                style="background:#006874;box-shadow:0 4px 16px rgba(0,104,116,0.3)">
-          Explore Policies
+                class="w-full py-4 rounded-xl text-[15px] font-bold text-white flex items-center justify-center gap-3 transition-all disabled:opacity-40 disabled:cursor-not-allowed active:scale-[0.99]"
+                [style]="selectedMakeId ? 'background:#006874;box-shadow:0 4px 16px rgba(0,104,116,0.3)' : 'background:#b0b9c6'">
+          เช็คเบี้ยประกัน
           <svg viewBox="0 0 256 256" fill="currentColor" style="width:18px;height:18px">
             <path d="M221.66,133.66l-72,72a8,8,0,0,1-11.32-11.32L196.69,136H40a8,8,0,0,1,0-16H196.69L138.34,61.66a8,8,0,0,1,11.32-11.32l72,72A8,8,0,0,1,221.66,133.66Z"/>
           </svg>
         </button>
       </div>
 
-      <!-- Right info cards -->
+      <!-- ── Right sidebar ───────────────────────────────────────────── -->
       <div class="flex flex-col gap-4">
-
-        <!-- EV card -->
         <div class="rounded-2xl overflow-hidden relative text-white"
              style="background:linear-gradient(150deg,#004d58,#006874 50%,#1a7a6e);min-height:200px;box-shadow:0 4px 20px rgba(0,104,116,0.3)">
           <div class="absolute inset-0 opacity-20"
                style="background:url('data:image/svg+xml,<svg xmlns=%22http://www.w3.org/2000/svg%22 viewBox=%220 0 200 200%22><circle cx=%22150%22 cy=%2250%22 r=%22100%22 fill=%22%2349b2c1%22 opacity=%220.4%22/></svg>') center/cover"></div>
-          <div class="relative p-5 flex flex-col h-full justify-end" style="min-height:200px">
+          <div class="relative p-5 flex flex-col justify-end" style="min-height:200px">
             <div class="mb-2">
-              <span class="text-[10px] font-bold tracking-widest px-2 py-1 rounded"
-                    style="background:#f7941d;color:white">MEMBER EXCLUSIVE</span>
+              <span class="text-[10px] font-bold tracking-widest px-2 py-1 rounded" style="background:#f7941d;color:white">MEMBER EXCLUSIVE</span>
             </div>
-            <div class="text-[18px] font-black leading-snug mb-1"
-                 style="font-family:'Plus Jakarta Sans',sans-serif">
+            <div class="text-[18px] font-black leading-snug mb-1" style="font-family:'Plus Jakarta Sans',sans-serif">
               EV Insurance:<br>The Future is Here
             </div>
             <p class="text-[11px] leading-relaxed" style="color:rgba(255,255,255,0.75)">
@@ -206,19 +314,12 @@ function randomSearchId(): string {
             </p>
           </div>
         </div>
-
-        <!-- Need Assistance card -->
         <div class="rounded-2xl p-5" style="background:#ffffff;box-shadow:0 2px 12px rgba(17,48,105,0.07)">
-          <div class="text-[14px] font-extrabold mb-4" style="color:#171c22;font-family:'Plus Jakarta Sans',sans-serif">
-            Need Assistance?
-          </div>
+          <div class="text-[14px] font-extrabold mb-4" style="color:#171c22;font-family:'Plus Jakarta Sans',sans-serif">Need Assistance?</div>
           <div class="flex flex-col gap-4">
             <div class="flex items-start gap-3">
-              <div class="w-8 h-8 rounded-lg flex items-center justify-center flex-shrink-0"
-                   style="background:rgba(246,146,29,0.1)">
-                <svg viewBox="0 0 256 256" fill="#f7941d" style="width:16px;height:16px">
-                  <path d="M222.37,158.46l-47.11-21.11-.13-.06a16,16,0,0,0-15.17,1.4,8.12,8.12,0,0,0-.75.56L134.87,160c-15.42-7.49-31.34-23.29-38.83-38.51l20.78-24.71c.2-.23.39-.47.57-.72a16,16,0,0,0,1.32-15.06l-.06-.13L97.54,33.64a16,16,0,0,0-16.62-9.52A56.26,56.26,0,0,0,32,80c0,79.4,64.6,144,144,144a56.26,56.26,0,0,0,55.88-48.92A16,16,0,0,0,222.37,158.46Z"/>
-                </svg>
+              <div class="w-8 h-8 rounded-lg flex items-center justify-center flex-shrink-0" style="background:rgba(246,146,29,0.1)">
+                <svg viewBox="0 0 256 256" fill="#f7941d" style="width:16px;height:16px"><path d="M222.37,158.46l-47.11-21.11-.13-.06a16,16,0,0,0-15.17,1.4,8.12,8.12,0,0,0-.75.56L134.87,160c-15.42-7.49-31.34-23.29-38.83-38.51l20.78-24.71c.2-.23.39-.47.57-.72a16,16,0,0,0,1.32-15.06l-.06-.13L97.54,33.64a16,16,0,0,0-16.62-9.52A56.26,56.26,0,0,0,32,80c0,79.4,64.6,144,144,144a56.26,56.26,0,0,0,55.88-48.92A16,16,0,0,0,222.37,158.46Z"/></svg>
               </div>
               <div>
                 <div class="text-[13px] font-bold" style="color:#171c22">24/7 Expert Chat</div>
@@ -226,11 +327,8 @@ function randomSearchId(): string {
               </div>
             </div>
             <div class="flex items-start gap-3">
-              <div class="w-8 h-8 rounded-lg flex items-center justify-center flex-shrink-0"
-                   style="background:rgba(0,104,116,0.08)">
-                <svg viewBox="0 0 256 256" fill="#006874" style="width:16px;height:16px">
-                  <path d="M201.54,54.46A104,104,0,1,0,54.46,201.54,104,104,0,1,0,201.54,54.46ZM128,216a88,88,0,1,1,88-88A88.1,88.1,0,0,1,128,216Zm16-40a8,8,0,0,1-8,8,16,16,0,0,1-16-16V128a8,8,0,0,1,0-16,16,16,0,0,1,16,16v40A8,8,0,0,1,144,176ZM112,84a16,16,0,1,1,16,16A16,16,0,0,1,112,84Z"/>
-                </svg>
+              <div class="w-8 h-8 rounded-lg flex items-center justify-center flex-shrink-0" style="background:rgba(0,104,116,0.08)">
+                <svg viewBox="0 0 256 256" fill="#006874" style="width:16px;height:16px"><path d="M201.54,54.46A104,104,0,1,0,54.46,201.54,104,104,0,1,0,201.54,54.46ZM128,216a88,88,0,1,1,88-88A88.1,88.1,0,0,1,128,216Zm16-40a8,8,0,0,1-8,8,16,16,0,0,1-16-16V128a8,8,0,0,1,0-16,16,16,0,0,1,16,16v40A8,8,0,0,1,144,176ZM112,84a16,16,0,1,1,16,16A16,16,0,0,1,112,84Z"/></svg>
               </div>
               <div>
                 <div class="text-[13px] font-bold" style="color:#171c22">Help Center</div>
@@ -239,33 +337,22 @@ function randomSearchId(): string {
             </div>
           </div>
         </div>
+      </div>
+    </div>
 
-      </div><!-- end right cards -->
-    </div><!-- end 2-col grid -->
-
-    <!-- ── Recently Viewed Configurations ────────────────────────────── -->
+    <!-- ── Recently Viewed ────────────────────────────────────────────── -->
     @if (recentVehicles().length > 0) {
       <div class="mt-10">
-        <div class="text-[11px] font-bold tracking-widest uppercase mb-4" style="color:#9aa5b4">
-          Recently Viewed Configurations
-        </div>
+        <div class="text-[11px] font-bold tracking-widest uppercase mb-4" style="color:#9aa5b4">Recently Viewed Configurations</div>
         <div class="grid gap-3" style="grid-template-columns:repeat(auto-fill,minmax(200px,1fr))">
           @for (v of recentVehicles(); track v.modelId) {
-            <button (click)="loadRecent(v)"
-                    class="text-left rounded-xl p-4 transition-all active:scale-[0.98] group"
+            <button (click)="loadRecent(v)" class="text-left rounded-xl p-4 transition-all active:scale-[0.98]"
                     style="background:#ffffff;border:1.5px solid #e8eef4;box-shadow:0 1px 6px rgba(17,48,105,0.05)">
               <div class="text-[11px] font-bold mb-1" style="color:#006874">{{ v.makeName }}</div>
               <div class="text-[15px] font-extrabold leading-snug mb-2" style="color:#171c22;font-family:'Plus Jakarta Sans',sans-serif">
                 {{ v.modelName }} {{ v.year ?? '' }}
               </div>
-              <div class="flex items-center justify-between">
-                <div class="text-[11px]" style="color:#9aa5b4">
-                  {{ v.gearType ?? 'Auto' }} • {{ v.subModel ?? '—' }}
-                </div>
-                <svg viewBox="0 0 256 256" fill="#b0b9c6" style="width:14px;height:14px;flex-shrink:0">
-                  <path d="M128,24A104,104,0,1,0,232,128,104.11,104.11,0,0,0,128,24Zm0,192a88,88,0,1,1,88-88A88.1,88.1,0,0,1,128,216Zm64-88a8,8,0,0,1-8,8H128a8,8,0,0,1-8-8V72a8,8,0,0,1,16,0v48h48A8,8,0,0,1,192,128Z"/>
-                </svg>
-              </div>
+              <div class="text-[11px]" style="color:#9aa5b4">{{ v.subModel ?? 'All Variants' }}</div>
             </button>
           }
         </div>
@@ -274,6 +361,138 @@ function randomSearchId(): string {
 
   </div>
 </div>
+
+<!-- ── Province picker dialog ─────────────────────────────────────────────── -->
+@if (showProvinceDialog()) {
+  <div class="dlg-overlay" (click)="closeProvinceDialog()">
+    <div class="dlg-card" (click)="$event.stopPropagation()">
+
+      <!-- Dialog header -->
+      <div class="flex items-center justify-between px-5 py-4" style="border-bottom:1px solid #f0f4fd">
+        <div>
+          <div class="text-[15px] font-extrabold" style="color:#171c22;font-family:'Plus Jakarta Sans',sans-serif">เลือกจังหวัดจดทะเบียน</div>
+          <div class="text-[11px] mt-0.5" style="color:#9aa5b4">77 จังหวัดทั่วประเทศ</div>
+        </div>
+        <button (click)="closeProvinceDialog()"
+                style="width:30px;height:30px;border-radius:8px;border:none;background:#f0f4fd;cursor:pointer;display:flex;align-items:center;justify-content:center;color:#6b7a8d;font-size:14px;font-weight:700">✕</button>
+      </div>
+
+      <!-- Search input -->
+      <div class="px-5 py-3" style="border-bottom:1px solid #f7f9fc">
+        <div style="position:relative">
+          <svg viewBox="0 0 256 256" fill="#9aa5b4" style="width:15px;height:15px;position:absolute;left:10px;top:50%;transform:translateY(-50%);pointer-events:none">
+            <path d="M229.66,218.34l-50.07-50.06a88.21,88.21,0,1,0-11.31,11.31l50.06,50.07a8,8,0,0,0,11.32-11.32ZM40,112a72,72,0,1,1,72,72A72.08,72.08,0,0,1,40,112Z"/>
+          </svg>
+          <input class="dlg-search" type="text" placeholder="ค้นหาจังหวัด..."
+                 [ngModel]="dialogProvinceSearch()" (ngModelChange)="dialogProvinceSearch.set($event)"/>
+          @if (dialogProvinceSearch()) {
+            <button (click)="dialogProvinceSearch.set('')"
+                    style="position:absolute;right:10px;top:50%;transform:translateY(-50%);background:none;border:none;cursor:pointer;color:#9aa5b4;font-size:13px;font-weight:700;padding:0;line-height:1">✕</button>
+          }
+        </div>
+      </div>
+
+      <!-- Province list -->
+      <div style="overflow-y:auto;flex:1">
+        @if (provinceDialogResults().length === 0) {
+          <div class="py-8 text-center text-[13px]" style="color:#b0b9c6">ไม่พบจังหวัดที่ค้นหา</div>
+        } @else {
+          @for (name of provinceDialogResults(); track name) {
+            <button (click)="selectProvinceFromDialog(name)"
+                    style="width:100%;display:flex;align-items:center;justify-content:space-between;padding:11px 20px;border:none;border-bottom:1px solid #f5f7fa;cursor:pointer;text-align:left;font-family:'Noto Sans Thai',sans-serif;transition:background .1s"
+                    [style.background]="selectedProvinceId() === name ? '#e8f7f9' : '#fff'">
+              <span style="font-size:14px;font-weight:600;"
+                    [style.color]="selectedProvinceId() === name ? '#006874' : '#171c22'">{{ name }}</span>
+              @if (selectedProvinceId() === name) {
+                <svg viewBox="0 0 20 20" fill="#006874" style="width:16px;height:16px;flex-shrink:0">
+                  <path fill-rule="evenodd" d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z" clip-rule="evenodd"/>
+                </svg>
+              }
+            </button>
+          }
+        }
+      </div>
+
+      <!-- Dialog footer -->
+      <div class="px-5 py-3 flex justify-end gap-3" style="border-top:1px solid #f0f4fd">
+        @if (selectedProvinceId()) {
+          <button (click)="selectedProvinceId.set(''); closeProvinceDialog()"
+                  style="padding:.5rem 1.25rem;border-radius:8px;border:1.5px solid #fde8e8;background:#fff5f5;font-size:13px;font-weight:600;color:#c0392b;cursor:pointer;font-family:'Noto Sans Thai',sans-serif">
+            ล้างการเลือก
+          </button>
+        }
+        <button (click)="closeProvinceDialog()"
+                style="padding:.5rem 1.25rem;border-radius:8px;border:1.5px solid #e2e8f0;background:#fff;font-size:13px;font-weight:600;color:#6b7a8d;cursor:pointer;font-family:'Noto Sans Thai',sans-serif">
+          ปิด
+        </button>
+      </div>
+
+    </div>
+  </div>
+}
+
+<!-- ── Brand picker dialog ────────────────────────────────────────────────── -->
+@if (showBrandDialog()) {
+  <div class="dlg-overlay" (click)="closeBrandDialog()">
+    <div class="dlg-card" (click)="$event.stopPropagation()">
+
+      <!-- Dialog header -->
+      <div class="flex items-center justify-between px-5 py-4" style="border-bottom:1px solid #f0f4fd">
+        <div>
+          <div class="text-[15px] font-extrabold" style="color:#171c22;font-family:'Plus Jakarta Sans',sans-serif">เลือกยี่ห้อรถยนต์</div>
+          <div class="text-[11px] mt-0.5" style="color:#9aa5b4">{{ makes().length }} ยี่ห้อในระบบ</div>
+        </div>
+        <button (click)="closeBrandDialog()"
+                style="width:30px;height:30px;border-radius:8px;border:none;background:#f0f4fd;cursor:pointer;display:flex;align-items:center;justify-content:center;color:#6b7a8d;font-size:14px;font-weight:700">✕</button>
+      </div>
+
+      <!-- Search input -->
+      <div class="px-5 py-3" style="border-bottom:1px solid #f7f9fc">
+        <div style="position:relative">
+          <svg viewBox="0 0 256 256" fill="#9aa5b4" style="width:15px;height:15px;position:absolute;left:10px;top:50%;transform:translateY(-50%);pointer-events:none">
+            <path d="M229.66,218.34l-50.07-50.06a88.21,88.21,0,1,0-11.31,11.31l50.06,50.07a8,8,0,0,0,11.32-11.32ZM40,112a72,72,0,1,1,72,72A72.08,72.08,0,0,1,40,112Z"/>
+          </svg>
+          <input class="dlg-search" type="text" placeholder="ค้นหายี่ห้อรถยนต์..."
+                 [ngModel]="dialogSearch()" (ngModelChange)="dialogSearch.set($event)" #dlgInput/>
+          @if (dialogSearch()) {
+            <button (click)="dialogSearch.set('')"
+                    style="position:absolute;right:10px;top:50%;transform:translateY(-50%);background:none;border:none;cursor:pointer;color:#9aa5b4;font-size:13px;font-weight:700;padding:0;line-height:1">✕</button>
+          }
+        </div>
+      </div>
+
+      <!-- Brand list -->
+      <div style="overflow-y:auto;flex:1">
+        @if (dialogResults().length === 0) {
+          <div class="py-8 text-center text-[13px]" style="color:#b0b9c6">ไม่พบยี่ห้อที่ค้นหา</div>
+        } @else {
+          @for (m of dialogResults(); track m.id) {
+            <button (click)="selectMakeFromDialog(m.id)"
+                    style="width:100%;display:flex;align-items:center;justify-content:space-between;padding:11px 20px;border:none;border-bottom:1px solid #f5f7fa;cursor:pointer;text-align:left;font-family:'Noto Sans Thai',sans-serif;transition:background .1s"
+                    [style.background]="selectedMakeId === m.id ? '#e8f7f9' : '#fff'">
+              <span style="font-size:14px;font-weight:600;"
+                    [style.color]="selectedMakeId === m.id ? '#006874' : '#171c22'">{{ m.name }}</span>
+              @if (selectedMakeId === m.id) {
+                <svg viewBox="0 0 20 20" fill="#006874" style="width:16px;height:16px;flex-shrink:0">
+                  <path fill-rule="evenodd" d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z" clip-rule="evenodd"/>
+                </svg>
+              }
+            </button>
+          }
+        }
+      </div>
+
+      <!-- Dialog footer -->
+      <div class="px-5 py-3 flex justify-end" style="border-top:1px solid #f0f4fd">
+        <button (click)="closeBrandDialog()"
+                style="padding:.5rem 1.25rem;border-radius:8px;border:1.5px solid #e2e8f0;background:#fff;font-size:13px;font-weight:600;color:#6b7a8d;cursor:pointer;font-family:'Noto Sans Thai',sans-serif">
+          ปิด
+        </button>
+      </div>
+
+    </div>
+  </div>
+}
   `
 })
 export class SearchHomeComponent implements OnInit {
@@ -290,9 +509,106 @@ export class SearchHomeComponent implements OnInit {
   // ── Form state ────────────────────────────────────────────────────────────
   selectedMakeId = '';
   readonly selectedModelName = signal('');
-  readonly selectedYear      = signal(0);
+  readonly selectedYear = signal(0);
   readonly selectedVariantId = signal('');
   readonly searchId = randomSearchId();
+
+  // ── Brand search / dialog ─────────────────────────────────────────────────
+  brandSearch = signal('');   // kept for any remaining references
+  showBrandSearch = signal(false);
+  showBrandDialog = signal(false);
+  dialogSearch = signal('');
+
+  // ── Province ──────────────────────────────────────────────────────────────
+  readonly popularProvinces = POPULAR_PROVINCES;
+  readonly selectedProvinceId = signal('');
+  readonly showProvinceDialog = signal(false);
+  readonly dialogProvinceSearch = signal('');
+
+  readonly provinceDialogResults = computed(() => {
+    const q = this.dialogProvinceSearch().toLowerCase().trim();
+    if (!q) return ALL_PROVINCES;
+    return ALL_PROVINCES.filter(p => p.toLowerCase().includes(q));
+  });
+
+  isOtherProvince(): boolean {
+    const id = this.selectedProvinceId();
+    return !!id && !POPULAR_PROVINCES.some(p => p.id === id);
+  }
+
+  selectProvince(id: string): void {
+    this.selectedProvinceId.set(this.selectedProvinceId() === id ? '' : id);
+  }
+
+  openProvinceDialog(): void {
+    this.dialogProvinceSearch.set('');
+    this.showProvinceDialog.set(true);
+  }
+
+  closeProvinceDialog(): void {
+    this.showProvinceDialog.set(false);
+    this.dialogProvinceSearch.set('');
+  }
+
+  selectProvinceFromDialog(name: string): void {
+    this.selectedProvinceId.set(name);
+    this.closeProvinceDialog();
+  }
+
+  readonly popularMakes = computed(() => {
+    const all = this.makes();
+    return POPULAR_MAKE_NAMES
+      .map(name => all.find(m => m.name.toLowerCase() === name.toLowerCase()))
+      .filter((m): m is VehicleMake => m != null);
+  });
+
+  readonly brandSearchResults = computed(() => {
+    const q = this.brandSearch().toLowerCase();
+    if (!q) return this.makes();
+    return this.makes().filter(m => m.name.toLowerCase().includes(q));
+  });
+
+  readonly dialogResults = computed(() => {
+    const q = this.dialogSearch().toLowerCase().trim();
+    if (!q) return this.makes();
+    return this.makes().filter(m => m.name.toLowerCase().includes(q));
+  });
+
+  // Expose module-level helpers to template
+  readonly makeAbbr = makeAbbr;
+  readonly makeLogo = (name: string) => MAKE_LOGO[name.toLowerCase()] ?? null;
+
+  selectedMakeName(): string {
+    return this.makes().find(m => m.id === this.selectedMakeId)?.name ?? '';
+  }
+
+  isPopularMake(): boolean {
+    const name = this.selectedMakeName().toLowerCase();
+    return POPULAR_MAKE_NAMES.some(n => n.toLowerCase() === name);
+  }
+
+  selectMake(makeId: string): void {
+    this.selectedMakeId = makeId;
+    this.showBrandSearch.set(false);
+    this.brandSearch.set('');
+    this.onMakeChange(makeId);
+  }
+
+  openBrandDialog(): void {
+    this.dialogSearch.set('');
+    this.showBrandDialog.set(true);
+  }
+
+  closeBrandDialog(): void {
+    this.showBrandDialog.set(false);
+    this.dialogSearch.set('');
+  }
+
+  selectMakeFromDialog(makeId: string): void {
+    this.selectedMakeId = makeId;
+    this.closeBrandDialog();
+    this.onMakeChange(makeId);
+  }
 
   // ── Computed options ─────────────────────────────────────────────────────
   readonly modelGroups = computed(() => {
@@ -375,6 +691,9 @@ export class SearchHomeComponent implements OnInit {
         this.selectedYear.set(saved.vehicleYear ?? 0);
       });
     }
+    if (saved?.province) {
+      this.selectedProvinceId.set(saved.province);
+    }
   }
 
   private async loadModels(makeId: string): Promise<void> {
@@ -418,7 +737,9 @@ export class SearchHomeComponent implements OnInit {
       modelName: this.selectedModelName(),
       engineCC: undefined,
       gearType: undefined,
+      allVariants: !variantId || undefined,   // true when "All Variants" selected
       vehicleYear: year,
+      province: this.selectedProvinceId() || undefined,
       planType: '',
       repairType: 'Garage',
     });

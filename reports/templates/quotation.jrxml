@@ -4,294 +4,344 @@
               xsi:schemaLocation="http://jasperreports.sourceforge.net/jasperreports
                 http://jasperreports.sourceforge.net/xsd/jasperreport.xsd"
               name="quotation"
-              pageWidth="595"
-              pageHeight="842"
-              columnWidth="515"
-              leftMargin="40"
-              rightMargin="40"
-              topMargin="40"
-              bottomMargin="40"
-              uuid="a1b2c3d4-e5f6-7890-abcd-ef1234567890">
+              pageWidth="595" pageHeight="842" columnWidth="515"
+              leftMargin="40" rightMargin="40" topMargin="30" bottomMargin="30"
+              uuid="a1b2c3d4-e5f6-7890-abcd-ef1234567891">
 
-  <!--
-    Parameters:
-      param1  = quotation UUID (string) — used as the WHERE condition
-      param2  = reserved / unused
-      param3  = reserved / unused
+  <style name="defaultStyle" isDefault="true" fontName="TH Sarabun New"/>
 
-    Data source: The Spring Boot report service provides a JDBC connection.
-    This report queries the ihos PostgreSQL database directly.
-  -->
   <parameter name="param1" class="java.lang.String"/>
   <parameter name="param2" class="java.lang.String"/>
   <parameter name="param3" class="java.lang.String"/>
 
   <queryString language="SQL"><![CDATA[
     SELECT
-      q.id                                          AS quotation_id,
-      q.customer_name,
-      COALESCE(q.vehicle_registration, '—')         AS vehicle_registration,
-      q.vehicle_make,
-      q.vehicle_model_name,
-      q.vehicle_year,
-      q.premium_at_generation,
-      q.generated_at,
-      ic.name                                       AS company_name,
-      ip.plan_type,
-      ip.repair_type,
-      ip.sum_insured,
-      ip.excess_amount,
-      ip.coverage_details::text                     AS coverage_details,
-      ip.remarks,
-      u.full_name                                   AS agent_name
+      q."Id"                                                  AS quotation_id,
+      q."CustomerName"                                        AS customer_name,
+      COALESCE(q."VehicleRegistration", '-')                  AS vehicle_registration,
+      q."VehicleMake"                                         AS vehicle_make,
+      q."VehicleModelName"                                    AS vehicle_model_name,
+      q."VehicleYear"                                         AS vehicle_year,
+      q."GeneratedAt"                                         AS generated_at,
+      ic1."Name"                                              AS company1_name,
+      CASE ip1."PlanType"
+        WHEN 'Type1'     THEN 'ประกันชั้น 1'
+        WHEN 'Type2'     THEN 'ประกันชั้น 2'
+        WHEN 'Type2Plus' THEN 'ประกันชั้น 2+'
+        WHEN 'Type3'     THEN 'ประกันชั้น 3'
+        WHEN 'Type3Plus' THEN 'ประกันชั้น 3+'
+        ELSE ip1."PlanType" END                               AS plan1_type,
+      CASE ip1."RepairType"
+        WHEN 'Dealer' THEN 'ซ่อมศูนย์'
+        ELSE 'ซ่อมอู่' END                                    AS repair1_type,
+      ip1."TpbiPerPerson"      AS p1_tpbi_person,
+      ip1."TpbiPerAccident"    AS p1_tpbi_accident,
+      ip1."Tppd"               AS p1_tppd,
+      ip1."SumInsured"         AS p1_sum_insured,
+      ip1."ExcessAmount"       AS p1_excess,
+      ip1."FireTheft"          AS p1_fire_theft,
+      ip1."PersonalAccident"   AS p1_pa_driver,
+      ip1."PassengerAccident"  AS p1_pa_passenger,
+      ip1."MedicalExpenses"    AS p1_medical,
+      ip1."BailBond"           AS p1_bail,
+      q."PremiumAtGeneration"  AS p1_premium,
+      ic2."Name"               AS company2_name,
+      CASE ip2."PlanType"
+        WHEN 'Type1'     THEN 'ประกันชั้น 1'
+        WHEN 'Type2'     THEN 'ประกันชั้น 2'
+        WHEN 'Type2Plus' THEN 'ประกันชั้น 2+'
+        WHEN 'Type3'     THEN 'ประกันชั้น 3'
+        WHEN 'Type3Plus' THEN 'ประกันชั้น 3+'
+        ELSE ip2."PlanType" END                               AS plan2_type,
+      CASE WHEN ip2."Id" IS NULL THEN NULL
+           WHEN ip2."RepairType" = 'Dealer' THEN 'ซ่อมศูนย์'
+           ELSE 'ซ่อมอู่' END                                 AS repair2_type,
+      ip2."TpbiPerPerson"      AS p2_tpbi_person,
+      ip2."TpbiPerAccident"    AS p2_tpbi_accident,
+      ip2."Tppd"               AS p2_tppd,
+      ip2."SumInsured"         AS p2_sum_insured,
+      ip2."ExcessAmount"       AS p2_excess,
+      ip2."FireTheft"          AS p2_fire_theft,
+      ip2."PersonalAccident"   AS p2_pa_driver,
+      ip2."PassengerAccident"  AS p2_pa_passenger,
+      ip2."MedicalExpenses"    AS p2_medical,
+      ip2."BailBond"           AS p2_bail,
+      q."PremiumAtGeneration2" AS p2_premium,
+      ic3."Name"               AS company3_name,
+      CASE ip3."PlanType"
+        WHEN 'Type1'     THEN 'ประกันชั้น 1'
+        WHEN 'Type2'     THEN 'ประกันชั้น 2'
+        WHEN 'Type2Plus' THEN 'ประกันชั้น 2+'
+        WHEN 'Type3'     THEN 'ประกันชั้น 3'
+        WHEN 'Type3Plus' THEN 'ประกันชั้น 3+'
+        ELSE ip3."PlanType" END                               AS plan3_type,
+      CASE WHEN ip3."Id" IS NULL THEN NULL
+           WHEN ip3."RepairType" = 'Dealer' THEN 'ซ่อมศูนย์'
+           ELSE 'ซ่อมอู่' END                                 AS repair3_type,
+      ip3."TpbiPerPerson"      AS p3_tpbi_person,
+      ip3."TpbiPerAccident"    AS p3_tpbi_accident,
+      ip3."Tppd"               AS p3_tppd,
+      ip3."SumInsured"         AS p3_sum_insured,
+      ip3."ExcessAmount"       AS p3_excess,
+      ip3."FireTheft"          AS p3_fire_theft,
+      ip3."PersonalAccident"   AS p3_pa_driver,
+      ip3."PassengerAccident"  AS p3_pa_passenger,
+      ip3."MedicalExpenses"    AS p3_medical,
+      ip3."BailBond"           AS p3_bail,
+      q."PremiumAtGeneration3" AS p3_premium,
+      u."FullName"             AS agent_name
     FROM quotations q
-    JOIN insurance_plans ip  ON ip.id = q.plan_id
-    JOIN insurance_companies ic ON ic.id = ip.company_id
-    LEFT JOIN users u         ON u.id  = q.created_by
-    WHERE q.id = $P{param1}::uuid
-      AND q.is_deleted = false
+    JOIN  insurance_plans ip1     ON ip1."Id" = q."PlanId"
+    JOIN  insurance_companies ic1 ON ic1."Id" = ip1."CompanyId"
+    LEFT JOIN insurance_plans ip2     ON ip2."Id" = q."PlanId2"
+    LEFT JOIN insurance_companies ic2 ON ic2."Id" = ip2."CompanyId"
+    LEFT JOIN insurance_plans ip3     ON ip3."Id" = q."PlanId3"
+    LEFT JOIN insurance_companies ic3 ON ic3."Id" = ip3."CompanyId"
+    LEFT JOIN users u             ON u."Id"  = q."CreatedBy"
+    WHERE q."Id" = $P{param1}::uuid
+      AND q."IsDeleted" = false
   ]]></queryString>
 
-  <!-- Mapped fields from the query -->
-  <field name="quotation_id"        class="java.util.UUID"/>
-  <field name="customer_name"       class="java.lang.String"/>
+  <field name="quotation_id"         class="java.util.UUID"/>
+  <field name="customer_name"        class="java.lang.String"/>
   <field name="vehicle_registration" class="java.lang.String"/>
-  <field name="vehicle_make"        class="java.lang.String"/>
-  <field name="vehicle_model_name"  class="java.lang.String"/>
-  <field name="vehicle_year"        class="java.lang.Integer"/>
-  <field name="premium_at_generation" class="java.math.BigDecimal"/>
-  <field name="generated_at"        class="java.sql.Timestamp"/>
-  <field name="company_name"        class="java.lang.String"/>
-  <field name="plan_type"           class="java.lang.String"/>
-  <field name="repair_type"         class="java.lang.String"/>
-  <field name="sum_insured"         class="java.math.BigDecimal"/>
-  <field name="excess_amount"       class="java.math.BigDecimal"/>
-  <field name="coverage_details"    class="java.lang.String"/>
-  <field name="remarks"             class="java.lang.String"/>
-  <field name="agent_name"          class="java.lang.String"/>
+  <field name="vehicle_make"         class="java.lang.String"/>
+  <field name="vehicle_model_name"   class="java.lang.String"/>
+  <field name="vehicle_year"         class="java.lang.Integer"/>
+  <field name="generated_at"         class="java.sql.Timestamp"/>
+  <field name="agent_name"           class="java.lang.String"/>
+  <field name="company1_name"        class="java.lang.String"/>
+  <field name="plan1_type"           class="java.lang.String"/>
+  <field name="repair1_type"         class="java.lang.String"/>
+  <field name="p1_tpbi_person"       class="java.math.BigDecimal"/>
+  <field name="p1_tpbi_accident"     class="java.math.BigDecimal"/>
+  <field name="p1_tppd"              class="java.math.BigDecimal"/>
+  <field name="p1_sum_insured"       class="java.math.BigDecimal"/>
+  <field name="p1_excess"            class="java.math.BigDecimal"/>
+  <field name="p1_fire_theft"        class="java.math.BigDecimal"/>
+  <field name="p1_pa_driver"         class="java.math.BigDecimal"/>
+  <field name="p1_pa_passenger"      class="java.math.BigDecimal"/>
+  <field name="p1_medical"           class="java.math.BigDecimal"/>
+  <field name="p1_bail"              class="java.math.BigDecimal"/>
+  <field name="p1_premium"           class="java.math.BigDecimal"/>
+  <field name="company2_name"        class="java.lang.String"/>
+  <field name="plan2_type"           class="java.lang.String"/>
+  <field name="repair2_type"         class="java.lang.String"/>
+  <field name="p2_tpbi_person"       class="java.math.BigDecimal"/>
+  <field name="p2_tpbi_accident"     class="java.math.BigDecimal"/>
+  <field name="p2_tppd"              class="java.math.BigDecimal"/>
+  <field name="p2_sum_insured"       class="java.math.BigDecimal"/>
+  <field name="p2_excess"            class="java.math.BigDecimal"/>
+  <field name="p2_fire_theft"        class="java.math.BigDecimal"/>
+  <field name="p2_pa_driver"         class="java.math.BigDecimal"/>
+  <field name="p2_pa_passenger"      class="java.math.BigDecimal"/>
+  <field name="p2_medical"           class="java.math.BigDecimal"/>
+  <field name="p2_bail"              class="java.math.BigDecimal"/>
+  <field name="p2_premium"           class="java.math.BigDecimal"/>
+  <field name="company3_name"        class="java.lang.String"/>
+  <field name="plan3_type"           class="java.lang.String"/>
+  <field name="repair3_type"         class="java.lang.String"/>
+  <field name="p3_tpbi_person"       class="java.math.BigDecimal"/>
+  <field name="p3_tpbi_accident"     class="java.math.BigDecimal"/>
+  <field name="p3_tppd"             class="java.math.BigDecimal"/>
+  <field name="p3_sum_insured"       class="java.math.BigDecimal"/>
+  <field name="p3_excess"            class="java.math.BigDecimal"/>
+  <field name="p3_fire_theft"        class="java.math.BigDecimal"/>
+  <field name="p3_pa_driver"         class="java.math.BigDecimal"/>
+  <field name="p3_pa_passenger"      class="java.math.BigDecimal"/>
+  <field name="p3_medical"           class="java.math.BigDecimal"/>
+  <field name="p3_bail"              class="java.math.BigDecimal"/>
+  <field name="p3_premium"           class="java.math.BigDecimal"/>
 
+  <!-- TITLE: branding only, no field expressions -->
   <title>
-    <band height="70" splitType="Stretch">
-      <rectangle>
-        <reportElement x="0" y="0" width="515" height="55" backcolor="#006874" forecolor="#006874" uuid="hdr-bg"/>
-        <graphicElement><pen lineWidth="0.0"/></graphicElement>
-      </rectangle>
-      <staticText>
-        <reportElement x="10" y="8" width="350" height="26" forecolor="#FFFFFF" uuid="t1"/>
-        <textElement><font size="18" isBold="true"/></textElement>
-        <text><![CDATA[Insurance Quotation]]></text>
-      </staticText>
-      <staticText>
-        <reportElement x="10" y="36" width="350" height="14" forecolor="#CCECEF" uuid="t2"/>
-        <textElement><font size="9"/></textElement>
-        <text><![CDATA[IHOS — Motor Insurance Management System]]></text>
-      </staticText>
-      <textField>
-        <reportElement x="340" y="8" width="165" height="14" forecolor="#FFFFFF" uuid="t3"/>
-        <textElement textAlignment="Right"><font size="8"/></textElement>
-        <textFieldExpression><![CDATA["Ref: " + $F{quotation_id}.toString().substring(0,8).toUpperCase()]]></textFieldExpression>
-      </textField>
-      <textField>
-        <reportElement x="340" y="24" width="165" height="14" forecolor="#CCECEF" uuid="t4"/>
-        <textElement textAlignment="Right"><font size="8"/></textElement>
-        <textFieldExpression><![CDATA[new java.text.SimpleDateFormat("dd MMM yyyy").format($F{generated_at})]]></textFieldExpression>
-      </textField>
+    <band height="65" splitType="Stretch">
+      <rectangle><reportElement x="0" y="0" width="515" height="45" backcolor="#006874" forecolor="#006874" uuid="c1c1c1c1-1111-1111-1111-111111111101"/><graphicElement><pen lineWidth="0.0"/></graphicElement></rectangle>
+      <staticText><reportElement x="10" y="5" width="200" height="22" forecolor="#FFFFFF" uuid="c1c1c1c1-1111-1111-1111-111111111102"/><textElement><font size="16" isBold="true"/></textElement><text><![CDATA[InsureHub]]></text></staticText>
+      <staticText><reportElement x="10" y="27" width="250" height="14" forecolor="#CCECEF" uuid="c1c1c1c1-1111-1111-1111-111111111103"/><textElement><font size="10"/></textElement><text><![CDATA[Get Insured like an Expert.]]></text></staticText>
+      <staticText><reportElement x="280" y="4" width="235" height="14" forecolor="#FFFFFF" uuid="c1c1c1c1-1111-1111-1111-111111111104"/><textElement textAlignment="Right"><font size="10" isBold="true"/></textElement><text><![CDATA[บริษัท อินชัวร์ฮับ จำกัด]]></text></staticText>
+      <staticText><reportElement x="280" y="18" width="235" height="13" forecolor="#CCECEF" uuid="c1c1c1c1-1111-1111-1111-111111111105"/><textElement textAlignment="Right"><font size="9"/></textElement><text><![CDATA[109 ถนน บางแค แขวงบางแค เขต บางแค กรุงเทพฯ 10160]]></text></staticText>
+      <staticText><reportElement x="280" y="31" width="235" height="13" forecolor="#CCECEF" uuid="c1c1c1c1-1111-1111-1111-111111111106"/><textElement textAlignment="Right"><font size="9"/></textElement><text><![CDATA[โทรศัพท์: 02-0044-722  Email: Contact@insurehub.co.th]]></text></staticText>
+      <staticText><reportElement x="0" y="48" width="515" height="14" uuid="c1c1c1c1-1111-1111-1111-111111111107"/><textElement><font size="9" isItalic="true"/></textElement><text><![CDATA[ใบอนุญาติเลขที่ ช00011/2562, ว00026/2562]]></text></staticText>
+      <line><reportElement x="0" y="64" width="515" height="1" forecolor="#006874" uuid="c1c1c1c1-1111-1111-1111-111111111108"/></line>
     </band>
   </title>
 
+  <!-- DETAIL: all field content here; height=564 -->
+  <!-- page math: 842-30-30-36=746; title(65)+detail(564)=629 < 746 -->
   <detail>
-    <band height="560" splitType="Stretch">
+    <band height="564" splitType="Stretch">
 
-      <!-- ── Customer Section ── -->
-      <staticText>
-        <reportElement x="0" y="10" width="515" height="16" forecolor="#006874" uuid="s1"/>
-        <textElement><font size="11" isBold="true"/></textElement>
-        <text><![CDATA[Customer Information]]></text>
-      </staticText>
-      <line><reportElement x="0" y="27" width="515" height="1" forecolor="#006874" uuid="l1"/></line>
+      <!-- ใบเสนอราคา title -->
+      <staticText><reportElement x="0" y="4" width="515" height="36" uuid="d1d1d1d1-1111-1111-1111-111111111101"/><textElement textAlignment="Center"><font size="20" isBold="true"/></textElement><text><![CDATA[ใบเสนอราคา]]></text></staticText>
 
-      <staticText>
-        <reportElement x="0" y="33" width="150" height="14" uuid="cl1"/>
-        <textElement><font size="9" isBold="true"/></textElement>
-        <text><![CDATA[Customer Name:]]></text>
-      </staticText>
-      <textField>
-        <reportElement x="155" y="33" width="360" height="14" uuid="cv1"/>
-        <textElement><font size="9"/></textElement>
-        <textFieldExpression><![CDATA[$F{customer_name}]]></textFieldExpression>
-      </textField>
+      <!-- Ref / Make -->
+      <staticText><reportElement x="0"   y="44" width="40"  height="15" uuid="d1d1d1d1-1111-1111-1111-111111111102"/><textElement><font size="11" isBold="true"/></textElement><text><![CDATA[Ref:]]></text></staticText>
+      <textField><reportElement x="42"  y="44" width="200" height="15" uuid="d1d1d1d1-1111-1111-1111-111111111103"/><textElement><font size="11"/></textElement><textFieldExpression><![CDATA["MT-" + new java.text.SimpleDateFormat("yyyyMMdd").format($F{generated_at}) + "-" + $F{quotation_id}.toString().substring(0,8).toUpperCase()]]></textFieldExpression></textField>
+      <staticText><reportElement x="280" y="44" width="60"  height="15" uuid="d1d1d1d1-1111-1111-1111-111111111104"/><textElement><font size="11" isBold="true"/></textElement><text><![CDATA[ยี่ห้อ:]]></text></staticText>
+      <textField><reportElement x="342" y="44" width="173" height="15" uuid="d1d1d1d1-1111-1111-1111-111111111105"/><textElement><font size="11"/></textElement><textFieldExpression><![CDATA[$F{vehicle_make}]]></textFieldExpression></textField>
 
-      <staticText>
-        <reportElement x="0" y="50" width="150" height="14" uuid="cl2"/>
-        <textElement><font size="9" isBold="true"/></textElement>
-        <text><![CDATA[Vehicle Registration:]]></text>
-      </staticText>
-      <textField>
-        <reportElement x="155" y="50" width="360" height="14" uuid="cv2"/>
-        <textElement><font size="9"/></textElement>
-        <textFieldExpression><![CDATA[$F{vehicle_registration}]]></textFieldExpression>
-      </textField>
+      <!-- Date / Model -->
+      <staticText><reportElement x="0"   y="61" width="40"  height="15" uuid="d1d1d1d1-1111-1111-1111-111111111106"/><textElement><font size="11" isBold="true"/></textElement><text><![CDATA[วันที่:]]></text></staticText>
+      <textField><reportElement x="42"  y="61" width="200" height="15" uuid="d1d1d1d1-1111-1111-1111-111111111107"/><textElement><font size="11"/></textElement><textFieldExpression><![CDATA[new java.text.SimpleDateFormat("d/M/yyyy").format($F{generated_at})]]></textFieldExpression></textField>
+      <staticText><reportElement x="280" y="61" width="60"  height="15" uuid="d1d1d1d1-1111-1111-1111-111111111108"/><textElement><font size="11" isBold="true"/></textElement><text><![CDATA[รุ่น:]]></text></staticText>
+      <textField><reportElement x="342" y="61" width="173" height="15" uuid="d1d1d1d1-1111-1111-1111-111111111109"/><textElement><font size="11"/></textElement><textFieldExpression><![CDATA[$F{vehicle_model_name}]]></textFieldExpression></textField>
 
-      <staticText>
-        <reportElement x="0" y="67" width="150" height="14" uuid="cl3"/>
-        <textElement><font size="9" isBold="true"/></textElement>
-        <text><![CDATA[Vehicle:]]></text>
-      </staticText>
-      <textField>
-        <reportElement x="155" y="67" width="360" height="14" uuid="cv3"/>
-        <textElement><font size="9"/></textElement>
-        <textFieldExpression><![CDATA[$F{vehicle_make} + " " + $F{vehicle_model_name} + " (" + $F{vehicle_year} + ")"]]></textFieldExpression>
-      </textField>
+      <line><reportElement x="0" y="79" width="515" height="1" forecolor="#006874" uuid="d1d1d1d1-1111-1111-1111-111111111110"/></line>
 
-      <!-- ── Plan Section ── -->
-      <staticText>
-        <reportElement x="0" y="100" width="515" height="16" forecolor="#006874" uuid="s2"/>
-        <textElement><font size="11" isBold="true"/></textElement>
-        <text><![CDATA[Plan Details]]></text>
-      </staticText>
-      <line><reportElement x="0" y="117" width="515" height="1" forecolor="#006874" uuid="l2"/></line>
+      <!-- Customer info -->
+      <staticText><reportElement x="0"   y="82" width="90"  height="15" uuid="d1d1d1d1-1111-1111-1111-111111111111"/><textElement><font size="11" isBold="true"/></textElement><text><![CDATA[ผู้ประสานงาน:]]></text></staticText>
+      <textField><reportElement x="92"  y="82" width="180" height="15" uuid="d1d1d1d1-1111-1111-1111-111111111112"/><textElement><font size="11"/></textElement><textFieldExpression><![CDATA[$F{agent_name} != null ? $F{agent_name} : "Staff"]]></textFieldExpression></textField>
+      <staticText><reportElement x="280" y="82" width="60"  height="15" uuid="d1d1d1d1-1111-1111-1111-111111111113"/><textElement><font size="11" isBold="true"/></textElement><text><![CDATA[ปีผลิต:]]></text></staticText>
+      <textField><reportElement x="342" y="82" width="173" height="15" uuid="d1d1d1d1-1111-1111-1111-111111111114"/><textElement><font size="11"/></textElement><textFieldExpression><![CDATA[$F{vehicle_year}.toString()]]></textFieldExpression></textField>
 
-      <staticText>
-        <reportElement x="0" y="123" width="150" height="14" uuid="pl1"/>
-        <textElement><font size="9" isBold="true"/></textElement>
-        <text><![CDATA[Insurance Company:]]></text>
-      </staticText>
-      <textField>
-        <reportElement x="155" y="123" width="360" height="14" uuid="pv1"/>
-        <textElement><font size="9"/></textElement>
-        <textFieldExpression><![CDATA[$F{company_name}]]></textFieldExpression>
-      </textField>
+      <staticText><reportElement x="0"  y="99" width="90"  height="15" uuid="d1d1d1d1-1111-1111-1111-111111111115"/><textElement><font size="11" isBold="true"/></textElement><text><![CDATA[เรียนคุณ:]]></text></staticText>
+      <textField><reportElement x="92" y="99" width="180" height="15" uuid="d1d1d1d1-1111-1111-1111-111111111116"/><textElement><font size="11"/></textElement><textFieldExpression><![CDATA[$F{customer_name}]]></textFieldExpression></textField>
 
-      <staticText>
-        <reportElement x="0" y="140" width="150" height="14" uuid="pl2"/>
-        <textElement><font size="9" isBold="true"/></textElement>
-        <text><![CDATA[Plan Type:]]></text>
-      </staticText>
-      <textField>
-        <reportElement x="155" y="140" width="360" height="14" uuid="pv2"/>
-        <textElement><font size="9"/></textElement>
-        <textFieldExpression><![CDATA[$F{plan_type}]]></textFieldExpression>
-      </textField>
+      <staticText><reportElement x="0"   y="116" width="90"  height="15" uuid="d1d1d1d1-1111-1111-1111-111111111117"/><textElement><font size="11" isBold="true"/></textElement><text><![CDATA[ทะเบียนรถ:]]></text></staticText>
+      <textField><reportElement x="92"  y="116" width="180" height="15" uuid="d1d1d1d1-1111-1111-1111-111111111118"/><textElement><font size="11"/></textElement><textFieldExpression><![CDATA[$F{vehicle_registration}]]></textFieldExpression></textField>
 
-      <staticText>
-        <reportElement x="0" y="157" width="150" height="14" uuid="pl3"/>
-        <textElement><font size="9" isBold="true"/></textElement>
-        <text><![CDATA[Repair Type:]]></text>
-      </staticText>
-      <textField>
-        <reportElement x="155" y="157" width="360" height="14" uuid="pv3"/>
-        <textElement><font size="9"/></textElement>
-        <textFieldExpression><![CDATA[$F{repair_type}]]></textFieldExpression>
-      </textField>
+      <staticText><reportElement x="0" y="134" width="515" height="15" uuid="d1d1d1d1-1111-1111-1111-111111111119"/><textElement><font size="11"/></textElement><text><![CDATA[บริษัท อินชัวร์ฮับมีความยินดี นำเสนอราคาเบี้ยประกันรถยนต์ ดังนี้]]></text></staticText>
 
-      <!-- ── Premium Box ── -->
-      <staticText>
-        <reportElement x="0" y="190" width="515" height="16" forecolor="#006874" uuid="s3"/>
-        <textElement><font size="11" isBold="true"/></textElement>
-        <text><![CDATA[Premium &amp; Coverage]]></text>
-      </staticText>
-      <line><reportElement x="0" y="207" width="515" height="1" forecolor="#006874" uuid="l3"/></line>
+      <!-- TABLE HEADER (orange) y=152 h=52 -->
+      <rectangle><reportElement x="0"   y="152" width="155" height="52" backcolor="#F7941D" forecolor="#F7941D" uuid="d2d2d2d2-1111-1111-1111-111111111101"/><graphicElement><pen lineWidth="0.5" lineColor="#DDDDDD"/></graphicElement></rectangle>
+      <rectangle><reportElement x="155" y="152" width="120" height="52" backcolor="#F7941D" forecolor="#F7941D" uuid="d2d2d2d2-1111-1111-1111-111111111102"/><graphicElement><pen lineWidth="0.5" lineColor="#DDDDDD"/></graphicElement></rectangle>
+      <textField isBlankWhenNull="true"><reportElement x="155" y="154" width="120" height="17" forecolor="#FFFFFF" uuid="d2d2d2d2-1111-1111-1111-111111111103"/><textElement textAlignment="Center"><font size="11" isBold="true"/></textElement><textFieldExpression><![CDATA[$F{company1_name}]]></textFieldExpression></textField>
+      <textField isBlankWhenNull="true"><reportElement x="155" y="172" width="120" height="15" forecolor="#FFFFFF" uuid="d2d2d2d2-1111-1111-1111-111111111104"/><textElement textAlignment="Center"><font size="11"/></textElement><textFieldExpression><![CDATA[$F{plan1_type}]]></textFieldExpression></textField>
+      <textField isBlankWhenNull="true"><reportElement x="155" y="189" width="120" height="14" forecolor="#FFFFFF" uuid="d2d2d2d2-1111-1111-1111-111111111105"/><textElement textAlignment="Center"><font size="10"/></textElement><textFieldExpression><![CDATA[$F{repair1_type}]]></textFieldExpression></textField>
+      <rectangle><reportElement x="275" y="152" width="120" height="52" backcolor="#F7941D" forecolor="#F7941D" uuid="d2d2d2d2-1111-1111-1111-111111111106"/><graphicElement><pen lineWidth="0.5" lineColor="#DDDDDD"/></graphicElement></rectangle>
+      <textField isBlankWhenNull="true"><reportElement x="275" y="154" width="120" height="17" forecolor="#FFFFFF" uuid="d2d2d2d2-1111-1111-1111-111111111107"/><textElement textAlignment="Center"><font size="11" isBold="true"/></textElement><textFieldExpression><![CDATA[$F{company2_name} != null ? $F{company2_name} : ""]]></textFieldExpression></textField>
+      <textField isBlankWhenNull="true"><reportElement x="275" y="172" width="120" height="15" forecolor="#FFFFFF" uuid="d2d2d2d2-1111-1111-1111-111111111108"/><textElement textAlignment="Center"><font size="11"/></textElement><textFieldExpression><![CDATA[$F{plan2_type} != null ? $F{plan2_type} : ""]]></textFieldExpression></textField>
+      <textField isBlankWhenNull="true"><reportElement x="275" y="189" width="120" height="14" forecolor="#FFFFFF" uuid="d2d2d2d2-1111-1111-1111-111111111109"/><textElement textAlignment="Center"><font size="10"/></textElement><textFieldExpression><![CDATA[$F{repair2_type} != null ? $F{repair2_type} : ""]]></textFieldExpression></textField>
+      <rectangle><reportElement x="395" y="152" width="120" height="52" backcolor="#F7941D" forecolor="#F7941D" uuid="d2d2d2d2-1111-1111-1111-111111111110"/><graphicElement><pen lineWidth="0.5" lineColor="#DDDDDD"/></graphicElement></rectangle>
+      <textField isBlankWhenNull="true"><reportElement x="395" y="154" width="120" height="17" forecolor="#FFFFFF" uuid="d2d2d2d2-1111-1111-1111-111111111111"/><textElement textAlignment="Center"><font size="11" isBold="true"/></textElement><textFieldExpression><![CDATA[$F{company3_name} != null ? $F{company3_name} : ""]]></textFieldExpression></textField>
+      <textField isBlankWhenNull="true"><reportElement x="395" y="172" width="120" height="15" forecolor="#FFFFFF" uuid="d2d2d2d2-1111-1111-1111-111111111112"/><textElement textAlignment="Center"><font size="11"/></textElement><textFieldExpression><![CDATA[$F{plan3_type} != null ? $F{plan3_type} : ""]]></textFieldExpression></textField>
+      <textField isBlankWhenNull="true"><reportElement x="395" y="189" width="120" height="14" forecolor="#FFFFFF" uuid="d2d2d2d2-1111-1111-1111-111111111113"/><textElement textAlignment="Center"><font size="10"/></textElement><textFieldExpression><![CDATA[$F{repair3_type} != null ? $F{repair3_type} : ""]]></textFieldExpression></textField>
 
-      <rectangle>
-        <reportElement x="0" y="213" width="515" height="54" backcolor="#F0F9FA" forecolor="#CCECEF" uuid="pb"/>
-        <graphicElement><pen lineWidth="1.0"/></graphicElement>
-      </rectangle>
-      <staticText>
-        <reportElement x="10" y="222" width="200" height="14" uuid="pm1"/>
-        <textElement><font size="9" isBold="true"/></textElement>
-        <text><![CDATA[Annual Premium (THB):]]></text>
-      </staticText>
-      <textField>
-        <reportElement x="210" y="220" width="295" height="18" uuid="pm2"/>
-        <textElement><font size="13" isBold="true"/></textElement>
-        <textFieldExpression><![CDATA["฿ " + new java.text.DecimalFormat("#,##0").format($F{premium_at_generation})]]></textFieldExpression>
-      </textField>
-      <staticText>
-        <reportElement x="10" y="242" width="200" height="14" uuid="pm3"/>
-        <textElement><font size="9"/></textElement>
-        <text><![CDATA[Sum Insured (THB):]]></text>
-      </staticText>
-      <textField>
-        <reportElement x="210" y="242" width="295" height="14" uuid="pm4"/>
-        <textElement><font size="9"/></textElement>
-        <textFieldExpression><![CDATA["฿ " + new java.text.DecimalFormat("#,##0").format($F{sum_insured})]]></textFieldExpression>
-      </textField>
+      <!-- SECTION HEADER y=204 -->
+      <rectangle><reportElement x="0" y="204" width="515" height="18" backcolor="#EEEEEE" forecolor="#CCCCCC" uuid="d3d3d3d3-1111-1111-1111-111111111101"/><graphicElement><pen lineWidth="0.5"/></graphicElement></rectangle>
+      <staticText><reportElement x="4" y="206" width="511" height="14" uuid="d3d3d3d3-1111-1111-1111-111111111102"/><textElement><font size="11" isBold="true"/></textElement><text><![CDATA[รายละเอียดความคุ้มครอง]]></text></staticText>
 
-      <staticText>
-        <reportElement x="0" y="276" width="150" height="14" uuid="ex1"/>
-        <textElement><font size="9" isBold="true"/></textElement>
-        <text><![CDATA[Excess Amount (THB):]]></text>
-      </staticText>
-      <textField>
-        <reportElement x="155" y="276" width="360" height="14" uuid="ex2"/>
-        <textElement><font size="9"/></textElement>
-        <textFieldExpression><![CDATA["฿ " + new java.text.DecimalFormat("#,##0").format($F{excess_amount})]]></textFieldExpression>
-      </textField>
+      <!-- SUB: ความรับผิดชอบต่อคู่กรณี y=222 -->
+      <rectangle><reportElement x="0" y="222" width="515" height="16" backcolor="#F5F5F5" forecolor="#CCCCCC" uuid="d3d3d3d3-1111-1111-1111-111111111103"/><graphicElement><pen lineWidth="0.3"/></graphicElement></rectangle>
+      <staticText><reportElement x="4" y="223" width="511" height="14" uuid="d3d3d3d3-1111-1111-1111-111111111104"/><textElement><font size="11" isBold="true" isItalic="true"/></textElement><text><![CDATA[ความรับผิดชอบต่อคู่กรณี]]></text></staticText>
 
-      <staticText>
-        <reportElement x="0" y="295" width="150" height="14" uuid="cd1"/>
-        <textElement><font size="9" isBold="true"/></textElement>
-        <text><![CDATA[Coverage Details:]]></text>
-      </staticText>
-      <textField isStretchWithOverflow="true">
-        <reportElement x="155" y="295" width="360" height="50" uuid="cd2"/>
-        <textElement><font size="8"/></textElement>
-        <textFieldExpression><![CDATA[$F{coverage_details} != null ? $F{coverage_details} : "—"]]></textFieldExpression>
-      </textField>
+      <!-- Row: TPBI/person y=238 -->
+      <rectangle><reportElement x="0" y="238" width="515" height="20" backcolor="#FFFFFF" forecolor="#DDDDDD" uuid="d3d3d3d3-1111-1111-1111-111111111105"/><graphicElement><pen lineWidth="0.3"/></graphicElement></rectangle>
+      <staticText><reportElement x="4" y="240" width="151" height="15" uuid="d3d3d3d3-1111-1111-1111-111111111106"/><textElement><font size="11"/></textElement><text><![CDATA[1. เสียชีวิต/บาดเจ็บ คู่กรณี ต่อ คน]]></text></staticText>
+      <textField isBlankWhenNull="true"><reportElement x="155" y="240" width="120" height="15" uuid="d3d3d3d3-1111-1111-1111-111111111107"/><textElement textAlignment="Center"><font size="11"/></textElement><textFieldExpression><![CDATA[$F{p1_tpbi_person} != null ? new java.text.DecimalFormat("#,##0").format($F{p1_tpbi_person}) : "-"]]></textFieldExpression></textField>
+      <textField isBlankWhenNull="true"><reportElement x="275" y="240" width="120" height="15" uuid="d3d3d3d3-1111-1111-1111-111111111108"/><textElement textAlignment="Center"><font size="11"/></textElement><textFieldExpression><![CDATA[$F{company2_name} != null ? ($F{p2_tpbi_person} != null ? new java.text.DecimalFormat("#,##0").format($F{p2_tpbi_person}) : "-") : ""]]></textFieldExpression></textField>
+      <textField isBlankWhenNull="true"><reportElement x="395" y="240" width="120" height="15" uuid="d3d3d3d3-1111-1111-1111-111111111109"/><textElement textAlignment="Center"><font size="11"/></textElement><textFieldExpression><![CDATA[$F{company3_name} != null ? ($F{p3_tpbi_person} != null ? new java.text.DecimalFormat("#,##0").format($F{p3_tpbi_person}) : "-") : ""]]></textFieldExpression></textField>
 
-      <!-- ── Validity & Agent ── -->
-      <staticText>
-        <reportElement x="0" y="365" width="515" height="16" forecolor="#006874" uuid="s4"/>
-        <textElement><font size="11" isBold="true"/></textElement>
-        <text><![CDATA[Validity &amp; Agent]]></text>
-      </staticText>
-      <line><reportElement x="0" y="382" width="515" height="1" forecolor="#006874" uuid="l4"/></line>
+      <!-- Row: TPBI/accident y=258 -->
+      <rectangle><reportElement x="0" y="258" width="515" height="20" backcolor="#FAFAFA" forecolor="#DDDDDD" uuid="d3d3d3d3-1111-1111-1111-111111111110"/><graphicElement><pen lineWidth="0.3"/></graphicElement></rectangle>
+      <staticText><reportElement x="4" y="260" width="151" height="15" uuid="d3d3d3d3-1111-1111-1111-111111111111"/><textElement><font size="11"/></textElement><text><![CDATA[   ต่อ ครั้ง]]></text></staticText>
+      <textField isBlankWhenNull="true"><reportElement x="155" y="260" width="120" height="15" uuid="d3d3d3d3-1111-1111-1111-111111111112"/><textElement textAlignment="Center"><font size="11"/></textElement><textFieldExpression><![CDATA[$F{p1_tpbi_accident} != null ? new java.text.DecimalFormat("#,##0").format($F{p1_tpbi_accident}) : "-"]]></textFieldExpression></textField>
+      <textField isBlankWhenNull="true"><reportElement x="275" y="260" width="120" height="15" uuid="d3d3d3d3-1111-1111-1111-111111111113"/><textElement textAlignment="Center"><font size="11"/></textElement><textFieldExpression><![CDATA[$F{company2_name} != null ? ($F{p2_tpbi_accident} != null ? new java.text.DecimalFormat("#,##0").format($F{p2_tpbi_accident}) : "-") : ""]]></textFieldExpression></textField>
+      <textField isBlankWhenNull="true"><reportElement x="395" y="260" width="120" height="15" uuid="d3d3d3d3-1111-1111-1111-111111111114"/><textElement textAlignment="Center"><font size="11"/></textElement><textFieldExpression><![CDATA[$F{company3_name} != null ? ($F{p3_tpbi_accident} != null ? new java.text.DecimalFormat("#,##0").format($F{p3_tpbi_accident}) : "-") : ""]]></textFieldExpression></textField>
 
-      <staticText>
-        <reportElement x="0" y="388" width="150" height="14" uuid="va1"/>
-        <textElement><font size="9" isBold="true"/></textElement>
-        <text><![CDATA[Valid Until:]]></text>
-      </staticText>
-      <textField>
-        <reportElement x="155" y="388" width="360" height="14" uuid="va2"/>
-        <textElement><font size="9"/></textElement>
-        <textFieldExpression><![CDATA[new java.text.SimpleDateFormat("dd MMM yyyy").format(new java.util.Date($F{generated_at}.getTime() + 30L*24*60*60*1000))]]></textFieldExpression>
-      </textField>
+      <!-- Row: TPPD y=278 -->
+      <rectangle><reportElement x="0" y="278" width="515" height="20" backcolor="#FFFFFF" forecolor="#DDDDDD" uuid="d3d3d3d3-1111-1111-1111-111111111115"/><graphicElement><pen lineWidth="0.3"/></graphicElement></rectangle>
+      <staticText><reportElement x="4" y="280" width="151" height="15" uuid="d3d3d3d3-1111-1111-1111-111111111116"/><textElement><font size="11"/></textElement><text><![CDATA[2. ความเสียหายต่อรถยนต์คู่กรณี]]></text></staticText>
+      <textField isBlankWhenNull="true"><reportElement x="155" y="280" width="120" height="15" uuid="d3d3d3d3-1111-1111-1111-111111111117"/><textElement textAlignment="Center"><font size="11"/></textElement><textFieldExpression><![CDATA[$F{p1_tppd} != null ? new java.text.DecimalFormat("#,##0").format($F{p1_tppd}) : "-"]]></textFieldExpression></textField>
+      <textField isBlankWhenNull="true"><reportElement x="275" y="280" width="120" height="15" uuid="d3d3d3d3-1111-1111-1111-111111111118"/><textElement textAlignment="Center"><font size="11"/></textElement><textFieldExpression><![CDATA[$F{company2_name} != null ? ($F{p2_tppd} != null ? new java.text.DecimalFormat("#,##0").format($F{p2_tppd}) : "-") : ""]]></textFieldExpression></textField>
+      <textField isBlankWhenNull="true"><reportElement x="395" y="280" width="120" height="15" uuid="d3d3d3d3-1111-1111-1111-111111111119"/><textElement textAlignment="Center"><font size="11"/></textElement><textFieldExpression><![CDATA[$F{company3_name} != null ? ($F{p3_tppd} != null ? new java.text.DecimalFormat("#,##0").format($F{p3_tppd}) : "-") : ""]]></textFieldExpression></textField>
 
-      <staticText>
-        <reportElement x="0" y="406" width="150" height="14" uuid="va3"/>
-        <textElement><font size="9" isBold="true"/></textElement>
-        <text><![CDATA[Prepared By:]]></text>
-      </staticText>
-      <textField>
-        <reportElement x="155" y="406" width="360" height="14" uuid="va4"/>
-        <textElement><font size="9"/></textElement>
-        <textFieldExpression><![CDATA[$F{agent_name} != null ? $F{agent_name} : "Staff"]]></textFieldExpression>
-      </textField>
+      <!-- SUB: ความคุ้มครองต่อทรัพย์สิน y=298 -->
+      <rectangle><reportElement x="0" y="298" width="515" height="16" backcolor="#F5F5F5" forecolor="#CCCCCC" uuid="d3d3d3d3-1111-1111-1111-111111111120"/><graphicElement><pen lineWidth="0.3"/></graphicElement></rectangle>
+      <staticText><reportElement x="4" y="299" width="511" height="14" uuid="d3d3d3d3-1111-1111-1111-111111111121"/><textElement><font size="11" isBold="true" isItalic="true"/></textElement><text><![CDATA[ความคุ้มครองต่อทรัพย์สิน]]></text></staticText>
 
-      <!-- ── Disclaimer ── -->
-      <staticText>
-        <reportElement x="0" y="460" width="515" height="36" forecolor="#888888" uuid="disc"/>
-        <textElement><font size="7"/></textElement>
-        <text><![CDATA[This quotation is valid for 30 days from the date of issue. Premiums are subject to change without notice. This document is for reference only and does not constitute a binding insurance contract.]]></text>
-      </staticText>
+      <!-- Row: Sum Insured y=314 -->
+      <rectangle><reportElement x="0" y="314" width="515" height="20" backcolor="#FFFFFF" forecolor="#DDDDDD" uuid="d3d3d3d3-1111-1111-1111-111111111122"/><graphicElement><pen lineWidth="0.3"/></graphicElement></rectangle>
+      <staticText><reportElement x="4" y="316" width="151" height="15" uuid="d3d3d3d3-1111-1111-1111-111111111123"/><textElement><font size="11"/></textElement><text><![CDATA[3. ความเสียหาย (ทุนประกันภัย)]]></text></staticText>
+      <textField isBlankWhenNull="true"><reportElement x="155" y="316" width="120" height="15" uuid="d3d3d3d3-1111-1111-1111-111111111124"/><textElement textAlignment="Center"><font size="11"/></textElement><textFieldExpression><![CDATA[$F{p1_sum_insured} != null ? new java.text.DecimalFormat("#,##0").format($F{p1_sum_insured}) : "-"]]></textFieldExpression></textField>
+      <textField isBlankWhenNull="true"><reportElement x="275" y="316" width="120" height="15" uuid="d3d3d3d3-1111-1111-1111-111111111125"/><textElement textAlignment="Center"><font size="11"/></textElement><textFieldExpression><![CDATA[$F{company2_name} != null ? ($F{p2_sum_insured} != null ? new java.text.DecimalFormat("#,##0").format($F{p2_sum_insured}) : "-") : ""]]></textFieldExpression></textField>
+      <textField isBlankWhenNull="true"><reportElement x="395" y="316" width="120" height="15" uuid="d3d3d3d3-1111-1111-1111-111111111126"/><textElement textAlignment="Center"><font size="11"/></textElement><textFieldExpression><![CDATA[$F{company3_name} != null ? ($F{p3_sum_insured} != null ? new java.text.DecimalFormat("#,##0").format($F{p3_sum_insured}) : "-") : ""]]></textFieldExpression></textField>
+
+      <!-- Row: Excess y=334 -->
+      <rectangle><reportElement x="0" y="334" width="515" height="20" backcolor="#FAFAFA" forecolor="#DDDDDD" uuid="d3d3d3d3-1111-1111-1111-111111111127"/><graphicElement><pen lineWidth="0.3"/></graphicElement></rectangle>
+      <staticText><reportElement x="4" y="336" width="151" height="15" uuid="d3d3d3d3-1111-1111-1111-111111111128"/><textElement><font size="11"/></textElement><text><![CDATA[4. ความเสียหายส่วนแรก]]></text></staticText>
+      <textField isBlankWhenNull="true"><reportElement x="155" y="336" width="120" height="15" uuid="d3d3d3d3-1111-1111-1111-111111111129"/><textElement textAlignment="Center"><font size="11"/></textElement><textFieldExpression><![CDATA[$F{p1_excess} != null ? new java.text.DecimalFormat("#,##0").format($F{p1_excess}) : "0"]]></textFieldExpression></textField>
+      <textField isBlankWhenNull="true"><reportElement x="275" y="336" width="120" height="15" uuid="d3d3d3d3-1111-1111-1111-111111111130"/><textElement textAlignment="Center"><font size="11"/></textElement><textFieldExpression><![CDATA[$F{company2_name} != null ? ($F{p2_excess} != null ? new java.text.DecimalFormat("#,##0").format($F{p2_excess}) : "0") : ""]]></textFieldExpression></textField>
+      <textField isBlankWhenNull="true"><reportElement x="395" y="336" width="120" height="15" uuid="d3d3d3d3-1111-1111-1111-111111111131"/><textElement textAlignment="Center"><font size="11"/></textElement><textFieldExpression><![CDATA[$F{company3_name} != null ? ($F{p3_excess} != null ? new java.text.DecimalFormat("#,##0").format($F{p3_excess}) : "0") : ""]]></textFieldExpression></textField>
+
+      <!-- Row: Fire/Theft y=354 -->
+      <rectangle><reportElement x="0" y="354" width="515" height="20" backcolor="#FFFFFF" forecolor="#DDDDDD" uuid="d3d3d3d3-1111-1111-1111-111111111132"/><graphicElement><pen lineWidth="0.3"/></graphicElement></rectangle>
+      <staticText><reportElement x="4" y="356" width="151" height="15" uuid="d3d3d3d3-1111-1111-1111-111111111133"/><textElement><font size="11"/></textElement><text><![CDATA[5. รถยนต์สูญหาย/ไฟไหม้]]></text></staticText>
+      <textField isBlankWhenNull="true"><reportElement x="155" y="356" width="120" height="15" uuid="d3d3d3d3-1111-1111-1111-111111111134"/><textElement textAlignment="Center"><font size="11"/></textElement><textFieldExpression><![CDATA[$F{p1_fire_theft} != null ? new java.text.DecimalFormat("#,##0").format($F{p1_fire_theft}) : "-"]]></textFieldExpression></textField>
+      <textField isBlankWhenNull="true"><reportElement x="275" y="356" width="120" height="15" uuid="d3d3d3d3-1111-1111-1111-111111111135"/><textElement textAlignment="Center"><font size="11"/></textElement><textFieldExpression><![CDATA[$F{company2_name} != null ? ($F{p2_fire_theft} != null ? new java.text.DecimalFormat("#,##0").format($F{p2_fire_theft}) : "-") : ""]]></textFieldExpression></textField>
+      <textField isBlankWhenNull="true"><reportElement x="395" y="356" width="120" height="15" uuid="d3d3d3d3-1111-1111-1111-111111111136"/><textElement textAlignment="Center"><font size="11"/></textElement><textFieldExpression><![CDATA[$F{company3_name} != null ? ($F{p3_fire_theft} != null ? new java.text.DecimalFormat("#,##0").format($F{p3_fire_theft}) : "-") : ""]]></textFieldExpression></textField>
+
+      <!-- SUB: ความคุ้มครองเพิ่มเติม y=374 -->
+      <rectangle><reportElement x="0" y="374" width="515" height="16" backcolor="#F5F5F5" forecolor="#CCCCCC" uuid="d3d3d3d3-1111-1111-1111-111111111137"/><graphicElement><pen lineWidth="0.3"/></graphicElement></rectangle>
+      <staticText><reportElement x="4" y="375" width="511" height="14" uuid="d3d3d3d3-1111-1111-1111-111111111138"/><textElement><font size="11" isBold="true" isItalic="true"/></textElement><text><![CDATA[ความคุ้มครองเพิ่มเติม]]></text></staticText>
+
+      <!-- Row: PA Driver y=390 -->
+      <rectangle><reportElement x="0" y="390" width="515" height="20" backcolor="#FFFFFF" forecolor="#DDDDDD" uuid="d3d3d3d3-1111-1111-1111-111111111139"/><graphicElement><pen lineWidth="0.3"/></graphicElement></rectangle>
+      <staticText><reportElement x="4" y="392" width="151" height="15" uuid="d3d3d3d3-1111-1111-1111-111111111140"/><textElement><font size="11"/></textElement><text><![CDATA[6. อุบัติเหตุส่วนบุคคล (ผู้ขับขี่)]]></text></staticText>
+      <textField isBlankWhenNull="true"><reportElement x="155" y="392" width="120" height="15" uuid="d3d3d3d3-1111-1111-1111-111111111141"/><textElement textAlignment="Center"><font size="11"/></textElement><textFieldExpression><![CDATA[$F{p1_pa_driver} != null ? new java.text.DecimalFormat("#,##0").format($F{p1_pa_driver}) : "-"]]></textFieldExpression></textField>
+      <textField isBlankWhenNull="true"><reportElement x="275" y="392" width="120" height="15" uuid="d3d3d3d3-1111-1111-1111-111111111142"/><textElement textAlignment="Center"><font size="11"/></textElement><textFieldExpression><![CDATA[$F{company2_name} != null ? ($F{p2_pa_driver} != null ? new java.text.DecimalFormat("#,##0").format($F{p2_pa_driver}) : "-") : ""]]></textFieldExpression></textField>
+      <textField isBlankWhenNull="true"><reportElement x="395" y="392" width="120" height="15" uuid="d3d3d3d3-1111-1111-1111-111111111143"/><textElement textAlignment="Center"><font size="11"/></textElement><textFieldExpression><![CDATA[$F{company3_name} != null ? ($F{p3_pa_driver} != null ? new java.text.DecimalFormat("#,##0").format($F{p3_pa_driver}) : "-") : ""]]></textFieldExpression></textField>
+
+      <!-- Row: PA Passengers y=410 -->
+      <rectangle><reportElement x="0" y="410" width="515" height="20" backcolor="#FAFAFA" forecolor="#DDDDDD" uuid="d3d3d3d3-1111-1111-1111-111111111144"/><graphicElement><pen lineWidth="0.3"/></graphicElement></rectangle>
+      <staticText><reportElement x="4" y="412" width="151" height="15" uuid="d3d3d3d3-1111-1111-1111-111111111145"/><textElement><font size="11"/></textElement><text><![CDATA[   ผู้ขับขี่ + ผู้โดยสาร]]></text></staticText>
+      <textField isBlankWhenNull="true"><reportElement x="155" y="412" width="120" height="15" uuid="d3d3d3d3-1111-1111-1111-111111111146"/><textElement textAlignment="Center"><font size="11"/></textElement><textFieldExpression><![CDATA[$F{p1_pa_passenger} != null ? new java.text.DecimalFormat("#,##0").format($F{p1_pa_passenger}) : "-"]]></textFieldExpression></textField>
+      <textField isBlankWhenNull="true"><reportElement x="275" y="412" width="120" height="15" uuid="d3d3d3d3-1111-1111-1111-111111111147"/><textElement textAlignment="Center"><font size="11"/></textElement><textFieldExpression><![CDATA[$F{company2_name} != null ? ($F{p2_pa_passenger} != null ? new java.text.DecimalFormat("#,##0").format($F{p2_pa_passenger}) : "-") : ""]]></textFieldExpression></textField>
+      <textField isBlankWhenNull="true"><reportElement x="395" y="412" width="120" height="15" uuid="d3d3d3d3-1111-1111-1111-111111111148"/><textElement textAlignment="Center"><font size="11"/></textElement><textFieldExpression><![CDATA[$F{company3_name} != null ? ($F{p3_pa_passenger} != null ? new java.text.DecimalFormat("#,##0").format($F{p3_pa_passenger}) : "-") : ""]]></textFieldExpression></textField>
+
+      <!-- Row: Medical y=430 -->
+      <rectangle><reportElement x="0" y="430" width="515" height="20" backcolor="#FFFFFF" forecolor="#DDDDDD" uuid="d3d3d3d3-1111-1111-1111-111111111149"/><graphicElement><pen lineWidth="0.3"/></graphicElement></rectangle>
+      <staticText><reportElement x="4" y="432" width="151" height="15" uuid="d3d3d3d3-1111-1111-1111-111111111150"/><textElement><font size="11"/></textElement><text><![CDATA[7. ค่ารักษาพยาบาล]]></text></staticText>
+      <textField isBlankWhenNull="true"><reportElement x="155" y="432" width="120" height="15" uuid="d3d3d3d3-1111-1111-1111-111111111151"/><textElement textAlignment="Center"><font size="11"/></textElement><textFieldExpression><![CDATA[$F{p1_medical} != null ? new java.text.DecimalFormat("#,##0").format($F{p1_medical}) : "-"]]></textFieldExpression></textField>
+      <textField isBlankWhenNull="true"><reportElement x="275" y="432" width="120" height="15" uuid="d3d3d3d3-1111-1111-1111-111111111152"/><textElement textAlignment="Center"><font size="11"/></textElement><textFieldExpression><![CDATA[$F{company2_name} != null ? ($F{p2_medical} != null ? new java.text.DecimalFormat("#,##0").format($F{p2_medical}) : "-") : ""]]></textFieldExpression></textField>
+      <textField isBlankWhenNull="true"><reportElement x="395" y="432" width="120" height="15" uuid="d3d3d3d3-1111-1111-1111-111111111153"/><textElement textAlignment="Center"><font size="11"/></textElement><textFieldExpression><![CDATA[$F{company3_name} != null ? ($F{p3_medical} != null ? new java.text.DecimalFormat("#,##0").format($F{p3_medical}) : "-") : ""]]></textFieldExpression></textField>
+
+      <!-- Row: Bail Bond y=450 -->
+      <rectangle><reportElement x="0" y="450" width="515" height="20" backcolor="#FAFAFA" forecolor="#DDDDDD" uuid="d3d3d3d3-1111-1111-1111-111111111154"/><graphicElement><pen lineWidth="0.3"/></graphicElement></rectangle>
+      <staticText><reportElement x="4" y="452" width="151" height="15" uuid="d3d3d3d3-1111-1111-1111-111111111155"/><textElement><font size="11"/></textElement><text><![CDATA[8. ประกันตัวผู้ขับขี่]]></text></staticText>
+      <textField isBlankWhenNull="true"><reportElement x="155" y="452" width="120" height="15" uuid="d3d3d3d3-1111-1111-1111-111111111156"/><textElement textAlignment="Center"><font size="11"/></textElement><textFieldExpression><![CDATA[$F{p1_bail} != null ? new java.text.DecimalFormat("#,##0").format($F{p1_bail}) : "-"]]></textFieldExpression></textField>
+      <textField isBlankWhenNull="true"><reportElement x="275" y="452" width="120" height="15" uuid="d3d3d3d3-1111-1111-1111-111111111157"/><textElement textAlignment="Center"><font size="11"/></textElement><textFieldExpression><![CDATA[$F{company2_name} != null ? ($F{p2_bail} != null ? new java.text.DecimalFormat("#,##0").format($F{p2_bail}) : "-") : ""]]></textFieldExpression></textField>
+      <textField isBlankWhenNull="true"><reportElement x="395" y="452" width="120" height="15" uuid="d3d3d3d3-1111-1111-1111-111111111158"/><textElement textAlignment="Center"><font size="11"/></textElement><textFieldExpression><![CDATA[$F{company3_name} != null ? ($F{p3_bail} != null ? new java.text.DecimalFormat("#,##0").format($F{p3_bail}) : "-") : ""]]></textFieldExpression></textField>
+
+      <!-- Premium row y=470 -->
+      <rectangle><reportElement x="0" y="470" width="515" height="20" backcolor="#F0F0F0" forecolor="#CCCCCC" uuid="d4d4d4d4-1111-1111-1111-111111111101"/><graphicElement><pen lineWidth="0.5"/></graphicElement></rectangle>
+      <staticText><reportElement x="4" y="472" width="151" height="15" uuid="d4d4d4d4-1111-1111-1111-111111111102"/><textElement><font size="11" isBold="true"/></textElement><text><![CDATA[เบี้ยประกันภัยรวมภาษีอากร]]></text></staticText>
+      <textField isBlankWhenNull="true"><reportElement x="155" y="472" width="120" height="15" uuid="d4d4d4d4-1111-1111-1111-111111111103"/><textElement textAlignment="Center"><font size="11" isBold="true"/></textElement><textFieldExpression><![CDATA[new java.text.DecimalFormat("#,##0.00").format($F{p1_premium})]]></textFieldExpression></textField>
+      <textField isBlankWhenNull="true"><reportElement x="275" y="472" width="120" height="15" uuid="d4d4d4d4-1111-1111-1111-111111111104"/><textElement textAlignment="Center"><font size="11" isBold="true"/></textElement><textFieldExpression><![CDATA[$F{p2_premium} != null ? new java.text.DecimalFormat("#,##0.00").format($F{p2_premium}) : ($F{company2_name} != null ? "-" : "")]]></textFieldExpression></textField>
+      <textField isBlankWhenNull="true"><reportElement x="395" y="472" width="120" height="15" uuid="d4d4d4d4-1111-1111-1111-111111111105"/><textElement textAlignment="Center"><font size="11" isBold="true"/></textElement><textFieldExpression><![CDATA[$F{p3_premium} != null ? new java.text.DecimalFormat("#,##0.00").format($F{p3_premium}) : ($F{company3_name} != null ? "-" : "")]]></textFieldExpression></textField>
+
+      <!-- พ.ร.บ. row y=490 -->
+      <rectangle><reportElement x="0" y="490" width="515" height="17" backcolor="#FAFAFA" forecolor="#DDDDDD" uuid="d4d4d4d4-1111-1111-1111-111111111106"/><graphicElement><pen lineWidth="0.3"/></graphicElement></rectangle>
+      <staticText><reportElement x="4" y="492" width="151" height="13" uuid="d4d4d4d4-1111-1111-1111-111111111107"/><textElement><font size="11"/></textElement><text><![CDATA[พ.ร.บ.]]></text></staticText>
+      <staticText><reportElement x="155" y="492" width="120" height="13" uuid="d4d4d4d4-1111-1111-1111-111111111108"/><textElement textAlignment="Center"><font size="11"/></textElement><text><![CDATA[0.00]]></text></staticText>
+      <textField isBlankWhenNull="true"><reportElement x="275" y="492" width="120" height="13" uuid="d4d4d4d4-1111-1111-1111-111111111109"/><textElement textAlignment="Center"><font size="11"/></textElement><textFieldExpression><![CDATA[$F{company2_name} != null ? "0.00" : ""]]></textFieldExpression></textField>
+      <textField isBlankWhenNull="true"><reportElement x="395" y="492" width="120" height="13" uuid="d4d4d4d4-1111-1111-1111-111111111110"/><textElement textAlignment="Center"><font size="11"/></textElement><textFieldExpression><![CDATA[$F{company3_name} != null ? "0.00" : ""]]></textFieldExpression></textField>
+
+      <!-- Total row y=507 -->
+      <rectangle><reportElement x="0" y="507" width="515" height="22" backcolor="#E8F4F5" forecolor="#006874" uuid="d4d4d4d4-1111-1111-1111-111111111111"/><graphicElement><pen lineWidth="0.8"/></graphicElement></rectangle>
+      <staticText><reportElement x="4" y="510" width="151" height="15" forecolor="#006874" uuid="d4d4d4d4-1111-1111-1111-111111111112"/><textElement><font size="11" isBold="true"/></textElement><text><![CDATA[เบี้ยประกันภัย + พ.ร.บ.]]></text></staticText>
+      <textField isBlankWhenNull="true"><reportElement x="155" y="510" width="120" height="15" forecolor="#006874" uuid="d4d4d4d4-1111-1111-1111-111111111113"/><textElement textAlignment="Center"><font size="11" isBold="true"/></textElement><textFieldExpression><![CDATA[new java.text.DecimalFormat("#,##0.00").format($F{p1_premium})]]></textFieldExpression></textField>
+      <textField isBlankWhenNull="true"><reportElement x="275" y="510" width="120" height="15" forecolor="#006874" uuid="d4d4d4d4-1111-1111-1111-111111111114"/><textElement textAlignment="Center"><font size="11" isBold="true"/></textElement><textFieldExpression><![CDATA[$F{p2_premium} != null ? new java.text.DecimalFormat("#,##0.00").format($F{p2_premium}) : ($F{company2_name} != null ? "-" : "")]]></textFieldExpression></textField>
+      <textField isBlankWhenNull="true"><reportElement x="395" y="510" width="120" height="15" forecolor="#006874" uuid="d4d4d4d4-1111-1111-1111-111111111115"/><textElement textAlignment="Center"><font size="11" isBold="true"/></textElement><textFieldExpression><![CDATA[$F{p3_premium} != null ? new java.text.DecimalFormat("#,##0.00").format($F{p3_premium}) : ($F{company3_name} != null ? "-" : "")]]></textFieldExpression></textField>
+
+      <!-- Notes y=532 -->
+      <staticText><reportElement x="0"  y="532" width="60"  height="15" uuid="d4d4d4d4-1111-1111-1111-111111111116"/><textElement><font size="11" isBold="true"/></textElement><text><![CDATA[หมายเหตุ :]]></text></staticText>
+      <staticText><reportElement x="65" y="532" width="450" height="15" uuid="d4d4d4d4-1111-1111-1111-111111111117"/><textElement><font size="11"/></textElement><text><![CDATA[ใบเสนอราคานี้มีอายุ 15 วันนับจากวันที่ออก]]></text></staticText>
+
+      <!-- Valid Until y=549 -->
+      <staticText><reportElement x="0"  y="549" width="65"  height="15" uuid="d4d4d4d4-1111-1111-1111-111111111118"/><textElement><font size="11" isBold="true"/></textElement><text><![CDATA[Valid Until:]]></text></staticText>
+      <textField><reportElement x="68" y="549" width="200" height="15" uuid="d4d4d4d4-1111-1111-1111-111111111119"/><textElement><font size="11"/></textElement><textFieldExpression><![CDATA[new java.text.SimpleDateFormat("d/M/yyyy").format(new java.util.Date($F{generated_at}.getTime() + 15L*24*60*60*1000))]]></textFieldExpression></textField>
 
     </band>
   </detail>
 
   <pageFooter>
-    <band height="28">
-      <line><reportElement x="0" y="0" width="515" height="1" forecolor="#CCCCCC" uuid="fl"/></line>
-      <staticText>
-        <reportElement x="0" y="6" width="300" height="14" forecolor="#888888" uuid="fs1"/>
-        <textElement><font size="7"/></textElement>
-        <text><![CDATA[IHOS — Internal Motor Insurance Management System]]></text>
-      </staticText>
-      <textField>
-        <reportElement x="300" y="6" width="215" height="14" forecolor="#888888" uuid="fp"/>
-        <textElement textAlignment="Right"><font size="7"/></textElement>
-        <textFieldExpression><![CDATA["Page " + $V{PAGE_NUMBER}]]></textFieldExpression>
-      </textField>
+    <band height="36">
+      <line><reportElement x="0" y="0" width="515" height="1" forecolor="#006874" uuid="e1e1e1e1-1111-1111-1111-111111111101"/></line>
+      <staticText><reportElement x="0" y="5" width="260" height="11" forecolor="#006874" uuid="e1e1e1e1-1111-1111-1111-111111111102"/><textElement><font size="7" isBold="true"/></textElement><text><![CDATA[สอบถามเพิ่มเติม ได้ที่ 02-0044-722 หรือ Email: Contact@insurehub.co.th]]></text></staticText>
+      <staticText><reportElement x="310" y="5" width="205" height="11" forecolor="#006874" uuid="e1e1e1e1-1111-1111-1111-111111111103"/><textElement textAlignment="Right"><font size="7" isBold="true"/></textElement><text><![CDATA[Facebook: Insurehub / Line: @Insurehub]]></text></staticText>
+      <textField><reportElement x="430" y="20" width="85" height="10" forecolor="#888888" uuid="e1e1e1e1-1111-1111-1111-111111111104"/><textElement textAlignment="Right"><font size="6.5"/></textElement><textFieldExpression><![CDATA["Page " + $V{PAGE_NUMBER}]]></textFieldExpression></textField>
     </band>
   </pageFooter>
 

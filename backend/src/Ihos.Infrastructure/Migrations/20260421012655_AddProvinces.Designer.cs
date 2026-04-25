@@ -3,6 +3,7 @@ using System;
 using Ihos.Infrastructure.Persistence;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Infrastructure;
+using Microsoft.EntityFrameworkCore.Migrations;
 using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 using Npgsql.EntityFrameworkCore.PostgreSQL.Metadata;
 
@@ -11,9 +12,11 @@ using Npgsql.EntityFrameworkCore.PostgreSQL.Metadata;
 namespace Ihos.Infrastructure.Migrations
 {
     [DbContext(typeof(ApplicationDbContext))]
-    partial class ApplicationDbContextModelSnapshot : ModelSnapshot
+    [Migration("20260421012655_AddProvinces")]
+    partial class AddProvinces
     {
-        protected override void BuildModel(ModelBuilder modelBuilder)
+        /// <inheritdoc />
+        protected override void BuildTargetModel(ModelBuilder modelBuilder)
         {
 #pragma warning disable 612, 618
             modelBuilder
@@ -1044,19 +1047,7 @@ namespace Ihos.Infrastructure.Migrations
                     b.Property<Guid>("PlanId")
                         .HasColumnType("uuid");
 
-                    b.Property<Guid?>("PlanId2")
-                        .HasColumnType("uuid");
-
-                    b.Property<Guid?>("PlanId3")
-                        .HasColumnType("uuid");
-
                     b.Property<decimal>("PremiumAtGeneration")
-                        .HasColumnType("numeric(15,2)");
-
-                    b.Property<decimal?>("PremiumAtGeneration2")
-                        .HasColumnType("numeric(15,2)");
-
-                    b.Property<decimal?>("PremiumAtGeneration3")
                         .HasColumnType("numeric(15,2)");
 
                     b.Property<DateTime>("UpdatedAt")
@@ -1086,10 +1077,6 @@ namespace Ihos.Infrastructure.Migrations
                     b.HasIndex("GeneratedAt");
 
                     b.HasIndex("PlanId");
-
-                    b.HasIndex("PlanId2");
-
-                    b.HasIndex("PlanId3");
 
                     b.ToTable("quotations", (string)null);
                 });
@@ -1444,21 +1431,7 @@ namespace Ihos.Infrastructure.Migrations
                         .OnDelete(DeleteBehavior.Restrict)
                         .IsRequired();
 
-                    b.HasOne("Ihos.Domain.Entities.InsurancePlan", "Plan2")
-                        .WithMany()
-                        .HasForeignKey("PlanId2")
-                        .OnDelete(DeleteBehavior.Restrict);
-
-                    b.HasOne("Ihos.Domain.Entities.InsurancePlan", "Plan3")
-                        .WithMany()
-                        .HasForeignKey("PlanId3")
-                        .OnDelete(DeleteBehavior.Restrict);
-
                     b.Navigation("Plan");
-
-                    b.Navigation("Plan2");
-
-                    b.Navigation("Plan3");
                 });
 
             modelBuilder.Entity("Ihos.Domain.Entities.RefreshToken", b =>

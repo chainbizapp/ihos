@@ -251,18 +251,18 @@ public sealed class AllianzInsuranceAdapter : ICompanyImportAdapter
     /// <summary>
     /// Maps Allianz COVER_TYPE codes to canonical PlanType names.
     /// VMI1 → Type1, VMI2 → Type2, VMI3 → Type3,
-    /// VMI2P → Type2Plus, VMI3P → Type3Plus.
+    /// VMI2P / VMI2+ → Type2Plus, VMI3P / VMI3+ → Type3Plus.
     /// Unknown codes are passed through so the mapping resolver can handle them.
     /// </summary>
     private static string MapCoverType(string raw) =>
         raw.ToUpperInvariant() switch
         {
-            "VMI1"  => "Type1",
-            "VMI2"  => "Type2",
-            "VMI3"  => "Type3",
-            "VMI2P" => "Type2Plus",
-            "VMI3P" => "Type3Plus",
-            _       => raw
+            "VMI1"           => "Type1",
+            "VMI2"           => "Type2",
+            "VMI3"           => "Type3",
+            "VMI2P" or "VMI2+" => "Type2Plus",
+            "VMI3P" or "VMI3+" => "Type3Plus",
+            _                => raw
         };
 
     /// <summary>
