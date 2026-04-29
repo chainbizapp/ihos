@@ -4,7 +4,8 @@ public record VehicleMasterRow(
     string CarnameCode,
     string Brand,
     string CarModel,
-    string CarOption
+    string CarOption,
+    string CarCC = ""
 );
 
 /// <summary>

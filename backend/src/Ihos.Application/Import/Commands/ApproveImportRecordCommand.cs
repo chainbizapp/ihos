@@ -44,11 +44,11 @@ public class ApproveImportRecordCommandHandler : IRequestHandler<ApproveImportRe
         record.ReviewedBy = _currentUser.UserId;
         record.ReviewedAt = DateTime.UtcNow;
 
-        // Update batch counts
+        // Sync batch counters from actual record state
         var batch = await _batches.GetByIdAsync(record.BatchId, ct);
         if (batch != null)
         {
-            batch.ApprovedRows++;
+            await _batches.RecalculateCountersAsync(batch.Id, ct);
         }
 
         await _records.SaveChangesAsync(ct);

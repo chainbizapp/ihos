@@ -10,6 +10,8 @@ export interface VehicleModelMappingDto {
   rawName: string;
   canonicalModelId: string;
   canonicalModelName: string;
+  canonicalSubModel?: string;
+  canonicalEngineCC?: string;
   canonicalMakeName: string;
   isAutoSuggested: boolean;
 }
@@ -50,9 +52,10 @@ export class MappingApiService {
   private readonly http = inject(HttpClient);
   private readonly api = `${environment.apiUrl}/mappings`;
 
-  async getVehicleModelMappings(options: { companyId?: string; page?: number; pageSize?: number } = {}): Promise<VehicleModelMappingsResult> {
+  async getVehicleModelMappings(options: { companyId?: string; makeName?: string; page?: number; pageSize?: number } = {}): Promise<VehicleModelMappingsResult> {
     let params = new HttpParams();
     if (options.companyId) params = params.set('companyId', options.companyId);
+    if (options.makeName) params = params.set('makeName', options.makeName);
     if (options.page) params = params.set('page', options.page);
     if (options.pageSize) params = params.set('pageSize', options.pageSize);
     return firstValueFrom(this.http.get<VehicleModelMappingsResult>(`${this.api}/vehicle-models`, { params }));
@@ -64,6 +67,10 @@ export class MappingApiService {
 
   async updateVehicleModelMapping(id: string, canonicalModelId: string): Promise<void> {
     return firstValueFrom(this.http.put<void>(`${this.api}/vehicle-models/${id}`, { canonicalModelId }));
+  }
+
+  async deleteVehicleModelMapping(id: string): Promise<void> {
+    return firstValueFrom(this.http.delete<void>(`${this.api}/vehicle-models/${id}`));
   }
 
   async getPlanTypeMappings(options: { companyId?: string; page?: number; pageSize?: number } = {}): Promise<PlanTypeMappingsResult> {

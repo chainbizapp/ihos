@@ -219,8 +219,7 @@ export class ImportApiService {
       count: number;
       firstRowNumber: number;
       repairType: string;
-      minYear: string;
-      maxYear: string;
+      registrationYear: string;
       sumInsured: string;
       externalPackageId: string;
       vehicleModels: string[];

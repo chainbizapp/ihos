@@ -77,23 +77,6 @@ interface SubModelOption {
         </select>
       </div>
 
-      <!-- Gear Type -->
-      <div [class]="layout() === 'horizontal' ? 'flex-1 min-w-[120px]' : ''" [style.display]="gearTypeOptions().length === 0 ? 'none' : 'block'">
-        <label class="block text-[11px] font-bold text-[#4a5568] mb-2 uppercase tracking-wide">
-          Transmission
-        </label>
-        <select
-          [ngModel]="selectedGearType()"
-          (ngModelChange)="onGearTypeChange($event)"
-          [disabled]="!selectedModelName() || gearTypeOptions().length === 0"
-          class="w-full bg-white border border-gray-200 rounded-lg px-3 py-2.5 text-[14px] font-medium text-[#2d3748] focus:outline-none focus:border-[#006874] transition-colors cursor-pointer appearance-none disabled:opacity-50 disabled:bg-gray-50 disabled:cursor-not-allowed">
-          <option value="">All Gears</option>
-          @for (gear of gearTypeOptions(); track gear) {
-            <option [value]="gear">{{ gear }}</option>
-          }
-        </select>
-      </div>
-
       <!-- Sub-model -->
       <div [class]="layout() === 'horizontal' ? 'flex-[1.5] min-w-[160px]' : ''">
         <label class="block text-[11px] font-bold text-[#4a5568] mb-2 uppercase tracking-wide">
@@ -128,7 +111,6 @@ export class VehicleSelectorComponent implements OnInit {
   readonly selectedSubModelId = signal('');
   readonly selectedCC         = signal('');
   readonly selectedYear       = signal(0); // 0 = All Years
-  readonly selectedGearType   = signal('');
 
   readonly initialSelection = input<VehicleSelection | null>(null);
   readonly selectionChange  = output<VehicleSelection | null>();
@@ -193,21 +175,6 @@ export class VehicleSelectorComponent implements OnInit {
   });
 
   /**
-   * Gear Type options for the current model group.
-   */
-  readonly gearTypeOptions = computed<string[]>(() => {
-    const g = this.selectedGroup();
-    if (!g) return [];
-    const yr = this.selectedYear();
-    const cc = this.selectedCC();
-    const all = [...(g.umbrella ? [g.umbrella] : []), ...g.trims]
-      .filter(m => this.modelCoversYear(m, yr))
-      .filter(m => !cc || (m.engineCC ?? '') === cc);
-    const gears = [...new Set(all.map(m => m.gearType ?? '').filter(g => g !== ''))].sort();
-    return gears.length > 1 ? gears : [];
-  });
-
-  /**
    * Sub-model options filtered by selected year AND selected CC.
    */
   readonly subModelOptions = computed<SubModelOption[]>(() => {
@@ -216,12 +183,9 @@ export class VehicleSelectorComponent implements OnInit {
 
     const yr = this.selectedYear();
     const cc = this.selectedCC();
-    const gear = this.selectedGearType();
-
     const trims = g.trims
       .filter(t => this.modelCoversYear(t, yr))
-      .filter(t => !cc || (t.engineCC ?? '') === cc)
-      .filter(t => !gear || (t.gearType ?? '') === gear);
+      .filter(t => !cc || (t.engineCC ?? '') === cc);
 
     const opts: SubModelOption[] = [];
     if (trims.length === 0 && !g.umbrella) return [];
@@ -234,7 +198,7 @@ export class VehicleSelectorComponent implements OnInit {
     }
     
     for (const t of trims)
-      opts.push({ id: t.id, label: t.gearType ? `${t.subModel} (${t.gearType})` : t.subModel!, isAllVariants: false });
+      opts.push({ id: t.id, label: t.subModel!, isAllVariants: false });
     return opts;
   });
 
@@ -265,7 +229,6 @@ export class VehicleSelectorComponent implements OnInit {
           this.selectedModelName.set(m.name);
           this.selectedYear.set(saved.year ?? 0);
           this.selectedCC.set(saved.engineCC ?? '');
-          this.selectedGearType.set(saved.gearType ?? '');
           // When allVariants:true but the model has no umbrella row, the saved
           // modelId is trims[0].id — but the dropdown option for "All variants"
           // uses the synthetic id 'ALL_VARIANTS'. Match it so the dropdown restores correctly.
@@ -289,7 +252,6 @@ export class VehicleSelectorComponent implements OnInit {
     this.selectedModelName.set('');
     this.selectedYear.set(0);
     this.selectedCC.set('');
-    this.selectedGearType.set('');
     this.selectedSubModelId.set('');
     this.models.set([]);
     this.selectionChange.emit(null);
@@ -307,7 +269,6 @@ export class VehicleSelectorComponent implements OnInit {
     this.selectedModelName.set(modelName);
     this.selectedYear.set(0);
     this.selectedCC.set('');
-    this.selectedGearType.set('');
     this.selectedSubModelId.set('');
     this.selectionChange.emit(null);
 
@@ -325,7 +286,6 @@ export class VehicleSelectorComponent implements OnInit {
     const year = Number(yr);
     this.selectedYear.set(year);
     this.selectedCC.set('');
-    this.selectedGearType.set('');
     this.selectedSubModelId.set('');
     this.selectionChange.emit(null);
     this.autoSelectIfSingle();
@@ -333,18 +293,11 @@ export class VehicleSelectorComponent implements OnInit {
 
   onCCChange(cc: string): void {
     this.selectedCC.set(cc);
-    this.selectedGearType.set('');
     this.selectedSubModelId.set('');
     this.selectionChange.emit(null);
     this.autoSelectIfSingle();
   }
 
-  onGearTypeChange(gear: string): void {
-    this.selectedGearType.set(gear);
-    this.selectedSubModelId.set('');
-    this.selectionChange.emit(null);
-    this.autoSelectIfSingle();
-  }
 
   onSubModelChange(modelId: string): void {
     this.selectedSubModelId.set(modelId);
@@ -367,7 +320,6 @@ export class VehicleSelectorComponent implements OnInit {
     this.selectedModelName.set('');
     this.selectedYear.set(0);
     this.selectedCC.set('');
-    this.selectedGearType.set('');
     this.selectedSubModelId.set('');
     this.models.set([]);
     this.selectionChange.emit(null);
@@ -425,10 +377,6 @@ export class VehicleSelectorComponent implements OnInit {
       : model.name;
     const allVariants = isFakeAllVariants || (this.selectedGroup()?.umbrella?.id === model.id);
     const cc = this.selectedCC() || model.engineCC || undefined;
-    // When "All variants" is selected, only use an explicit Transmission filter — never inherit from the model
-    const gear = allVariants
-      ? (this.selectedGearType() || undefined)
-      : (this.selectedGearType() || model.gearType || undefined);
     const yr = this.selectedYear() || undefined;
     
     this.selectionChange.emit({ 
@@ -437,7 +385,6 @@ export class VehicleSelectorComponent implements OnInit {
       modelId: model.id, 
       modelName, 
       engineCC: cc, 
-      gearType: gear, 
       allVariants,
       year: yr 
     });

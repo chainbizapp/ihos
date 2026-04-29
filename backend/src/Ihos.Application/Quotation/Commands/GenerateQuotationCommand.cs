@@ -7,7 +7,13 @@ public record GenerateQuotationCommand(
     IReadOnlyList<Guid> PlanIds,   // 1–3 plans; first is primary
     string CustomerName,
     string? VehicleRegistration,
-    int VehicleYear
+    int VehicleYear,
+    // Driver info (optional extras for customer record)
+    string? Phone = null,
+    string? Email = null,
+    string? LicenseNumber = null,
+    string? PreviousInsurer = null,
+    string? PreviousExpiryDate = null   // ISO date string yyyy-MM-dd
 ) : IRequest<GenerateQuotationResult>;
 
 public record GenerateQuotationResult(
@@ -19,17 +25,20 @@ public class GenerateQuotationCommandHandler : IRequestHandler<GenerateQuotation
 {
     private readonly IInsurancePlanRepository _plans;
     private readonly IQuotationRepository _quotations;
+    private readonly ICustomerRepository _customers;
     private readonly IJasperReportsClient _jasper;
     private readonly ICurrentUserService _currentUser;
 
     public GenerateQuotationCommandHandler(
         IInsurancePlanRepository plans,
         IQuotationRepository quotations,
+        ICustomerRepository customers,
         IJasperReportsClient jasper,
         ICurrentUserService currentUser)
     {
         _plans = plans;
         _quotations = quotations;
+        _customers = customers;
         _jasper = jasper;
         _currentUser = currentUser;
     }
@@ -83,6 +92,29 @@ public class GenerateQuotationCommandHandler : IRequestHandler<GenerateQuotation
 
         await _quotations.AddAsync(quotation, ct);
         await _quotations.SaveChangesAsync(ct);
+
+        // Upsert customer record for auto-suggest on future quotations
+        if (!string.IsNullOrWhiteSpace(request.Phone))
+        {
+            DateOnly? expiryDate = null;
+            if (DateOnly.TryParse(request.PreviousExpiryDate, out var d)) expiryDate = d;
+
+            var customer = new Domain.Entities.Customer
+            {
+                FullName              = request.CustomerName,
+                Phone                 = request.Phone,
+                Email                 = string.IsNullOrWhiteSpace(request.Email) ? null : request.Email,
+                LicenseNumber         = string.IsNullOrWhiteSpace(request.LicenseNumber) ? null : request.LicenseNumber,
+                VehicleRegistration   = string.IsNullOrWhiteSpace(request.VehicleRegistration) ? null : request.VehicleRegistration,
+                VehicleYear           = request.VehicleYear > 0 ? request.VehicleYear : null,
+                PreviousInsurer       = string.IsNullOrWhiteSpace(request.PreviousInsurer) ? null : request.PreviousInsurer,
+                PreviousExpiryDate    = expiryDate,
+                CreatedBy             = _currentUser.UserId
+            };
+
+            await _customers.UpsertAsync(customer, ct);
+            await _customers.SaveChangesAsync(ct);
+        }
 
         // The JasperReports template connects directly to the DB.
         // param1 = quotation UUID; the report runs its own SQL query.

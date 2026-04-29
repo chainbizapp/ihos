@@ -26,6 +26,12 @@ public class CreatePlanTypeMappingCommandHandler : IRequestHandler<CreatePlanTyp
 
     public async Task<Guid> Handle(CreatePlanTypeMappingCommand request, CancellationToken ct)
     {
+        var existing = await _mappings.GetByCompanyAndRawNameAsync(request.CompanyId, request.RawName, ct);
+        if (existing != null)
+        {
+            return existing.Id;
+        }
+
         var mapping = new PlanTypeMapping
         {
             CompanyId = request.CompanyId,

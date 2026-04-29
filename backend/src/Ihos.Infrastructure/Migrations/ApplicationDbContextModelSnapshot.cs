@@ -74,6 +74,69 @@ namespace Ihos.Infrastructure.Migrations
                     b.ToTable("audit_logs", (string)null);
                 });
 
+            modelBuilder.Entity("Ihos.Domain.Entities.Customer", b =>
+                {
+                    b.Property<Guid>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("uuid")
+                        .HasDefaultValueSql("gen_random_uuid()");
+
+                    b.Property<DateTime>("CreatedAt")
+                        .HasColumnType("timestamp with time zone");
+
+                    b.Property<Guid?>("CreatedBy")
+                        .HasColumnType("uuid");
+
+                    b.Property<string>("Email")
+                        .HasMaxLength(255)
+                        .HasColumnType("character varying(255)");
+
+                    b.Property<string>("FullName")
+                        .IsRequired()
+                        .HasMaxLength(255)
+                        .HasColumnType("character varying(255)");
+
+                    b.Property<bool>("IsDeleted")
+                        .HasColumnType("boolean");
+
+                    b.Property<string>("LicenseNumber")
+                        .HasMaxLength(50)
+                        .HasColumnType("character varying(50)");
+
+                    b.Property<string>("Phone")
+                        .IsRequired()
+                        .HasMaxLength(30)
+                        .HasColumnType("character varying(30)");
+
+                    b.Property<DateOnly?>("PreviousExpiryDate")
+                        .HasColumnType("date");
+
+                    b.Property<string>("PreviousInsurer")
+                        .HasMaxLength(255)
+                        .HasColumnType("character varying(255)");
+
+                    b.Property<DateTime>("UpdatedAt")
+                        .HasColumnType("timestamp with time zone");
+
+                    b.Property<string>("VehicleRegistration")
+                        .HasMaxLength(50)
+                        .HasColumnType("character varying(50)");
+
+                    b.Property<int?>("VehicleYear")
+                        .HasColumnType("integer");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("CreatedBy");
+
+                    b.HasIndex("FullName");
+
+                    b.HasIndex("FullName", "Phone", "VehicleRegistration", "CreatedBy")
+                        .IsUnique();
+
+                    b.ToTable("customers", (string)null);
+                });
+
             modelBuilder.Entity("Ihos.Domain.Entities.ImportBatch", b =>
                 {
                     b.Property<Guid>("Id")
@@ -324,14 +387,8 @@ namespace Ihos.Infrastructure.Migrations
                     b.Property<bool>("IsPublished")
                         .HasColumnType("boolean");
 
-                    b.Property<int>("MaxYear")
-                        .HasColumnType("integer");
-
                     b.Property<decimal?>("MedicalExpenses")
                         .HasColumnType("numeric(15,2)");
-
-                    b.Property<int>("MinYear")
-                        .HasColumnType("integer");
 
                     b.Property<decimal?>("PassengerAccident")
                         .HasColumnType("numeric(15,2)");
@@ -353,6 +410,9 @@ namespace Ihos.Infrastructure.Migrations
                         .HasMaxLength(100)
                         .HasColumnType("character varying(100)")
                         .HasDefaultValue("");
+
+                    b.Property<int>("RegistrationYear")
+                        .HasColumnType("integer");
 
                     b.Property<string>("Remarks")
                         .HasColumnType("text");
@@ -386,6 +446,10 @@ namespace Ihos.Infrastructure.Migrations
                     b.Property<Guid>("VehicleModelId")
                         .HasColumnType("uuid");
 
+                    b.Property<string>("VehicleTypeCode")
+                        .IsRequired()
+                        .HasColumnType("text");
+
                     b.HasKey("Id");
 
                     b.HasIndex("CompanyId");
@@ -398,7 +462,7 @@ namespace Ihos.Infrastructure.Migrations
 
                     b.HasIndex("VehicleModelId");
 
-                    b.HasIndex("CompanyId", "VehicleModelId", "PlanType", "RepairType", "MinYear", "MaxYear", "SumInsured", "RegionGroup", "ExternalPackageId")
+                    b.HasIndex("CompanyId", "VehicleModelId", "PlanType", "RepairType", "RegistrationYear", "SumInsured", "RegionGroup", "ExternalPackageId", "VehicleTypeCode")
                         .IsUnique();
 
                     b.ToTable("insurance_plans", (string)null);
@@ -1127,6 +1191,87 @@ namespace Ihos.Infrastructure.Migrations
                     b.ToTable("refresh_tokens", (string)null);
                 });
 
+            modelBuilder.Entity("Ihos.Domain.Entities.RegionGroupMapping", b =>
+                {
+                    b.Property<int>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("integer");
+
+                    NpgsqlPropertyBuilderExtensions.UseIdentityByDefaultColumn(b.Property<int>("Id"));
+
+                    b.Property<string>("CompanyShortCode")
+                        .IsRequired()
+                        .HasMaxLength(50)
+                        .HasColumnType("character varying(50)");
+
+                    b.Property<string>("RegionGroup")
+                        .IsRequired()
+                        .HasMaxLength(50)
+                        .HasColumnType("character varying(50)");
+
+                    b.Property<string>("ThaiRegion")
+                        .IsRequired()
+                        .HasMaxLength(20)
+                        .HasColumnType("character varying(20)");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("CompanyShortCode", "RegionGroup");
+
+                    b.ToTable("region_group_mappings", (string)null);
+
+                    b.HasData(
+                        new
+                        {
+                            Id = 1,
+                            CompanyShortCode = "ALA",
+                            RegionGroup = "BKK",
+                            ThaiRegion = "Bangkok"
+                        },
+                        new
+                        {
+                            Id = 2,
+                            CompanyShortCode = "ALA",
+                            RegionGroup = "NE",
+                            ThaiRegion = "Northeast"
+                        },
+                        new
+                        {
+                            Id = 3,
+                            CompanyShortCode = "ALA",
+                            RegionGroup = "UPC",
+                            ThaiRegion = "North"
+                        },
+                        new
+                        {
+                            Id = 4,
+                            CompanyShortCode = "ALA",
+                            RegionGroup = "UPC",
+                            ThaiRegion = "Central"
+                        },
+                        new
+                        {
+                            Id = 5,
+                            CompanyShortCode = "ALA",
+                            RegionGroup = "UPC",
+                            ThaiRegion = "East"
+                        },
+                        new
+                        {
+                            Id = 6,
+                            CompanyShortCode = "ALA",
+                            RegionGroup = "UPC",
+                            ThaiRegion = "West"
+                        },
+                        new
+                        {
+                            Id = 7,
+                            CompanyShortCode = "ALA",
+                            RegionGroup = "UPC",
+                            ThaiRegion = "South"
+                        });
+                });
+
             modelBuilder.Entity("Ihos.Domain.Entities.User", b =>
                 {
                     b.Property<Guid>("Id")
@@ -1305,7 +1450,7 @@ namespace Ihos.Infrastructure.Migrations
 
                     b.HasIndex("MakeId");
 
-                    b.HasIndex("MakeId", "Name", "SubModel", "GearType")
+                    b.HasIndex("MakeId", "Name", "SubModel", "GearType", "EngineCC")
                         .IsUnique();
 
                     b.ToTable("vehicle_models", (string)null);

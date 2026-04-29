@@ -22,7 +22,7 @@ public class CsvImportParser : ICsvImportParser
                 BadDataFound = context =>
                 {
                     errors.Add(new ParseError(
-                        context.Context.Parser.Row,
+                        context.Context?.Parser.Row ?? 0,
                         "Unknown",
                         $"Bad data: {context.RawRecord?.Trim()}"));
                 }

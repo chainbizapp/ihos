@@ -43,9 +43,12 @@ public class ReResolveBatchMappingsCommandHandler
         if (pendingRecords.Count == 0)
             return new ReResolveBatchMappingsResult(true, 0, 0);
 
-        // Pre-load all mappings once for the whole batch
+        // Pre-load all mappings once for the whole batch.
+        // AllowAutoSuggest = false: re-resolve uses only confirmed existing mappings;
+        // fuzzy auto-suggestion is reserved for initial import and "Auto Map All".
         var ctx = await _resolver.CreateContextAsync(
-            batch.CompanyId, _currentUser.UserId ?? Guid.Empty, ct);
+            batch.CompanyId, _currentUser.UserId ?? Guid.Empty, ct,
+            allowAutoSuggest: false);
 
         int resolvedCount = 0;
         int stillPending  = 0;
@@ -81,10 +84,8 @@ public class ReResolveBatchMappingsCommandHandler
         // Flush any new auto-suggestions + save all record updates
         await _resolver.FlushAutoSuggestionsAsync(ctx, ct);
 
-        batch.ResolvedRows += resolvedCount;
-        batch.PendingRows   = Math.Max(0, batch.PendingRows - resolvedCount);
-
         await _records.SaveChangesAsync(ct);
+        await _batches.RecalculateCountersAsync(batch.Id, ct);
 
         return new ReResolveBatchMappingsResult(true, resolvedCount, stillPending);
     }

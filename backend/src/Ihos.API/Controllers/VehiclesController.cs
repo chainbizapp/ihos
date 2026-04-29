@@ -51,9 +51,9 @@ public class VehiclesController : ControllerBase
                 subModel = m.SubModel,
                 engineCC = m.EngineCC,
                 gearType = m.GearType,
-                // Aggregate year ranges from all published plans linked to this model
-                minYear  = m.InsurancePlans.Where(p => !p.IsDeleted).Min(p => (int?)p.MinYear),
-                maxYear  = m.InsurancePlans.Where(p => !p.IsDeleted).Max(p => (int?)p.MaxYear)
+                // Aggregate registration year ranges from all published plans linked to this model
+                minYear  = m.InsurancePlans.Where(p => !p.IsDeleted && p.RegistrationYear > 0).Min(p => (int?)p.RegistrationYear),
+                maxYear  = m.InsurancePlans.Where(p => !p.IsDeleted && p.RegistrationYear > 0).Max(p => (int?)p.RegistrationYear)
             })
             .OrderBy(m => m.name)
             .ToListAsync(ct);

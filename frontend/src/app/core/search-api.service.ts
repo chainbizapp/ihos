@@ -20,6 +20,7 @@ export interface InsurancePlanSummary {
   excessAmount: number;
   coverageDetails: string;
   remarks?: string;
+  regionGroup?: string | null;
   // Structured coverage limits (null = insurer does not publish this value)
   tpbiPerPerson?: number | null;
   tpbiPerAccident?: number | null;
@@ -79,6 +80,7 @@ export interface SearchParams {
   engineCC?: string;
   gearType?: string;
   allVariants?: boolean;
+  province?: string;
 }
 
 @Injectable({ providedIn: 'root' })
@@ -100,6 +102,7 @@ export class SearchApiService {
     if (params.companyId) p = p.set('companyId', params.companyId);
     if (params.excessMin != null) p = p.set('excessMin', params.excessMin);
     if (params.excessMax != null) p = p.set('excessMax', params.excessMax);
+    if (params.province) p = p.set('province', params.province);
     if (params.sort) p = p.set('sort', params.sort);
     if (params.page) p = p.set('page', params.page);
     if (params.pageSize) p = p.set('pageSize', params.pageSize);

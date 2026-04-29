@@ -21,7 +21,9 @@ public record SearchPlansQuery(
     /// <summary>Filter by gear type (e.g. "Automatic"). Null = all gear types.</summary>
     string? GearType = null,
     /// <summary>If true, bypasses specific sub-model restriction and searches all trims for this model.</summary>
-    bool AllVariants = false
+    bool AllVariants = false,
+    /// <summary>Thai province name (e.g. "กรุงเทพมหานคร"). Used to filter region-specific plans.</summary>
+    string? Province = null
 ) : IRequest<SearchPlansResult>;
 
 public record InsurancePlanSummaryDto(
@@ -35,13 +37,13 @@ public record InsurancePlanSummaryDto(
     string? VehicleSubModel,
     string? VehicleEngineCC,
     string? VehicleGearType,
-    int MinYear,
-    int MaxYear,
+    int RegistrationYear,
     decimal SumInsured,
     decimal PremiumTotal,
     decimal ExcessAmount,
     string CoverageDetails,
     string? Remarks,
+    string? RegionGroup        = null,
     // Structured coverage limits (null = company does not publish this value)
     decimal? TpbiPerPerson     = null,
     decimal? TpbiPerAccident   = null,
@@ -76,17 +78,15 @@ public class SearchPlansQueryHandler : IRequestHandler<SearchPlansQuery, SearchP
     public async Task<SearchPlansResult> Handle(SearchPlansQuery request, CancellationToken ct)
     {
         var pageSize = Math.Min(request.PageSize, 50);
-        // 0 = "All Years" sentinel → no age filter
-        int? vehicleAge = request.RegistrationYear > 0
-            ? DateTime.UtcNow.Year - request.RegistrationYear
-            : null;
+        // 0 = "All Years" sentinel → no year filter
+        int? registrationYear = request.RegistrationYear > 0 ? request.RegistrationYear : null;
 
         var vehicleModelIds = await ResolveVehicleModelIdsAsync(
             request.VehicleModelId, request.EngineCC, request.GearType, request.AllVariants, ct);
 
         var (items, total) = await _plans.SearchAsync(
             vehicleModelIds,
-            vehicleAge,
+            registrationYear,
             request.PlanType,
             request.RepairType,
             request.CompanyId,
@@ -95,6 +95,7 @@ public class SearchPlansQueryHandler : IRequestHandler<SearchPlansQuery, SearchP
             request.Sort,
             request.Page,
             pageSize,
+            request.Province,
             ct);
 
         var dtos = items.Select(p => new InsurancePlanSummaryDto(
@@ -108,13 +109,13 @@ public class SearchPlansQueryHandler : IRequestHandler<SearchPlansQuery, SearchP
             p.VehicleModel?.SubModel,
             p.VehicleModel?.EngineCC,
             p.VehicleModel?.GearType,
-            p.MinYear,
-            p.MaxYear,
+            p.RegistrationYear,
             p.SumInsured,
             p.PremiumTotal,
             p.ExcessAmount,
             p.CoverageDetails,
             p.Remarks,
+            RegionGroup       : string.IsNullOrEmpty(p.RegionGroup) ? null : p.RegionGroup,
             TpbiPerPerson     : p.TpbiPerPerson,
             TpbiPerAccident   : p.TpbiPerAccident,
             Tppd              : p.Tppd,

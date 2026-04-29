@@ -50,8 +50,7 @@ public class PublishImportBatchCommandHandler : IRequestHandler<PublishImportBat
 
         // Check for pending or unresolved records
         var pendingRecords = allRecords.Where(r =>
-            r.ReviewStatus == ImportReviewStatus.Pending ||
-            r.MappingStatus == ImportMappingStatus.PendingMapping).ToList();
+            r.ReviewStatus == ImportReviewStatus.Pending).ToList();
 
         if (pendingRecords.Count > 0)
             return new PublishImportBatchResult(false,
@@ -59,14 +58,8 @@ public class PublishImportBatchCommandHandler : IRequestHandler<PublishImportBat
 
         // Create InsurancePlan records for all approved records
         var approvedRecords = allRecords.Where(r => r.ReviewStatus == ImportReviewStatus.Approved).ToList();
-        int plansCreated = 0;
-        int plansUpdated = 0;
         var recordErrors = new List<PublishRecordError>();
-
-        // Load all existing plans for this company in ONE query instead of N+1 lookups
-        var existingPlans = await _plans.GetExistingByCompanyAsync(batch.CompanyId, ct);
-
-        var newPlans = new List<InsurancePlan>();
+        var plansToUpsert = new List<InsurancePlan>();
 
         // Track unique keys seen within this batch to catch intra-batch duplicates
         var seenKeys = new HashSet<string>();
@@ -98,8 +91,7 @@ public class PublishImportBatchCommandHandler : IRequestHandler<PublishImportBat
             }
 
             var repairType = ParseRepairType(rawData);
-            var minYear = ParseInt(rawData, "min_year", "minYear", "MinYear");
-            var maxYear = ParseInt(rawData, "max_year", "maxYear", "MaxYear");
+            var registrationYear = ParseInt(rawData, "registration_year", "registrationYear", "RegistrationYear");
             var sumInsured = ParseDecimal(rawData, "sum_insured", "sumInsured", "SumInsured");
             var premiumTotal = ParseDecimal(rawData, "premium_total", "premiumTotal", "PremiumTotal");
             var excessAmount = ParseDecimal(rawData, "excess_amount", "excessAmount", "ExcessAmount");
@@ -107,6 +99,8 @@ public class PublishImportBatchCommandHandler : IRequestHandler<PublishImportBat
                 ?? rawData.GetValueOrDefault("RegionGroup") ?? "";
             var externalPackageId = rawData.GetValueOrDefault("external_package_id")
                 ?? rawData.GetValueOrDefault("ExternalPackageId") ?? "";
+            var vehicleTypeCode = rawData.GetValueOrDefault("vehicle_type_code")
+                ?? rawData.GetValueOrDefault("VehicleTypeCode") ?? "";
             var coverageDetails = rawData.GetValueOrDefault("coverage_details")
                 ?? rawData.GetValueOrDefault("coverageDetails") ?? "{}";
 
@@ -121,84 +115,59 @@ public class PublishImportBatchCommandHandler : IRequestHandler<PublishImportBat
             var bailBond         = ParseNullableDecimal(rawData, "bail_bond");
 
             // Detect intra-batch duplicates before hitting the DB constraint
-            var uniqueKey = FormattableString.Invariant($"{batch.CompanyId}|{vehicleModelId}|{planType}|{repairType}|{minYear}|{maxYear}|{sumInsured}|{regionGroup}|{externalPackageId}");
+            var uniqueKey = FormattableString.Invariant($"{batch.CompanyId}|{vehicleModelId}|{planType}|{repairType}|{registrationYear}|{sumInsured}|{regionGroup}|{externalPackageId}|{vehicleTypeCode}");
             if (!seenKeys.Add(uniqueKey))
             {
                 recordErrors.Add(new PublishRecordError(record.Id, record.RowNumber,
-                    $"Duplicate plan key within batch: VehicleModelId={vehicleModelId}, PlanType={planType}, RepairType={repairType}, Years={minYear}-{maxYear}, SumInsured={sumInsured}, RegionGroup={regionGroup}, PackageId={externalPackageId}"));
+                    $"Duplicate plan key within batch: VehicleModelId={vehicleModelId}, PlanType={planType}, RepairType={repairType}, RegistrationYear={registrationYear}, SumInsured={sumInsured}, RegionGroup={regionGroup}, PackageId={externalPackageId}"));
                 continue;
             }
 
-            // In-memory lookup — no DB round trip per record
-            if (existingPlans.TryGetValue(uniqueKey, out var existing))
+            plansToUpsert.Add(new InsurancePlan
             {
-                existing.SumInsured        = sumInsured;
-                existing.PremiumTotal      = premiumTotal;
-                existing.ExcessAmount      = excessAmount;
-                existing.CoverageDetails   = coverageDetails;
-                existing.RegionGroup       = regionGroup;
-                existing.ExternalPackageId = externalPackageId;
-                existing.TpbiPerPerson     = tpbiPerPerson;
-                existing.TpbiPerAccident   = tpbiPerAccident;
-                existing.Tppd              = tppd;
-                existing.FireTheft         = fireTheft;
-                existing.PersonalAccident  = personalAccident;
-                existing.PassengerAccident = passengerAccident;
-                existing.MedicalExpenses   = medicalExpenses;
-                existing.BailBond          = bailBond;
-                existing.IsPublished       = true;
-                existing.SourceImportRecordId = record.Id;
-                existing.SourceBatchId     = request.BatchId;
-                plansUpdated++;
-            }
-            else
-            {
-                var plan = new InsurancePlan
-                {
-                    CompanyId          = batch.CompanyId,
-                    VehicleModelId     = vehicleModelId.Value,
-                    PlanType           = planType.Value,
-                    RepairType         = repairType,
-                    MinYear            = minYear,
-                    MaxYear            = maxYear,
-                    SumInsured         = sumInsured,
-                    PremiumTotal       = premiumTotal,
-                    ExcessAmount       = excessAmount,
-                    CoverageDetails    = coverageDetails,
-                    RegionGroup        = regionGroup,
-                    ExternalPackageId  = externalPackageId,
-                    TpbiPerPerson      = tpbiPerPerson,
-                    TpbiPerAccident    = tpbiPerAccident,
-                    Tppd               = tppd,
-                    FireTheft          = fireTheft,
-                    PersonalAccident   = personalAccident,
-                    PassengerAccident  = passengerAccident,
-                    MedicalExpenses    = medicalExpenses,
-                    BailBond           = bailBond,
-                    IsPublished        = true,
-                    SourceImportRecordId = record.Id,
-                    SourceBatchId      = request.BatchId,
-                    CreatedBy          = _currentUser.UserId
-                };
-                newPlans.Add(plan);
-                plansCreated++;
-            }
+                Id                 = Guid.NewGuid(),
+                CompanyId          = batch.CompanyId,
+                VehicleModelId     = vehicleModelId.Value,
+                PlanType           = planType.Value,
+                RepairType         = repairType,
+                RegistrationYear   = registrationYear,
+                SumInsured         = sumInsured,
+                PremiumTotal       = premiumTotal,
+                ExcessAmount       = excessAmount,
+                CoverageDetails    = coverageDetails,
+                RegionGroup        = regionGroup,
+                ExternalPackageId  = externalPackageId,
+                VehicleTypeCode    = vehicleTypeCode,
+                TpbiPerPerson      = tpbiPerPerson,
+                TpbiPerAccident    = tpbiPerAccident,
+                Tppd               = tppd,
+                FireTheft          = fireTheft,
+                PersonalAccident   = personalAccident,
+                PassengerAccident  = passengerAccident,
+                MedicalExpenses    = medicalExpenses,
+                BailBond           = bailBond,
+                IsPublished        = true,
+                SourceImportRecordId = record.Id,
+                SourceBatchId      = request.BatchId,
+                CreatedBy          = _currentUser.UserId,
+                CreatedAt          = DateTime.UtcNow
+            });
         }
 
-        // Bulk-add all new plans in one shot
-        if (newPlans.Count > 0)
-            await _plans.AddRangeAsync(newPlans, ct);
+        // Bulk-upsert all plans in one shot
+        if (plansToUpsert.Count > 0)
+            await _plans.BulkUpsertAsync(plansToUpsert, ct);
 
         batch.Status = ImportBatchStatus.Published;
         batch.PublishedBy = _currentUser.UserId;
         batch.PublishedAt = DateTime.UtcNow;
 
-        await _plans.SaveChangesAsync(ct);
+        // Use the base SaveChanges only for the batch status update (fast)
+        await _batches.SaveChangesAsync(ct);
 
         var outcomeMetadata = JsonSerializer.Serialize(new
         {
-            plansCreated,
-            plansUpdated,
+            plansCount = plansToUpsert.Count,
             approvedRecords = approvedRecords.Count,
             errorCount = recordErrors.Count,
             errors = recordErrors.Select(e => new { e.RecordId, e.RowNumber, e.Reason })
@@ -214,7 +183,7 @@ public class PublishImportBatchCommandHandler : IRequestHandler<PublishImportBat
             Metadata = outcomeMetadata
         }, ct);
 
-        return new PublishImportBatchResult(true, PlansCreated: plansCreated, PlansUpdated: plansUpdated,
+        return new PublishImportBatchResult(true, PlansCreated: plansToUpsert.Count, PlansUpdated: 0,
             Errors: recordErrors.Count > 0 ? recordErrors : null);
     }
 

@@ -58,6 +58,7 @@ public static class DependencyInjection
 
         // Quotation + Reporting module
         services.AddScoped<IQuotationRepository, QuotationRepository>();
+        services.AddScoped<ICustomerRepository, CustomerRepository>();
         services.AddHttpClient("jasper");
         services.AddScoped<IJasperReportsClient, JasperReportsClient>();
         services.AddScoped<ReportExportService>();

@@ -8,6 +8,11 @@ export interface GenerateQuotationRequest {
   customerName: string;
   vehicleRegistration?: string;
   vehicleYear: number;
+  phone?: string;
+  email?: string;
+  licenseNumber?: string;
+  previousInsurer?: string;
+  previousExpiryDate?: string;
 }
 
 export interface GenerateQuotationResponse {

@@ -42,15 +42,14 @@ public class RejectAllUnresolvedCommandHandler
         var now    = DateTime.UtcNow;
         var userId = _currentUser.UserId;
 
-        // Single UPDATE: reject all PendingMapping+Pending records
-        var rejectedCount = await _records.BulkRejectUnresolvedAsync(
-            request.BatchId, userId, now, "No vehicle model mapping — rejected in bulk.", ct);
+        // Single UPDATE: reject all records currently in 'Pending' review status
+        var rejectedCount = await _records.BulkRejectAllPendingAsync(
+            request.BatchId, userId, now, "Rejected in bulk by user.", ct);
 
         if (rejectedCount == 0)
             return new RejectAllUnresolvedResult(true, 0);
 
-        batch.RejectedRows += rejectedCount;
-        await _batches.SaveChangesAsync(ct);
+        await _batches.RecalculateCountersAsync(batch.Id, ct);
 
         await _audit.AddAsync(new AuditLog
         {

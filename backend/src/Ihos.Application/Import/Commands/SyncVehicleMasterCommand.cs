@@ -97,7 +97,7 @@ public class SyncVehicleMasterCommandHandler
 
         var dbModels = (await _vehicles.GetAllAsync(ct))
                            .ToDictionary(
-                               m => (m.MakeId, m.Name.ToUpperInvariant(), m.SubModel?.ToUpperInvariant(), m.GearType));
+                               m => (m.MakeId, m.Name.ToUpperInvariant(), m.SubModel?.ToUpperInvariant(), m.GearType, NormalizeCC(m.EngineCC)));
 
         var existingMappingKeys = (await _mappings.GetByCompanyAsync(request.CompanyId, ct))
                                       .Select(m => m.RawName)
@@ -132,7 +132,7 @@ public class SyncVehicleMasterCommandHandler
         }
 
         // ── Phase 2: collect and bulk-insert new VehicleModels ───────────────
-        var newModelByKey = new Dictionary<(Guid, string, string?, string?), VehicleModel>();
+        var newModelByKey = new Dictionary<(Guid, string, string?, string?, string?), VehicleModel>();
 
         foreach (var row in rows)
         {
@@ -143,7 +143,8 @@ public class SyncVehicleMasterCommandHandler
 
             var modelName = TitleCase(row.CarModel);
             var (subModel, gearType) = ParseVariant(row.CarOption);
-            var key       = (make.Id, modelName.ToUpperInvariant(), subModel?.ToUpperInvariant(), gearType);
+            var engineCC  = NormalizeCC(row.CarCC);
+            var key       = (make.Id, modelName.ToUpperInvariant(), subModel?.ToUpperInvariant(), gearType, engineCC);
 
             if (!dbModels.ContainsKey(key) && !newModelByKey.ContainsKey(key))
             {
@@ -153,6 +154,7 @@ public class SyncVehicleMasterCommandHandler
                     Name      = modelName,
                     SubModel  = subModel,
                     GearType  = gearType,
+                    EngineCC  = string.IsNullOrWhiteSpace(row.CarCC) ? null : row.CarCC.Trim(),
                     CreatedBy = _currentUser.UserId
                 };
             }
@@ -178,7 +180,7 @@ public class SyncVehicleMasterCommandHandler
 
             var modelName = TitleCase(row.CarModel);
             var (subModel, gearType) = ParseVariant(row.CarOption);
-            var modelKey  = (make.Id, modelName.ToUpperInvariant(), subModel?.ToUpperInvariant(), gearType);
+            var modelKey  = (make.Id, modelName.ToUpperInvariant(), subModel?.ToUpperInvariant(), gearType, NormalizeCC(row.CarCC));
 
             if (!dbModels.TryGetValue(modelKey, out var model)) continue;
 
@@ -218,7 +220,7 @@ public class SyncVehicleMasterCommandHandler
             var modelName = TitleCase(row.CarModel);
             var (subModel, gearType) = ParseVariant(row.CarOption);
 
-            if (!dbModels.TryGetValue((make.Id, modelName.ToUpperInvariant(), subModel?.ToUpperInvariant(), gearType), out var model))
+            if (!dbModels.TryGetValue((make.Id, modelName.ToUpperInvariant(), subModel?.ToUpperInvariant(), gearType, NormalizeCC(row.CarCC)), out var model))
                 continue;
 
             entries.Add(new SyncedModelDto(
@@ -283,6 +285,17 @@ public class SyncVehicleMasterCommandHandler
                 return char.ToUpperInvariant(word[0]) + word[1..].ToLowerInvariant();
             });
         return result;
+    }
+
+    /// <summary>
+    /// Normalises a raw car_cc string for use as a dictionary key.
+    /// Returns null for blank/zero values so that records without CC
+    /// are grouped together rather than creating a spurious unique dimension.
+    /// </summary>
+    private static string? NormalizeCC(string? raw)
+    {
+        var t = raw?.Trim();
+        return string.IsNullOrWhiteSpace(t) || t == "0" ? null : t;
     }
 
     /// <summary>

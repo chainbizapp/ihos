@@ -61,6 +61,15 @@ public class GetImportBatchDetailQueryHandler : IRequestHandler<GetImportBatchDe
         var batch = await _batches.GetByIdAsync(request.BatchId, ct);
         if (batch == null) return null;
 
+        // Self-heal: if batch is pending review, ensure counters are accurate
+        if (batch.Status == Ihos.Domain.Enums.ImportBatchStatus.PendingReview)
+        {
+            await _batches.RecalculateCountersAsync(batch.Id, ct);
+            // Refresh batch object after recalculation — bypass cache to get the fresh counters
+            batch = await _batches.GetByIdAsync(request.BatchId, ct, asNoTracking: true);
+            if (batch == null) return null;
+        }
+
         var (recordItems, recordTotal) = await _records.GetByBatchAsync(
             request.BatchId, request.RecordPage, request.RecordPageSize, request.IssuesOnly, ct);
 

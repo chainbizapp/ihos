@@ -18,7 +18,7 @@ import { AuthService } from '../../core/auth.service';
       <div class="w-full max-w-[1100px] bg-white rounded-[40px] shadow-2xl flex flex-col md:flex-row overflow-hidden min-h-[700px] z-10 relative">
         
         <!-- Left Pane (Teal area) -->
-        <div class="md:w-[48%] bg-[#006874] bg-gradient-to-br from-[#005a64] to-[#3695a1] p-12 lg:p-14 text-white flex flex-col relative overflow-hidden shrink-0">
+        <div class="hidden md:flex md:w-[48%] bg-[#006874] bg-gradient-to-br from-[#005a64] to-[#3695a1] p-12 lg:p-14 text-white flex-col relative overflow-hidden shrink-0">
           
           <!-- Logo -->
           <div class="text-2xl font-bold tracking-tight mb-16 relative z-10 font-sans cursor-default">

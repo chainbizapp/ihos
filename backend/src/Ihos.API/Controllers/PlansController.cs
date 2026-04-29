@@ -34,6 +34,7 @@ public class PlansController : ControllerBase
         [FromQuery] string? engineCC = null,
         [FromQuery] string? gearType = null,
         [FromQuery] bool allVariants = false,
+        [FromQuery] string? province = null,
         CancellationToken ct = default)
     {
         PlanType? pt = null;
@@ -54,7 +55,7 @@ public class PlansController : ControllerBase
             return BadRequest(new { error = "registrationYear is invalid." });
 
         var result = await _mediator.Send(
-            new SearchPlansQuery(vehicleModelId, registrationYear, pt, rt, companyId, excessMin, excessMax, sort, page, Math.Min(pageSize, 50), engineCC, gearType, allVariants), ct);
+            new SearchPlansQuery(vehicleModelId, registrationYear, pt, rt, companyId, excessMin, excessMax, sort, page, Math.Min(pageSize, 50), engineCC, gearType, allVariants, province), ct);
 
 
         return Ok(result);

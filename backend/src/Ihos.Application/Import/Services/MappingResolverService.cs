@@ -30,6 +30,17 @@ public class MappingResolverContext
 
     // Auto-created plan type mappings for raw names that are already canonical enum values
     public List<PlanTypeMapping> NewAutoPlanTypeMappings { get; } = [];
+
+    // Names that have already been fuzzy-searched and found no match (dist > 2)
+    public HashSet<string> NegativeVehicleSearches { get; } = new(StringComparer.OrdinalIgnoreCase);
+
+    /// <summary>
+    /// When false, vehicle model resolution skips fuzzy matching and only uses
+    /// existing exact mappings — no new VehicleModelMapping records are created.
+    /// Set to false for manual re-resolve so unresolved groups remain visible.
+    /// Set to true (default) for initial import so obvious matches are pre-resolved.
+    /// </summary>
+    public bool AllowAutoSuggest { get; init; } = true;
 }
 
 public class MappingResolverService
@@ -55,7 +66,8 @@ public class MappingResolverService
     /// Call once per batch, then pass the context to <see cref="Resolve"/> for each row.
     /// </summary>
     public async Task<MappingResolverContext> CreateContextAsync(
-        Guid companyId, Guid currentUserId, CancellationToken ct)
+        Guid companyId, Guid currentUserId, CancellationToken ct,
+        bool allowAutoSuggest = true)
     {
         var vehicleMappings  = await _vehicleMappings.GetByCompanyAsync(companyId, ct);
         var planTypeMappings = await _planTypeMappings.GetByCompanyAsync(companyId, ct);
@@ -67,7 +79,8 @@ public class MappingResolverService
             CurrentUserId    = currentUserId,
             VehicleMappings  = vehicleMappings.ToDictionary(m => m.RawName, StringComparer.OrdinalIgnoreCase),
             PlanTypeMappings = planTypeMappings.ToDictionary(m => m.RawName, StringComparer.OrdinalIgnoreCase),
-            AllModels        = allModels
+            AllModels        = allModels,
+            AllowAutoSuggest = allowAutoSuggest
         };
     }
 
@@ -135,23 +148,18 @@ public class MappingResolverService
         if (ctx.VehicleMappings.TryGetValue(rawName, out var mapping))
             return mapping.Id;
 
-        // Some adapters (e.g. Allianz) store a composite MODEL_NAME such as
-        // "A4 3.0 4 Doors" — model code followed by engine CC and door count.
-        // Extract the "root token" (everything before the first purely-numeric or
-        // decimal token) so we can also compare against just the base model name.
-        // "A4 3.0 4 Doors" → root = "A4"
-        // "D9"             → root = "D9" (same as rawName, no split)
-        // "X9 Plus"        → root = "X9 Plus" (no numeric suffix)
+        if (ctx.NegativeVehicleSearches.Contains(rawName))
+            return null;
+
+        if (!ctx.AllowAutoSuggest)
+            return null;
+
         var rootToken = ExtractModelRoot(rawName);
         bool hasRoot = !string.Equals(rootToken, rawName, StringComparison.OrdinalIgnoreCase)
                        && rootToken.Length >= 2;
 
-        // Levenshtein auto-suggest.
-        // For each canonical model we compute two distances and take the minimum:
-        //   1. rawName vs full candidate ("A4 3.0 4 Doors" vs "A4 3.0 4 Doors") — exact match if same trim
-        //   2. rootToken vs model.Name  ("A4" vs "A4") — umbrella match for composite raw names
         VehicleModel? bestModel = null;
-        int bestDistance = int.MaxValue;
+        int bestDistance = 3; // We only care about distance <= 2
 
         foreach (var model in ctx.AllModels)
         {
@@ -159,19 +167,45 @@ public class MappingResolverService
                 ? $"{model.Name} {model.SubModel}"
                 : model.Name;
 
-            var dist = LevenshteinDistance(rawName, candidate);
-
-            // Also try root-token vs base model name to handle "A4 3.0 4 Doors" → "A4"
-            if (hasRoot)
+            // Perfect match check (O(1) compared to Levenshtein)
+            if (string.Equals(rawName, candidate, StringComparison.OrdinalIgnoreCase))
             {
-                var rootDist = LevenshteinDistance(rootToken, model.Name);
-                if (rootDist < dist) dist = rootDist;
+                bestModel = model;
+                bestDistance = 0;
+                break;
             }
 
-            if (dist < bestDistance)
+            // Quick length filter: if lengths differ by more than current best,
+            // Levenshtein distance is guaranteed to be worse.
+            if (Math.Abs(rawName.Length - candidate.Length) < bestDistance)
             {
-                bestDistance = dist;
-                bestModel    = model;
+                var dist = LevenshteinDistance(rawName, candidate);
+                if (dist < bestDistance)
+                {
+                    bestDistance = dist;
+                    bestModel = model;
+                    if (bestDistance == 0) break;
+                }
+            }
+
+            if (hasRoot)
+            {
+                if (string.Equals(rootToken, model.Name, StringComparison.OrdinalIgnoreCase))
+                {
+                    // Root token match is treated as a "good enough" umbrella match
+                    bestModel = model;
+                    bestDistance = 1; // Arbitrary high-confidence value <= 2
+                    // We don't break yet because a full rawName match might be distance 0
+                }
+                else if (Math.Abs(rootToken.Length - model.Name.Length) < bestDistance)
+                {
+                    var rootDist = LevenshteinDistance(rootToken, model.Name);
+                    if (rootDist < bestDistance)
+                    {
+                        bestDistance = rootDist;
+                        bestModel = model;
+                    }
+                }
             }
         }
 
@@ -190,6 +224,8 @@ public class MappingResolverService
             return suggested.Id;
         }
 
+        // Remember that this name couldn't be resolved to avoid re-searching in the same batch
+        ctx.NegativeVehicleSearches.Add(rawName);
         return null;
     }
 
@@ -246,25 +282,39 @@ public class MappingResolverService
 
     private static int LevenshteinDistance(string a, string b)
     {
+        if (string.IsNullOrEmpty(a)) return b?.Length ?? 0;
+        if (string.IsNullOrEmpty(b)) return a?.Length ?? 0;
+
         a = a.ToLowerInvariant();
         b = b.ToLowerInvariant();
 
-        if (a.Length == 0) return b.Length;
-        if (b.Length == 0) return a.Length;
-
-        var dp = new int[a.Length + 1, b.Length + 1];
-        for (int i = 0; i <= a.Length; i++) dp[i, 0] = i;
-        for (int j = 0; j <= b.Length; j++) dp[0, j] = j;
-
-        for (int i = 1; i <= a.Length; i++)
-        for (int j = 1; j <= b.Length; j++)
+        if (a.Length < b.Length)
         {
-            int cost = a[i - 1] == b[j - 1] ? 0 : 1;
-            dp[i, j] = Math.Min(
-                Math.Min(dp[i - 1, j] + 1, dp[i, j - 1] + 1),
-                dp[i - 1, j - 1] + cost);
+            var temp = a;
+            a = b;
+            b = temp;
         }
 
-        return dp[a.Length, b.Length];
+        var n = a.Length;
+        var m = b.Length;
+        var prevRow = new int[m + 1];
+        var currRow = new int[m + 1];
+
+        for (var j = 0; j <= m; j++) prevRow[j] = j;
+
+        for (var i = 1; i <= n; i++)
+        {
+            currRow[0] = i;
+            for (var j = 1; j <= m; j++)
+            {
+                var cost = a[i - 1] == b[j - 1] ? 0 : 1;
+                currRow[j] = Math.Min(Math.Min(currRow[j - 1] + 1, prevRow[j] + 1), prevRow[j - 1] + cost);
+            }
+            
+            // Swap rows
+            for (var j = 0; j <= m; j++) prevRow[j] = currRow[j];
+        }
+
+        return prevRow[m];
     }
 }

@@ -39,7 +39,16 @@ public class QuotationsController : ControllerBase
         try
         {
             var result = await _mediator.Send(
-                new GenerateQuotationCommand(request.PlanIds, request.CustomerName, request.VehicleRegistration, request.VehicleYear), ct);
+                new GenerateQuotationCommand(
+                    request.PlanIds,
+                    request.CustomerName,
+                    request.VehicleRegistration,
+                    request.VehicleYear,
+                    request.Phone,
+                    request.Email,
+                    request.LicenseNumber,
+                    request.PreviousInsurer,
+                    request.PreviousExpiryDate), ct);
 
             return Ok(new { quotationId = result.QuotationId });
         }
@@ -86,5 +95,10 @@ public record GenerateQuotationRequest(
     List<Guid> PlanIds,
     string CustomerName,
     string? VehicleRegistration,
-    int VehicleYear
+    int VehicleYear,
+    string? Phone = null,
+    string? Email = null,
+    string? LicenseNumber = null,
+    string? PreviousInsurer = null,
+    string? PreviousExpiryDate = null
 );

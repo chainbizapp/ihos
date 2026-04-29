@@ -9,8 +9,8 @@ public interface IInsurancePlanRepository
     Task<IReadOnlyList<InsurancePlan>> GetByIdsAsync(IEnumerable<Guid> ids, CancellationToken ct = default);
     Task<InsurancePlan?> GetByUniqueKeyAsync(
         Guid companyId, Guid vehicleModelId, PlanType planType, RepairType repairType,
-        int minYear, int maxYear, decimal sumInsured, string regionGroup = "",
-        string externalPackageId = "", CancellationToken ct = default);
+        int registrationYear, decimal sumInsured, string regionGroup = "",
+        string externalPackageId = "", string vehicleTypeCode = "", CancellationToken ct = default);
     /// <summary>
     /// Loads all non-deleted plans for a company as a dictionary keyed by unique composite key.
     /// Used during publish to avoid N+1 lookups.
@@ -18,7 +18,7 @@ public interface IInsurancePlanRepository
     Task<Dictionary<string, InsurancePlan>> GetExistingByCompanyAsync(Guid companyId, CancellationToken ct = default);
     Task<(IReadOnlyList<InsurancePlan> Items, int TotalCount)> SearchAsync(
         IReadOnlyList<Guid> vehicleModelIds,
-        int? vehicleAge,
+        int? registrationYear,
         PlanType? planType,
         RepairType repairType,
         Guid? companyId,
@@ -27,8 +27,10 @@ public interface IInsurancePlanRepository
         string sort,
         int page,
         int pageSize,
+        string? province = null,
         CancellationToken ct = default);
     Task AddAsync(InsurancePlan plan, CancellationToken ct = default);
     Task AddRangeAsync(IEnumerable<InsurancePlan> plans, CancellationToken ct = default);
+    Task BulkUpsertAsync(IReadOnlyList<InsurancePlan> plans, CancellationToken ct = default);
     Task SaveChangesAsync(CancellationToken ct = default);
 }

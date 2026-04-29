@@ -10,15 +10,6 @@ import { VehicleSelectorComponent, VehicleSelection } from '../../shared/vehicle
 
 // ── Design tokens ─────────────────────────────────────────────────────────────
 
-const PLAN_TABS = [
-  { value: '', label: 'ทุกชั้น' },
-  { value: 'Type1', label: 'ชั้น 1' },
-  { value: 'Type2Plus', label: 'ชั้น 2+' },
-  { value: 'Type2', label: 'ชั้น 2' },
-  { value: 'Type3Plus', label: 'ชั้น 3+' },
-  { value: 'Type3', label: 'ชั้น 3' },
-];
-
 const SORT_OPTIONS = [
   { value: 'price_asc',        label: 'ราคาต่ำไปสูง' },
   { value: 'sum_insured_desc', label: 'ทุนประกันสูงสุด' },
@@ -29,11 +20,6 @@ const EXCESS_OPTIONS: { value: number | null; label: string }[] = [
   { value: 0,    label: 'ไม่มีค่าเสียหาย' },
   { value: 3000, label: 'สูงสุด ฿3,000' },
   { value: 5000, label: 'สูงสุด ฿5,000' },
-];
-
-const REPAIR_OPTIONS = [
-  { value: 'Garage', label: 'ซ่อมอู่' },
-  { value: 'Dealer', label: 'ซ่อมศูนย์' },
 ];
 
 const ALL_PROVINCES: string[] = [
@@ -199,6 +185,38 @@ function svg(path: string, cls = 'w-4 h-4'): string {
                 [initialSelection]="vehicleSelection()"
                 (selectionChange)="vehicleSelection.set($event)">
               </app-vehicle-selector>
+              <!-- Plan type -->
+              <div class="mt-4">
+                <div class="text-[11px] font-bold uppercase tracking-widest mb-2" style="color:#6b7a8d">ประเภทประกัน</div>
+                <div class="flex flex-wrap gap-2">
+                  @for (pt of planTypeOptions; track pt.value) {
+                    <button (click)="activePlanType.set(pt.value)"
+                            class="px-3.5 py-1.5 rounded-full text-[12px] font-bold transition-all"
+                            [style]="activePlanType() === pt.value
+                              ? 'background:#006874;color:#fff;box-shadow:0 2px 8px rgba(0,104,116,0.25)'
+                              : 'background:#f0f4fd;color:#435d98;border:1.5px solid #e2e8f0'">
+                      {{ pt.label }}
+                    </button>
+                  }
+                </div>
+              </div>
+
+              <!-- Repair type -->
+              <div class="mt-3">
+                <div class="text-[11px] font-bold uppercase tracking-widest mb-2" style="color:#6b7a8d">ประเภทการซ่อม</div>
+                <div class="flex gap-2">
+                  @for (rt of repairTypeOptions; track rt.value) {
+                    <button (click)="activeRepairType.set(rt.value)"
+                            class="px-4 py-1.5 rounded-xl text-[12px] font-bold transition-all"
+                            [style]="activeRepairType() === rt.value
+                              ? 'background:#006874;color:#fff;box-shadow:0 2px 8px rgba(0,104,116,0.2)'
+                              : 'background:#f0f4fd;color:#435d98;border:1.5px solid #e2e8f0'">
+                      {{ rt.label }}
+                    </button>
+                  }
+                </div>
+              </div>
+
               <div class="flex gap-2 mt-4">
                 <button (click)="onSearchClick()"
                         [disabled]="loading() || !vehicleSelection()?.modelId"
@@ -220,24 +238,6 @@ function svg(path: string, cls = 'w-4 h-4'): string {
       <!-- Sticky filter bar (64 + 53 = 117px) -->
       <div class="sticky z-20 px-5 py-3 flex items-center gap-3 flex-wrap"
            style="top:117px;background:#f0f4fd;border-bottom:1px solid rgba(17,48,105,0.07)">
-
-        <div class="flex items-center gap-1.5 flex-wrap">
-          @for (tab of planTabs; track tab.value) {
-            <button (click)="onPlanTypeChange(tab.value)"
-                    class="px-3.5 py-1.5 rounded-full text-[12px] font-bold transition-all"
-                    [style]="activePlanType() === tab.value
-                      ? 'background:linear-gradient(135deg,#006874,#49b2c1);color:white;box-shadow:0 2px 8px rgba(0,104,116,0.25)'
-                      : 'background:#ffffff;color:#5a6270'">
-              {{ tab.label }}
-            </button>
-          }
-        </div>
-
-        <div class="h-5 w-px hidden sm:block" style="background:rgba(17,48,105,0.12)"></div>
-
-        <select [(ngModel)]="repairTypeValue" (ngModelChange)="onRepairTypeChange($event)" class="filter-select">
-          @for (opt of repairOptions; track opt.value) { <option [value]="opt.value">{{ opt.label }}</option> }
-        </select>
 
         <select [(ngModel)]="excessIndex" (ngModelChange)="onExcessChange(+$event)" class="filter-select">
           @for (opt of excessOptions; track opt.label; let i = $index) { <option [value]="i">{{ opt.label }}</option> }
@@ -292,11 +292,21 @@ export class SearchPageComponent implements OnInit {
   readonly SAVE_PATH   = SAVE_PATH;
   readonly svg         = svg;
   readonly stepIcon    = stepIcon;
-  readonly planTabs    = PLAN_TABS;
   readonly sortOptions = SORT_OPTIONS;
   readonly excessOptions = EXCESS_OPTIONS;
-  readonly repairOptions = REPAIR_OPTIONS;
   readonly quoteSteps  = QUOTE_STEPS;
+  readonly planTypeOptions = [
+    { value: '',         label: 'ทุกชั้น' },
+    { value: 'Type1',    label: 'ชั้น 1' },
+    { value: 'Type2Plus', label: 'ชั้น 2+' },
+    { value: 'Type2',    label: 'ชั้น 2' },
+    { value: 'Type3Plus', label: 'ชั้น 3+' },
+    { value: 'Type3',    label: 'ชั้น 3' },
+  ];
+  readonly repairTypeOptions = [
+    { value: 'Garage', label: 'ซ่อมอู่' },
+    { value: 'Dealer', label: 'ซ่อมศูนย์' },
+  ];
   readonly trustItems  = TRUST_ITEMS;
   readonly avatarColors   = ['#006874','#f7941d','#435d98','#49b2c1'];
   readonly avatarInitials = ['A','B','C','D'];
@@ -313,7 +323,6 @@ export class SearchPageComponent implements OnInit {
   currentSort      = signal('price_asc');
   currentPage      = signal(1);
 
-  repairTypeValue  = 'Garage';
   excessIndex      = 0;
   sortValue        = 'price_asc';
   provinceValue    = '';
@@ -345,16 +354,22 @@ export class SearchPageComponent implements OnInit {
     });
     this.provinceValue = savedPrefs.province ?? '';
 
-    const sameVehicle = savedResult && lastParams &&
-      lastParams.vehicleModelId === savedPrefs.modelId &&
-      (lastParams.registrationYear ?? 0) === (savedPrefs.vehicleYear ?? 0);
+    // Seed filters from prefs before comparing cache
+    const prefPlanType   = savedPrefs.planType   ?? '';
+    const prefRepairType = savedPrefs.repairType  ?? 'Garage';
+    const prefProvince   = savedPrefs.province    ?? '';
 
-    if (sameVehicle) {
-      // Same vehicle — restore cached result and filters
+    const sameQuery = savedResult && lastParams &&
+      lastParams.vehicleModelId === savedPrefs.modelId &&
+      (lastParams.registrationYear ?? 0) === (savedPrefs.vehicleYear ?? 0) &&
+      (lastParams.planType   ?? '') === prefPlanType &&
+      (lastParams.repairType ?? 'Garage') === prefRepairType &&
+      ((lastParams as any).province ?? '') === prefProvince;
+
+    if (sameQuery) {
+      // Exact same query — restore cached result and filters
       this.activePlanType.set(lastParams!.planType ?? '');
-      const repair = lastParams!.repairType ?? 'Garage';
-      this.activeRepairType.set(repair);
-      this.repairTypeValue = repair;
+      this.activeRepairType.set(lastParams!.repairType ?? 'Garage');
       const excess = (lastParams as any).excessMax ?? null;
       this.activeExcess.set(excess);
       const excessIdx = EXCESS_OPTIONS.findIndex(o => o.value === excess);
@@ -365,7 +380,9 @@ export class SearchPageComponent implements OnInit {
       this.currentPage.set(this.searchState.lastPage());
       this.result.set(savedResult!);
     } else {
-      // Vehicle changed or first arrival — execute fresh search
+      // Conditions changed — seed filters from prefs and execute fresh search
+      this.activePlanType.set(prefPlanType);
+      this.activeRepairType.set(prefRepairType);
       this.executeSearch();
     }
   }
@@ -382,6 +399,7 @@ export class SearchPageComponent implements OnInit {
       engineCC:         sel.engineCC  || undefined,
       gearType:         sel.gearType  || undefined,
       allVariants:      sel.allVariants || undefined,
+      province:         this.provinceValue || undefined,
       sort:             this.currentSort(),
       page:             this.currentPage(),
     };
@@ -419,12 +437,6 @@ export class SearchPageComponent implements OnInit {
     this.executeSearch();
   }
 
-  onPlanTypeChange(type: string): void {
-    this.activePlanType.set(type); this.currentPage.set(1); this.executeSearch();
-  }
-  onRepairTypeChange(val: string): void {
-    this.activeRepairType.set(val); this.currentPage.set(1); this.executeSearch();
-  }
   onExcessChange(idx: number): void {
     this.activeExcess.set(EXCESS_OPTIONS[idx]?.value ?? null); this.currentPage.set(1); this.executeSearch();
   }
@@ -435,6 +447,8 @@ export class SearchPageComponent implements OnInit {
     this.provinceValue = province;
     const saved = this.prefs.load();
     if (saved) this.prefs.save({ ...saved, province: province || undefined });
+    this.currentPage.set(1);
+    this.executeSearch();
   }
   onPageChange(page: number): void {
     this.currentPage.set(page); this.executeSearch();

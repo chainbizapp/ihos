@@ -9,8 +9,7 @@ public record DuplicateGroupDto(
     int Count,
     int FirstRowNumber,
     string RepairType,
-    string MinYear,
-    string MaxYear,
+    string RegistrationYear,
     string SumInsured,
     string ExternalPackageId,
     IReadOnlyList<string> VehicleModels,
@@ -30,7 +29,7 @@ public class GetBatchDuplicatesQueryHandler : IRequestHandler<GetBatchDuplicates
         var groups = await _records.GetDuplicateGroupsAsync(request.BatchId, request.Limit, ct);
 
         var dtos = groups.Select(g => new DuplicateGroupDto(
-            g.Count, g.FirstRowNumber, g.RepairType, g.MinYear, g.MaxYear,
+            g.Count, g.FirstRowNumber, g.RepairType, g.RegistrationYear,
             g.SumInsured, g.ExternalPackageId, g.VehicleModels, g.DuplicateRows
         )).ToList();
 

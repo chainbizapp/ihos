@@ -25,6 +25,15 @@ public class CreateVehicleModelMappingCommandHandler : IRequestHandler<CreateVeh
 
     public async Task<Guid> Handle(CreateVehicleModelMappingCommand request, CancellationToken ct)
     {
+        // Avoid unique constraint violation: check if mapping already exists for this company/rawname
+        var existing = await _mappings.GetByCompanyAndRawNameAsync(request.CompanyId, request.RawName, ct);
+        if (existing != null)
+        {
+            // If it exists but points to a different model, we could optionally update it, 
+            // but for "Auto Map" idempotency, returning the existing one is safest.
+            return existing.Id;
+        }
+
         var mapping = new VehicleModelMapping
         {
             CompanyId = request.CompanyId,

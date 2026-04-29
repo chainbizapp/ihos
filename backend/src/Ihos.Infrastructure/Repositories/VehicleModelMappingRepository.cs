@@ -21,7 +21,7 @@ public class VehicleModelMappingRepository : IVehicleModelMappingRepository
         _db.VehicleModelMappings
             .FirstOrDefaultAsync(m => m.CompanyId == companyId && m.RawName == rawName && !m.IsDeleted, ct);
 
-    public async Task<(IReadOnlyList<VehicleModelMapping> Items, int TotalCount)> GetPagedByCompanyAsync(Guid? companyId, int page, int pageSize, CancellationToken ct = default)
+    public async Task<(IReadOnlyList<VehicleModelMapping> Items, int TotalCount)> GetPagedByCompanyAsync(Guid? companyId, string? makeName, int page, int pageSize, CancellationToken ct = default)
     {
         var query = _db.VehicleModelMappings
             .Include(m => m.Company)
@@ -31,9 +31,15 @@ public class VehicleModelMappingRepository : IVehicleModelMappingRepository
         if (companyId.HasValue)
             query = query.Where(m => m.CompanyId == companyId.Value);
 
+        if (!string.IsNullOrWhiteSpace(makeName))
+            query = query.Where(m => m.CanonicalModel!.Make!.Name == makeName);
+
         var total = await query.CountAsync(ct);
         var items = await query
-            .OrderBy(m => m.CompanyId).ThenBy(m => m.RawName)
+            .OrderBy(m => m.CanonicalModel!.Make!.Name)
+            .ThenBy(m => m.CanonicalModel!.Name)
+            .ThenBy(m => m.CompanyId)
+            .ThenBy(m => m.RawName)
             .Skip((page - 1) * pageSize)
             .Take(pageSize)
             .ToListAsync(ct);
@@ -52,6 +58,16 @@ public class VehicleModelMappingRepository : IVehicleModelMappingRepository
 
     public Task AddRangeAsync(IEnumerable<VehicleModelMapping> mappings, CancellationToken ct = default) =>
         _db.VehicleModelMappings.AddRangeAsync(mappings, ct);
+
+    public async Task<bool> DeleteAsync(Guid id, CancellationToken ct = default)
+    {
+        var mapping = await _db.VehicleModelMappings
+            .FirstOrDefaultAsync(m => m.Id == id && !m.IsDeleted, ct);
+        if (mapping == null) return false;
+        mapping.IsDeleted = true;
+        await _db.SaveChangesAsync(ct);
+        return true;
+    }
 
     public Task SaveChangesAsync(CancellationToken ct = default) =>
         _db.SaveChangesAsync(ct);

@@ -5,6 +5,7 @@ namespace Ihos.Application.Mapping.Queries;
 
 public record GetVehicleModelMappingsQuery(
     Guid? CompanyId = null,
+    string? MakeName = null,
     int Page = 1,
     int PageSize = 50
 ) : IRequest<GetVehicleModelMappingsResult>;
@@ -16,6 +17,8 @@ public record VehicleModelMappingDto(
     string RawName,
     Guid CanonicalModelId,
     string CanonicalModelName,
+    string? CanonicalSubModel,
+    string? CanonicalEngineCC,
     string CanonicalMakeName,
     bool IsAutoSuggested
 );
@@ -37,7 +40,7 @@ public class GetVehicleModelMappingsQueryHandler : IRequestHandler<GetVehicleMod
     public async Task<GetVehicleModelMappingsResult> Handle(GetVehicleModelMappingsQuery request, CancellationToken ct)
     {
         var (items, total) = await _mappings.GetPagedByCompanyAsync(
-            request.CompanyId, request.Page, request.PageSize, ct);
+            request.CompanyId, request.MakeName, request.Page, request.PageSize, ct);
 
         var dtos = items.Select(m => new VehicleModelMappingDto(
             m.Id,
@@ -46,6 +49,8 @@ public class GetVehicleModelMappingsQueryHandler : IRequestHandler<GetVehicleMod
             m.RawName,
             m.CanonicalModelId,
             m.CanonicalModel?.Name ?? string.Empty,
+            m.CanonicalModel?.SubModel,
+            m.CanonicalModel?.EngineCC,
             m.CanonicalModel?.Make?.Name ?? string.Empty,
             m.IsAutoSuggested
         )).ToList();

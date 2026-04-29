@@ -217,13 +217,14 @@ public sealed class ViriyahInsuranceAdapter : ICompanyImportAdapter
 
         var rawPlanType = MapInsureType(get("insure_type"));
         var repairType  = MapRepairType(get("flag_repair_type"));
-        var carAge      = get("car_age");
-        var sumInsured  = get("sum_insured");
-        var premium     = get("total");
-        var deduct      = get("deduct");
-        var rateCode    = get("rate_code");
-        var rateFname   = get("rate_fname");
-        var regYear     = get("registration_year");
+        var carAge           = get("car_age");
+        var sumInsured       = get("sum_insured");
+        var premium          = get("total");
+        var deduct           = get("deduct");
+        var rateCode         = get("rate_code");
+        var rateFname        = get("rate_fname");
+        var regYear          = get("registration_year");
+        var vehicleTypeCode  = get("vehicle_type_code");
 
         // Structured coverage limits — Viriyah column names
         var tpbiPerson   = get("tpbi_person_sumstd");
@@ -252,7 +253,6 @@ public sealed class ViriyahInsuranceAdapter : ICompanyImportAdapter
             model              = model,
             submodel           = submodel,
             gear_type          = gearType,
-            registration_year  = regYear,
             rate_code          = rateCode,
             rate_name          = rateFname,
             tppd_deduct        = tppdDeduct,
@@ -266,8 +266,7 @@ public sealed class ViriyahInsuranceAdapter : ICompanyImportAdapter
             RawVehicleModel   : rawVehicleModel,
             RawPlanType       : rawPlanType,
             RepairType        : repairType,
-            MinYear           : carAge,
-            MaxYear           : carAge,
+            RegistrationYear  : regYear,
             SumInsured        : sumInsured,
             PremiumTotal      : premium,
             ExcessAmount      : deduct,
@@ -283,7 +282,8 @@ public sealed class ViriyahInsuranceAdapter : ICompanyImportAdapter
             PersonalAccident  : drvPA,
             PassengerAccident : passengerAccident,
             MedicalExpenses   : medicalExpenses,
-            BailBond          : bailBond
+            BailBond          : bailBond,
+            VehicleTypeCode   : vehicleTypeCode
         );
     }
 

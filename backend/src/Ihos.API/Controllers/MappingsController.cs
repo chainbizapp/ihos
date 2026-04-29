@@ -22,12 +22,13 @@ public class MappingsController : ControllerBase
     [HttpGet("vehicle-models")]
     public async Task<IActionResult> GetVehicleModelMappings(
         [FromQuery] Guid? companyId = null,
+        [FromQuery] string? makeName = null,
         [FromQuery] int page = 1,
         [FromQuery] int pageSize = 50,
         CancellationToken ct = default)
     {
         var result = await _mediator.Send(
-            new GetVehicleModelMappingsQuery(companyId, page, pageSize), ct);
+            new GetVehicleModelMappingsQuery(companyId, makeName, page, pageSize), ct);
         return Ok(result);
     }
 
@@ -48,6 +49,14 @@ public class MappingsController : ControllerBase
         CancellationToken ct)
     {
         var success = await _mediator.Send(new UpdateVehicleModelMappingCommand(id, body.CanonicalModelId), ct);
+        if (!success) return NotFound();
+        return NoContent();
+    }
+
+    [HttpDelete("vehicle-models/{id:guid}")]
+    public async Task<IActionResult> DeleteVehicleModelMapping(Guid id, CancellationToken ct)
+    {
+        var success = await _mediator.Send(new DeleteVehicleModelMappingCommand(id), ct);
         if (!success) return NotFound();
         return NoContent();
     }

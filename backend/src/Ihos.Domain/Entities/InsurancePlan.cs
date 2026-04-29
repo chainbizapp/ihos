@@ -9,8 +9,12 @@ public class InsurancePlan : BaseEntity
     public Guid VehicleModelId { get; set; }
     public PlanType PlanType { get; set; }
     public RepairType RepairType { get; set; }
-    public int MinYear { get; set; }
-    public int MaxYear { get; set; }
+    /// <summary>
+    /// Actual vehicle registration year this plan applies to (e.g. 2020).
+    /// 0 = plan covers all years (no year restriction).
+    /// Part of the business unique key.
+    /// </summary>
+    public int RegistrationYear { get; set; }
     public decimal SumInsured { get; set; }
     public decimal PremiumTotal { get; set; }
     public decimal ExcessAmount { get; set; } = 0;
@@ -22,12 +26,18 @@ public class InsurancePlan : BaseEntity
     /// </summary>
     public string RegionGroup { get; set; } = "";
 
-    /// <summary>
+/// <summary>
     /// Company-assigned package/product ID (e.g. Allianz PACKAGE_ID).
     /// Empty string for companies that don't use package IDs.
     /// Part of the business unique key — allows multiple price tiers for the same coverage.
     /// </summary>
     public string ExternalPackageId { get; set; } = "";
+    /// <summary>
+    /// Vehicle type code from the insurer's file (e.g. Viriyah vehicle_type_code).
+    /// Empty string for companies that don't use this field.
+    /// Part of the business unique key.
+    /// </summary>
+    public string VehicleTypeCode { get; set; } = "";
     // ── Structured coverage limits (nullable = company doesn't provide this value) ──
     /// <summary>ความรับผิดชอบต่อคู่กรณี ต่อคน — TPBI per person</summary>
     public decimal? TpbiPerPerson { get; set; }

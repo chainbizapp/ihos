@@ -73,30 +73,43 @@ public class ImportRecordRepository : IImportRecordRepository
         await conn.OpenAsync(ct);
 
         const string sql = """
-            SELECT
-                COUNT(*)::int                                                          AS "Count",
-                MIN("RowNumber")::int                                                  AS "FirstRowNumber",
-                COALESCE("RawData"->>'repair_type', '')                                AS "RepairType",
-                COALESCE("RawData"->>'min_year', '')                                   AS "MinYear",
-                COALESCE("RawData"->>'max_year', '')                                   AS "MaxYear",
-                COALESCE("RawData"->>'sum_insured', '')                                AS "SumInsured",
-                COALESCE("RawData"->>'external_package_id', '')                        AS "ExternalPackageId",
-                array_agg(DISTINCT COALESCE("RawData"->>'vehicle_model', ''))          AS "VehicleModels",
-                array_agg("RowNumber" ORDER BY "RowNumber")
-                    FILTER (WHERE "RowNumber" <> MIN("RowNumber") OVER (
+            WITH joined AS (
+                SELECT
+                    ir."Id", ir."RowNumber", ir."RawData",
+                    COALESCE(vmm."CanonicalModelId"::text, '') AS "CanonicalModelId",
+                    COALESCE(ptm."CanonicalPlanType"::text, '') AS "CanonicalPlanType"
+                FROM import_records ir
+                LEFT JOIN vehicle_model_mappings vmm ON vmm."Id" = ir."VehicleModelMappingId"
+                LEFT JOIN plan_type_mappings     ptm ON ptm."Id" = ir."PlanTypeMappingId"
+                WHERE ir."BatchId" = @batchId AND ir."IsDeleted" = false
+            ),
+            ranked AS (
+                SELECT *,
+                    MIN("RowNumber") OVER (
                         PARTITION BY
-                            "VehicleModelMappingId", "PlanTypeMappingId",
-                            "RawData"->>'repair_type', "RawData"->>'min_year',
-                            "RawData"->>'max_year',   "RawData"->>'sum_insured',
-                            "RawData"->>'external_package_id'
-                    ))::int[]                                                           AS "DuplicateRows"
-            FROM import_records
-            WHERE "BatchId" = @batchId AND "IsDeleted" = false
+                            "CanonicalModelId", "CanonicalPlanType",
+                            "RawData"->>'repair_type', "RawData"->>'registration_year',
+                            "RawData"->>'sum_insured', "RawData"->>'external_package_id',
+                            "RawData"->>'vehicle_type_code'
+                    ) AS "MinRowInGroup"
+                FROM joined
+            )
+            SELECT
+                COUNT(*)::int                                                AS "Count",
+                MIN("RowNumber")::int                                        AS "FirstRowNumber",
+                COALESCE("RawData"->>'repair_type', '')                      AS "RepairType",
+                COALESCE("RawData"->>'registration_year', '')                AS "RegistrationYear",
+                COALESCE("RawData"->>'sum_insured', '')                      AS "SumInsured",
+                COALESCE("RawData"->>'external_package_id', '')              AS "ExternalPackageId",
+                array_agg(DISTINCT COALESCE("RawData"->>'vehicle_model', '')) AS "VehicleModels",
+                array_agg("RowNumber" ORDER BY "RowNumber")
+                    FILTER (WHERE "RowNumber" <> "MinRowInGroup")::int[]     AS "DuplicateRows"
+            FROM ranked
             GROUP BY
-                "VehicleModelMappingId", "PlanTypeMappingId",
-                "RawData"->>'repair_type', "RawData"->>'min_year',
-                "RawData"->>'max_year',   "RawData"->>'sum_insured',
-                "RawData"->>'external_package_id'
+                "CanonicalModelId", "CanonicalPlanType",
+                "RawData"->>'repair_type', "RawData"->>'registration_year',
+                "RawData"->>'sum_insured', "RawData"->>'external_package_id',
+                "RawData"->>'vehicle_type_code'
             HAVING COUNT(*) > 1
             ORDER BY COUNT(*) DESC
             LIMIT @limit
@@ -120,8 +133,7 @@ public class ImportRecordRepository : IImportRecordRepository
                 Count            : reader.GetInt32(reader.GetOrdinal("Count")),
                 FirstRowNumber   : reader.GetInt32(reader.GetOrdinal("FirstRowNumber")),
                 RepairType       : reader.GetString(reader.GetOrdinal("RepairType")),
-                MinYear          : reader.GetString(reader.GetOrdinal("MinYear")),
-                MaxYear          : reader.GetString(reader.GetOrdinal("MaxYear")),
+                RegistrationYear : reader.GetString(reader.GetOrdinal("RegistrationYear")),
                 SumInsured       : reader.GetString(reader.GetOrdinal("SumInsured")),
                 ExternalPackageId: reader.GetString(reader.GetOrdinal("ExternalPackageId")),
                 VehicleModels    : vehicleModels,
@@ -145,6 +157,17 @@ public class ImportRecordRepository : IImportRecordRepository
             .Where(r => r.BatchId == batchId
                      && !r.IsDeleted
                      && r.MappingStatus == ImportMappingStatus.PendingMapping
+                     && r.ReviewStatus == ImportReviewStatus.Pending)
+            .ExecuteUpdateAsync(s => s
+                .SetProperty(r => r.ReviewStatus,    ImportReviewStatus.Rejected)
+                .SetProperty(r => r.ReviewedBy,      userId)
+                .SetProperty(r => r.ReviewedAt,      now)
+                .SetProperty(r => r.RejectionReason, reason), ct);
+
+    public async Task<int> BulkRejectAllPendingAsync(Guid batchId, Guid? userId, DateTime now, string reason, CancellationToken ct = default) =>
+        await _db.ImportRecords
+            .Where(r => r.BatchId == batchId
+                     && !r.IsDeleted
                      && r.ReviewStatus == ImportReviewStatus.Pending)
             .ExecuteUpdateAsync(s => s
                 .SetProperty(r => r.ReviewStatus,    ImportReviewStatus.Rejected)

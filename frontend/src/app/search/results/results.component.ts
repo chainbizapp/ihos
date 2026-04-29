@@ -26,6 +26,7 @@ const CHART_ICON   = `<path d="M232,208a8,8,0,0,1-8,8H32a8,8,0,0,1,0-16H224A8,8,
 const CLOSE_ICON   = `<path d="M205.66,194.34a8,8,0,0,1-11.32,11.32L128,139.31,61.66,205.66a8,8,0,0,1-11.32-11.32L116.69,128,50.34,61.66A8,8,0,0,1,61.66,50.34L128,116.69l66.34-66.35a8,8,0,0,1,11.32,11.32L139.31,128Z"/>`;
 const CARET_DOWN   = `<path d="M213.66,101.66l-80,80a8,8,0,0,1-11.32,0l-80-80A8,8,0,0,1,53.66,90.34L128,164.69l74.34-74.35a8,8,0,0,1,11.32,11.32Z"/>`;
 const CARET_UP     = `<path d="M213.66,165.66a8,8,0,0,1-11.32,0L128,91.31,53.66,165.66a8,8,0,0,1-11.32-11.32l80-80a8,8,0,0,1,11.32,0l80,80A8,8,0,0,1,213.66,165.66Z"/>`;
+const FILTER_ICON  = `<path d="M230.6,49.53A8,8,0,0,0,224,40H32a8,8,0,0,0-5.93,13.35L96,124.69V208a8,8,0,0,0,11.58,7.16l48-24A8,8,0,0,0,160,184V124.69l69.93-71.34A8,8,0,0,0,230.6,49.53ZM145.37,111.48A8,8,0,0,0,144,116v63.48l-32,16V116a8,8,0,0,0-2.37-5.65L48.17,56H207.83Z"/>`;
 
 function svgIcon(path: string, cls = 'w-4 h-4'): string {
   return `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 256 256" fill="currentColor" class="${cls}">${path}</svg>`;
@@ -138,6 +139,35 @@ function groupKey(p: InsurancePlanSummary): string {
 
 <!-- ── Table ──────────────────────────────────────────────────────────── -->
 @if (loading() || (result() && result()!.items.length > 0)) {
+
+  <!-- Filter toolbar -->
+  @if (!loading() && allCompanies().length > 0) {
+    <div class="flex items-center justify-between mb-3 px-1">
+      <span class="text-[12px] font-medium" style="color:#8b95a6">
+        แสดง {{ groupedItems().length }} รายการ
+        @if (activeCompanyFilter().size > 0) {
+          <span class="ml-1 font-bold" style="color:#006874">
+            (กรอง {{ activeCompanyFilter().size }} บริษัท)
+          </span>
+        }
+      </span>
+      <button (click)="openCompanyFilter()"
+              class="flex items-center gap-2 px-4 py-2 rounded-2xl text-[12px] font-bold transition-all hover:opacity-90"
+              [style]="activeCompanyFilter().size > 0
+                ? 'background:#e6f4f5;color:#006874;box-shadow:0 0 0 1.5px #006874'
+                : 'background:#f0f4fd;color:#435d98'">
+        <span class="w-3.5 h-3.5" [innerHTML]="safe(FILTER_ICON,'w-3.5 h-3.5')"></span>
+        กรองบริษัท
+        @if (activeCompanyFilter().size > 0) {
+          <span class="w-4 h-4 rounded-full text-[10px] font-black flex items-center justify-center"
+                style="background:#006874;color:#fff">
+            {{ activeCompanyFilter().size }}
+          </span>
+        }
+      </button>
+    </div>
+  }
+
   <div class="rounded-3xl overflow-hidden"
        style="background:#ffffff;box-shadow:0px 12px 32px rgba(17,48,105,0.06)">
     <table class="w-full border-collapse">
@@ -264,6 +294,12 @@ function groupKey(p: InsurancePlanSummary): string {
                         <span class="px-1.5 py-0.5 rounded text-[10px] font-semibold"
                               style="background:#fff3e0;color:#e65100">
                           {{ yearRangeLabel(plan.minYear, plan.maxYear) }}
+                        </span>
+                      }
+                      @if (plan.regionGroup) {
+                        <span class="px-1.5 py-0.5 rounded text-[10px] font-semibold"
+                              style="background:#ede9fe;color:#6d28d9">
+                          {{ regionGroupLabel(plan.regionGroup) }}
                         </span>
                       }
                     </div>
@@ -397,6 +433,12 @@ function groupKey(p: InsurancePlanSummary): string {
                       <span style="color:#8b95a6">อายุรถที่รับประกัน</span>
                       <span class="font-bold" style="color:#171c22">{{ yearRangeLabel(plan.minYear, plan.maxYear) }}</span>
                     </div>
+                    @if (plan.regionGroup) {
+                      <div class="flex justify-between">
+                        <span style="color:#8b95a6">พื้นที่คุ้มครอง</span>
+                        <span class="font-bold" style="color:#6d28d9">{{ regionGroupLabel(plan.regionGroup) }}</span>
+                      </div>
+                    }
                   </div>
                   @if (plan.remarks) {
                     <div class="mt-3 pt-3 text-[12px] font-medium"
@@ -458,6 +500,12 @@ function groupKey(p: InsurancePlanSummary): string {
                           {{ yearRangeLabel(tier.minYear, tier.maxYear) }}
                         </span>
                       }
+                      @if (tier.regionGroup) {
+                        <span class="px-1.5 py-0.5 rounded text-[10px] font-semibold"
+                              style="background:#ede9fe;color:#6d28d9">
+                          {{ regionGroupLabel(tier.regionGroup) }}
+                        </span>
+                      }
                     </div>
                   </td>
 
@@ -513,6 +561,104 @@ function groupKey(p: InsurancePlanSummary): string {
         </div>
       </div>
     }
+  </div>
+}
+
+<!-- ── Company filter dialog ─────────────────────────────────────────── -->
+@if (companyFilterOpen()) {
+  <!-- Backdrop -->
+  <div class="fixed inset-0 z-50 flex items-center justify-center"
+       style="background:rgba(17,28,34,0.45);backdrop-filter:blur(4px)"
+       (click)="closeCompanyFilter()">
+    <!-- Panel — stop propagation so clicks inside don't close -->
+    <div class="relative w-full max-w-md mx-4 rounded-3xl overflow-hidden"
+         style="background:#fff;box-shadow:0 24px 64px rgba(17,48,105,0.18)"
+         (click)="$event.stopPropagation()">
+
+      <!-- Header -->
+      <div class="flex items-center justify-between px-6 py-5"
+           style="border-bottom:1px solid rgba(17,48,105,0.07)">
+        <div>
+          <h3 class="text-[16px] font-black" style="color:#171c22;font-family:'Plus Jakarta Sans',sans-serif">
+            เลือกบริษัทประกัน
+          </h3>
+          <p class="text-[12px] mt-0.5" style="color:#8b95a6">
+            {{ allCompanies().length }} บริษัท · เลือกที่ต้องการแสดง
+          </p>
+        </div>
+        <button (click)="closeCompanyFilter()"
+                class="w-8 h-8 rounded-xl flex items-center justify-center transition-colors"
+                style="background:#f0f4fd;color:#435d98"
+                [innerHTML]="safe(CLOSE_ICON,'w-4 h-4')">
+        </button>
+      </div>
+
+      <!-- Select all toggle -->
+      <div class="flex items-center justify-between px-6 py-3"
+           style="background:#f8f9ff;border-bottom:1px solid rgba(17,48,105,0.06)">
+        <span class="text-[12px] font-bold" style="color:#5a6270">เลือกทั้งหมด</span>
+        <div class="w-4 h-4 rounded border-2 flex items-center justify-center cursor-pointer transition-all"
+             (click)="toggleAllCompanies()"
+             [class]="draftAllSelected() ? 'check-active' : ''"
+             [style]="!draftAllSelected() ? 'border-color:rgba(17,48,105,0.25)' : ''">
+          @if (draftAllSelected()) {
+            <svg class="w-2.5 h-2.5 text-white" fill="currentColor" viewBox="0 0 20 20">
+              <path fill-rule="evenodd" d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z" clip-rule="evenodd"/>
+            </svg>
+          }
+        </div>
+      </div>
+
+      <!-- Company list -->
+      <div class="overflow-y-auto" style="max-height:320px">
+        @for (company of allCompanies(); track company) {
+          <div class="flex items-center gap-3 px-6 py-3.5 cursor-pointer transition-colors"
+               style="border-bottom:1px solid rgba(17,48,105,0.05)"
+               [style.background]="draftSelected().has(company) ? '#f0f9fa' : 'transparent'"
+               (click)="toggleDraftCompany(company)">
+            <!-- Logo badge -->
+            <div class="w-9 h-9 rounded-xl flex items-center justify-center flex-shrink-0 overflow-hidden"
+                 [style]="'background:' + palette(company).bg">
+              <img [src]="'assets/logos/' + companyShortCode(company).toLowerCase() + '.png'"
+                   [alt]="company"
+                   class="w-8 h-8 object-contain"
+                   (error)="onDialogLogoError($event, company)" />
+            </div>
+            <span class="flex-1 text-[13px] font-semibold" style="color:#171c22;font-family:'Noto Sans Thai',sans-serif">
+              {{ company }}
+            </span>
+            <!-- Checkbox -->
+            <div class="w-4 h-4 rounded border-2 flex items-center justify-center flex-shrink-0 transition-all"
+                 [class]="draftSelected().has(company) ? 'check-active' : ''"
+                 [style]="!draftSelected().has(company) ? 'border-color:rgba(17,48,105,0.25)' : ''">
+              @if (draftSelected().has(company)) {
+                <svg class="w-2.5 h-2.5 text-white" fill="currentColor" viewBox="0 0 20 20">
+                  <path fill-rule="evenodd" d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z" clip-rule="evenodd"/>
+                </svg>
+              }
+            </div>
+          </div>
+        }
+      </div>
+
+      <!-- Footer actions -->
+      <div class="flex items-center gap-3 px-6 py-4"
+           style="border-top:1px solid rgba(17,48,105,0.07)">
+        <button (click)="clearCompanyFilter()"
+                class="flex-1 py-2.5 rounded-2xl text-[13px] font-bold transition-all"
+                style="background:#f0f4fd;color:#435d98">
+          ล้างตัวกรอง
+        </button>
+        <button (click)="applyCompanyFilter()"
+                class="flex-1 py-2.5 rounded-2xl text-[13px] font-bold text-white transition-all hover:opacity-90"
+                style="background:linear-gradient(135deg,#006874,#49b2c1);box-shadow:0 2px 10px rgba(0,104,116,0.3)">
+          ใช้ตัวกรอง
+          @if (draftSelected().size > 0 && draftSelected().size < allCompanies().length) {
+            ({{ draftSelected().size }})
+          }
+        </button>
+      </div>
+    </div>
   </div>
 }
 
@@ -572,13 +718,14 @@ export class ResultsComponent {
 
   readonly #san = inject(DomSanitizer);
 
-  readonly SEARCH_ICON = SEARCH_ICON;
-  readonly SHIELD_ICON = SHIELD_ICON;
-  readonly CHART_ICON  = CHART_ICON;
-  readonly CLOSE_ICON  = CLOSE_ICON;
-  readonly LIST_ICON   = LIST_ICON;
-  readonly CARET_DOWN  = CARET_DOWN;
-  readonly CARET_UP    = CARET_UP;
+  readonly SEARCH_ICON  = SEARCH_ICON;
+  readonly SHIELD_ICON  = SHIELD_ICON;
+  readonly CHART_ICON   = CHART_ICON;
+  readonly CLOSE_ICON   = CLOSE_ICON;
+  readonly LIST_ICON    = LIST_ICON;
+  readonly CARET_DOWN   = CARET_DOWN;
+  readonly CARET_UP     = CARET_UP;
+  readonly FILTER_ICON  = FILTER_ICON;
   readonly yearRangeLabel = yearRangeLabel;
 
   skeletons        = [1, 2, 3, 4, 5, 6];
@@ -588,14 +735,37 @@ export class ResultsComponent {
   expandedGroupId  = signal<string | null>(null);   // sum-insured tier rows
   private toastId  = 0;
 
+  // ── Company filter ───────────────────────────────────────────────────────────
+  companyFilterOpen  = signal(false);
+  activeCompanyFilter = signal<Set<string>>(new Set()); // empty = show all
+  draftSelected      = signal<Set<string>>(new Set()); // working copy inside dialog
+
+  allCompanies = computed((): string[] => {
+    const items = this.result()?.items ?? [];
+    const seen = new Set<string>();
+    const names: string[] = [];
+    for (const p of items) {
+      if (!seen.has(p.companyName)) { seen.add(p.companyName); names.push(p.companyName); }
+    }
+    return names.sort((a, b) => a.localeCompare(b, 'th'));
+  });
+
+  draftAllSelected = computed(() => {
+    const draft = this.draftSelected();
+    const all   = this.allCompanies();
+    return all.length > 0 && all.every(c => draft.has(c));
+  });
+
   // ── Grouping ────────────────────────────────────────────────────────────────
   // Collapse rows with same company + planType + repairType.
   // Show cheapest as the representative ("เริ่มต้น ฿X,XXX").
   groupedItems = computed((): GroupedPlan[] => {
-    const items = this.result()?.items ?? [];
-    const map = new Map<string, InsurancePlanSummary[]>();
+    const items  = this.result()?.items ?? [];
+    const filter = this.activeCompanyFilter();
+    const map    = new Map<string, InsurancePlanSummary[]>();
 
     for (const plan of items) {
+      if (filter.size > 0 && !filter.has(plan.companyName)) continue;
       const k = groupKey(plan);
       if (!map.has(k)) map.set(k, []);
       map.get(k)!.push(plan);
@@ -635,6 +805,16 @@ export class ResultsComponent {
   palette(name: string) { return companyPalette(name); }
   planTypeLabel(t: string): string { return PLAN_TYPE_LABELS[t] ?? t; }
   repairTypeLabel(t: string): string { return t === 'Dealer' ? 'ซ่อมศูนย์' : 'ซ่อมอู่'; }
+
+  regionGroupLabel(code: string | null | undefined): string | null {
+    if (!code) return null;
+    const map: Record<string, string> = {
+      BKK: 'กรุงเทพและปริมณฑล',
+      NE:  'ภาคตะวันออกเฉียงเหนือ',
+      UPC: 'ต่างจังหวัด (ยกเว้นภาคตะวันออกเฉียงเหนือ)',
+    };
+    return map[code] ?? code;
+  }
 
   coverageBadges(plan: InsurancePlanSummary): string[] {
     const b: string[] = [];
@@ -726,6 +906,65 @@ export class ResultsComponent {
 
   generateQuotation(plan: InsurancePlanSummary): void {
     this.quotationNavigate.emit(plan.id);
+  }
+
+  // ── Company filter dialog methods ────────────────────────────────────────────
+  openCompanyFilter(): void {
+    // Pre-populate draft from current active filter (or all if none)
+    const active = this.activeCompanyFilter();
+    this.draftSelected.set(new Set(active.size > 0 ? active : []));
+    this.companyFilterOpen.set(true);
+  }
+
+  closeCompanyFilter(): void {
+    this.companyFilterOpen.set(false);
+  }
+
+  toggleDraftCompany(name: string): void {
+    const draft = new Set(this.draftSelected());
+    if (draft.has(name)) draft.delete(name); else draft.add(name);
+    this.draftSelected.set(draft);
+  }
+
+  toggleAllCompanies(): void {
+    if (this.draftAllSelected()) {
+      this.draftSelected.set(new Set());
+    } else {
+      this.draftSelected.set(new Set(this.allCompanies()));
+    }
+  }
+
+  applyCompanyFilter(): void {
+    const draft = this.draftSelected();
+    // If all or none selected → clear filter (show all)
+    const all = this.allCompanies();
+    if (draft.size === 0 || draft.size === all.length) {
+      this.activeCompanyFilter.set(new Set());
+    } else {
+      this.activeCompanyFilter.set(new Set(draft));
+    }
+    this.companyFilterOpen.set(false);
+  }
+
+  clearCompanyFilter(): void {
+    this.activeCompanyFilter.set(new Set());
+    this.draftSelected.set(new Set());
+    this.companyFilterOpen.set(false);
+  }
+
+  /** Look up a short code for a company by scanning result items */
+  companyShortCode(name: string): string {
+    const found = this.result()?.items.find(p => p.companyName === name);
+    return found?.companyShortCode ?? name.slice(0, 2).toUpperCase();
+  }
+
+  onDialogLogoError(event: Event, name: string): void {
+    const img = event.target as HTMLImageElement;
+    img.style.display = 'none';
+    const pal = companyPalette(name);
+    const parent = img.parentElement!;
+    parent.style.background = pal.bg;
+    parent.innerHTML = `<span style="font-size:11px;font-weight:900;letter-spacing:-0.5px;color:${pal.text}">${name.slice(0,2).toUpperCase()}</span>`;
   }
 
   onLogoError(event: Event, code: string, pal: { bg: string; text: string }): void {

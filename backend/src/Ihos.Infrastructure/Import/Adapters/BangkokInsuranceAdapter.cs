@@ -32,16 +32,16 @@ public sealed class BangkokInsuranceAdapter : ExcelCompanyAdapterBase
             ["RepairType"]        = "repair_type",
             ["Repair Type"]       = "repair_type",
 
-            // Year range
-            ["ปีเริ่มต้น"]        = "min_year",
-            ["อายุรถต่ำสุด"]      = "min_year",
-            ["MinYear"]           = "min_year",
-            ["Min Year"]          = "min_year",
-
-            ["ปีสิ้นสุด"]         = "max_year",
-            ["อายุรถสูงสุด"]      = "max_year",
-            ["MaxYear"]           = "max_year",
-            ["Max Year"]          = "max_year",
+            // Registration year
+            ["ปีจดทะเบียน"]       = "registration_year",
+            ["ปีรถยนต์"]          = "registration_year",
+            ["RegistrationYear"]  = "registration_year",
+            ["Registration Year"] = "registration_year",
+            // Legacy age-range fallbacks (mapped to registration_year)
+            ["ปีเริ่มต้น"]        = "registration_year",
+            ["อายุรถต่ำสุด"]      = "registration_year",
+            ["MinYear"]           = "registration_year",
+            ["Min Year"]          = "registration_year",
 
             // Financials
             ["ทุนประกัน"]         = "sum_insured",

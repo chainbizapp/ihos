@@ -37,9 +37,11 @@ public class ApplicationDbContext : DbContext
 
     // Quotation module
     public DbSet<Quotation> Quotations => Set<Quotation>();
+    public DbSet<Customer> Customers => Set<Customer>();
 
     // Reference data
     public DbSet<Province> Provinces => Set<Province>();
+    public DbSet<RegionGroupMapping> RegionGroupMappings => Set<RegionGroupMapping>();
 
     public override async Task<int> SaveChangesAsync(CancellationToken cancellationToken = default)
     {
@@ -152,7 +154,7 @@ public class ApplicationDbContext : DbContext
                 .OnDelete(DeleteBehavior.Restrict);
 
             entity.HasIndex(e => e.MakeId);
-            entity.HasIndex(new[] { nameof(VehicleModel.MakeId), nameof(VehicleModel.Name), nameof(VehicleModel.SubModel), nameof(VehicleModel.GearType) }).IsUnique();
+            entity.HasIndex(new[] { nameof(VehicleModel.MakeId), nameof(VehicleModel.Name), nameof(VehicleModel.SubModel), nameof(VehicleModel.GearType), nameof(VehicleModel.EngineCC) }).IsUnique();
         });
 
         modelBuilder.Entity<VehicleModelMapping>(entity =>
@@ -281,11 +283,11 @@ public class ApplicationDbContext : DbContext
                 nameof(InsurancePlan.VehicleModelId),
                 nameof(InsurancePlan.PlanType),
                 nameof(InsurancePlan.RepairType),
-                nameof(InsurancePlan.MinYear),
-                nameof(InsurancePlan.MaxYear),
+                nameof(InsurancePlan.RegistrationYear),
                 nameof(InsurancePlan.SumInsured),
                 nameof(InsurancePlan.RegionGroup),
-                nameof(InsurancePlan.ExternalPackageId)
+                nameof(InsurancePlan.ExternalPackageId),
+                nameof(InsurancePlan.VehicleTypeCode)
             }).IsUnique();
 
             entity.HasIndex(e => e.CompanyId);
@@ -357,6 +359,25 @@ public class ApplicationDbContext : DbContext
             entity.HasIndex(e => e.GeneratedAt);
         });
 
+        modelBuilder.Entity<Customer>(entity =>
+        {
+            entity.ToTable("customers");
+            entity.HasKey(e => e.Id);
+            entity.Property(e => e.Id).HasDefaultValueSql("gen_random_uuid()");
+            entity.Property(e => e.FullName).HasMaxLength(255).IsRequired();
+            entity.Property(e => e.Phone).HasMaxLength(30).IsRequired();
+            entity.Property(e => e.Email).HasMaxLength(255);
+            entity.Property(e => e.LicenseNumber).HasMaxLength(50);
+            entity.Property(e => e.VehicleRegistration).HasMaxLength(50);
+            entity.Property(e => e.VehicleYear);
+            entity.Property(e => e.PreviousInsurer).HasMaxLength(255);
+
+            // Unique per agent per vehicle: same customer can have multiple registrations
+            entity.HasIndex(new[] { nameof(Customer.FullName), nameof(Customer.Phone), nameof(Customer.VehicleRegistration), nameof(Customer.CreatedBy) }).IsUnique();
+            entity.HasIndex(e => e.CreatedBy);
+            entity.HasIndex(e => e.FullName);
+        });
+
         // ── Provinces (reference / seed) ─────────────────────────────────────
         modelBuilder.Entity<Province>(entity =>
         {
@@ -370,6 +391,31 @@ public class ApplicationDbContext : DbContext
             entity.HasIndex(e => e.NameTh).IsUnique();
 
             entity.HasData(ProvinceSeeder.All);
+        });
+
+        // ── RegionGroupMappings (Allianz-style regional pricing) ─────────────
+        // One row per (companyShortCode, regionGroup, thaiRegion).
+        // BKK  → Bangkok only
+        // NE   → Northeast only
+        // UPC  → everything else (North, Central, East, West, South)
+        modelBuilder.Entity<RegionGroupMapping>(entity =>
+        {
+            entity.ToTable("region_group_mappings");
+            entity.HasKey(e => e.Id);
+            entity.Property(e => e.CompanyShortCode).HasMaxLength(50).IsRequired();
+            entity.Property(e => e.RegionGroup).HasMaxLength(50).IsRequired();
+            entity.Property(e => e.ThaiRegion).HasConversion<string>().HasMaxLength(20).IsRequired();
+            entity.HasIndex(e => new { e.CompanyShortCode, e.RegionGroup });
+
+            entity.HasData(
+                new RegionGroupMapping { Id = 1, CompanyShortCode = "ALA", RegionGroup = "BKK", ThaiRegion = ThaiRegion.Bangkok    },
+                new RegionGroupMapping { Id = 2, CompanyShortCode = "ALA", RegionGroup = "NE",  ThaiRegion = ThaiRegion.Northeast  },
+                new RegionGroupMapping { Id = 3, CompanyShortCode = "ALA", RegionGroup = "UPC", ThaiRegion = ThaiRegion.North      },
+                new RegionGroupMapping { Id = 4, CompanyShortCode = "ALA", RegionGroup = "UPC", ThaiRegion = ThaiRegion.Central    },
+                new RegionGroupMapping { Id = 5, CompanyShortCode = "ALA", RegionGroup = "UPC", ThaiRegion = ThaiRegion.East       },
+                new RegionGroupMapping { Id = 6, CompanyShortCode = "ALA", RegionGroup = "UPC", ThaiRegion = ThaiRegion.West       },
+                new RegionGroupMapping { Id = 7, CompanyShortCode = "ALA", RegionGroup = "UPC", ThaiRegion = ThaiRegion.South      }
+            );
         });
     }
 }

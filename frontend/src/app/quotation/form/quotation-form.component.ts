@@ -4,6 +4,7 @@ import { FormsModule } from '@angular/forms';
 import { ActivatedRoute, Router } from '@angular/router';
 import { SearchApiService, InsurancePlanDetail } from '../../core/search-api.service';
 import { QuotationService } from '../quotation.service';
+import { CustomerApiService, CustomerSuggestion } from '../../core/customer-api.service';
 
 // ── shared sidebar helpers ────────────────────────────────────────────────────
 
@@ -71,6 +72,14 @@ function svg(path: string, cls = 'w-4 h-4'): string {
     .field-input::placeholder { color: #b0b9c6; }
     .step-connector { width: 2px; height: 24px; margin: 2px auto; border-radius: 1px; }
     .section-divider { height: 1px; background: rgba(17,48,105,0.07); margin: 1.25rem 0; }
+    /* ── Auto-suggest dropdown ── */
+    .suggest-drop { position:absolute;top:calc(100% + 4px);left:0;right:0;background:#fff;border:1.5px solid #e2e8f0;border-radius:12px;box-shadow:0 8px 24px rgba(17,48,105,.12);z-index:50;overflow:hidden;max-height:240px;overflow-y:auto }
+    .suggest-item { display:flex;align-items:center;gap:10px;padding:10px 14px;cursor:pointer;transition:background .1s;border-bottom:1px solid #f5f7fa }
+    .suggest-item:last-child { border-bottom:none }
+    .suggest-item:hover { background:#f7fdfd }
+    .suggest-avatar { width:32px;height:32px;border-radius:50%;background:rgba(0,104,116,.1);display:flex;align-items:center;justify-content:center;font-size:12px;font-weight:800;color:#006874;flex-shrink:0 }
+    .suggest-name { font-size:13px;font-weight:700;color:#171c22 }
+    .suggest-sub { font-size:11px;color:#9aa5b4;margin-top:1px }
   `],
   template: `
 <div style="background:#f0f4fd;font-family:'Noto Sans Thai',sans-serif;min-height:calc(100vh - 4rem)">
@@ -217,14 +226,32 @@ function svg(path: string, cls = 'w-4 h-4'): string {
             </div>
 
             <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
-              <!-- Full Name -->
+              <!-- Full Name with auto-suggest -->
               <div class="sm:col-span-2">
                 <label class="block text-[11px] font-bold uppercase tracking-wide mb-1.5" style="color:#6b7a8d">
                   Full Name / ชื่อ-นามสกุล <span style="color:#e53e3e">*</span>
                 </label>
-                <input type="text" name="customerName" [(ngModel)]="customerName" required maxlength="255"
-                       placeholder="e.g. สมชาย ใจดี" 
-                       [class]="'field-input' + (f.submitted && !customerName ? ' invalid' : '')" />
+                <div style="position:relative">
+                  <input type="text" name="customerName" [(ngModel)]="customerName" required maxlength="255"
+                         placeholder="e.g. สมชาย ใจดี"
+                         [class]="'field-input' + (f.submitted && !customerName ? ' invalid' : '')"
+                         (input)="onNameInput($event)"
+                         (focus)="onNameFocus()"
+                         (blur)="onNameBlur()" />
+                  @if (suggestions().length > 0 && showSuggest()) {
+                    <div class="suggest-drop">
+                      @for (s of suggestions(); track s.id) {
+                        <div class="suggest-item" (mousedown)="selectSuggestion(s)">
+                          <div class="suggest-avatar">{{ s.fullName.charAt(0) }}</div>
+                          <div>
+                            <div class="suggest-name">{{ s.fullName }}{{ s.vehicleRegistration ? ' — ' + s.vehicleRegistration : '' }}</div>
+                            <div class="suggest-sub">{{ s.phone }}{{ s.vehicleYear ? ' · ปี ' + s.vehicleYear : '' }}{{ s.email ? ' · ' + s.email : '' }}</div>
+                          </div>
+                        </div>
+                      }
+                    </div>
+                  }
+                </div>
                 @if (f.submitted && !customerName) {
                   <p class="text-[11px] mt-1" style="color:#e53e3e">Full name is required.</p>
                 }
@@ -395,6 +422,7 @@ export class QuotationFormComponent implements OnInit {
   private readonly router = inject(Router);
   private readonly searchApi = inject(SearchApiService);
   private readonly quotationService = inject(QuotationService);
+  private readonly customerApi = inject(CustomerApiService);
 
   /** Primary plan (required — drives validation & vehicle info) */
   plan = signal<InsurancePlanDetail | null>(null);
@@ -403,6 +431,11 @@ export class QuotationFormComponent implements OnInit {
   loadingPlan = signal(true);
   generating = signal(false);
   error = signal<string | null>(null);
+
+  // Auto-suggest
+  suggestions = signal<CustomerSuggestion[]>([]);
+  showSuggest = signal(false);
+  private suggestTimer: ReturnType<typeof setTimeout> | null = null;
 
   // Personal info
   customerName = '';
@@ -479,6 +512,11 @@ export class QuotationFormComponent implements OnInit {
         customerName: this.customerName,
         vehicleRegistration: this.vehicleRegistration || undefined,
         vehicleYear: this.vehicleYear,
+        phone: this.phone || undefined,
+        email: this.email || undefined,
+        licenseNumber: this.licenseNumber || undefined,
+        previousInsurer: this.previousCompany || undefined,
+        previousExpiryDate: this.previousPolicyExpiry || undefined,
       });
 
       this.router.navigate(['/quotation/success'], {
@@ -500,6 +538,42 @@ export class QuotationFormComponent implements OnInit {
     } finally {
       this.generating.set(false);
     }
+  }
+
+  // ── Auto-suggest handlers ──────────────────────────────────────────────────
+  onNameInput(event: Event): void {
+    const q = (event.target as HTMLInputElement).value;
+    if (this.suggestTimer) clearTimeout(this.suggestTimer);
+    if (!q || q.length < 2) { this.suggestions.set([]); return; }
+    this.suggestTimer = setTimeout(async () => {
+      try {
+        const results = await this.customerApi.search(q);
+        this.suggestions.set(results);
+        this.showSuggest.set(true);
+      } catch { this.suggestions.set([]); }
+    }, 250);
+  }
+
+  onNameFocus(): void {
+    if (this.suggestions().length > 0) this.showSuggest.set(true);
+  }
+
+  onNameBlur(): void {
+    // Small delay so mousedown on suggestion fires first
+    setTimeout(() => this.showSuggest.set(false), 150);
+  }
+
+  selectSuggestion(s: CustomerSuggestion): void {
+    this.customerName         = s.fullName;
+    this.phone                = s.phone;
+    this.email                = s.email ?? '';
+    this.licenseNumber        = s.licenseNumber ?? '';
+    this.vehicleRegistration  = s.vehicleRegistration ?? '';
+    if (s.vehicleYear) this.vehicleYear = s.vehicleYear;
+    this.previousCompany      = s.previousInsurer ?? '';
+    this.previousPolicyExpiry = s.previousExpiryDate ?? '';
+    this.showSuggest.set(false);
+    this.suggestions.set([]);
   }
 
   cancel(): void {

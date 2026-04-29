@@ -33,7 +33,8 @@ public sealed class ViriyahVehicleMasterParser : IVehicleMasterFileParser
                 CarnameCode: csv.GetField("carname_code") ?? string.Empty,
                 Brand      : csv.GetField("carname_desc") ?? string.Empty,
                 CarModel   : csv.GetField("car_model")    ?? string.Empty,
-                CarOption  : csv.GetField("car_option")   ?? string.Empty
+                CarOption  : csv.GetField("car_option")   ?? string.Empty,
+                CarCC      : csv.GetField("car_cc")       ?? string.Empty
             ));
         }
         return rows;

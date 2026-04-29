@@ -35,6 +35,19 @@ const POPULAR_MAKE_NAMES = [
   'Mazda', 'Ford', 'BYD', 'MG',
 ];
 
+// ── Popular models per brand (matched case-insensitively against API) ─────────
+const POPULAR_MODELS: Record<string, string[]> = {
+  toyota:     ['Hilux Revo', 'Fortuner', 'Yaris ATIV', 'Yaris Cross', 'Corolla Altis', 'Corolla Cross', 'Camry', 'Vios', 'Alphard'],
+  honda:      ['City', 'City Hatchback', 'Civic', 'Accord', 'HR-V', 'CR-V', 'BR-V', 'Jazz', 'Mobilio'],
+  isuzu:      ['D-Max', 'MU-X', 'D-Max Hi-Lander', 'D-Max V-Cross', 'D-Max Spark', 'D-Max Cab4', 'MU-X Active', 'MU-X Elegant', 'MU-X Ultimate'],
+  mitsubishi: ['Triton', 'Pajero Sport', 'Xpander', 'Xpander Cross', 'Attrage', 'Mirage', 'Outlander PHEV', 'Triton Athlete', 'Triton Single Cab'],
+  nissan:     ['Almera', 'Navara', 'Terra', 'Kicks e-Power', 'Sylphy', 'Note', 'March', 'Teana', 'X-Trail'],
+  mazda:      ['Mazda2', 'Mazda3', 'CX-3', 'CX-30', 'CX-5', 'CX-8', 'BT-50', 'MX-5', 'CX-60'],
+  ford:       ['Ranger', 'Everest', 'Ranger Raptor', 'Ranger Wildtrak', 'Ranger XL', 'Ranger XLS', 'Ranger XLT', 'Everest Sport', 'Everest Titanium'],
+  byd:        ['Dolphin', 'Atto 3', 'Seal', 'Sealion 6', 'Sealion 7', 'Yuan Plus', 'Qin Plus', 'Song Plus', 'Dolphin Mini'],
+  mg:         ['MG4 Electric', 'MG5', 'MG ZS EV', 'MG HS', 'MG ES', 'MG3 Hybrid+', 'MG VS HEV', 'MG EP', 'Maxus 9'],
+};
+
 const MAKE_LOGO: Record<string, string> = {
   toyota: 'logos/toyota.png',
   honda: 'logos/honda.png',
@@ -104,14 +117,14 @@ function makeAbbr(name: string): string {
     .fs:focus { border-color:#006874;box-shadow:0 0 0 3px rgba(0,104,116,.1) }
     .fs:disabled { background-color:#f8f9ff;color:#b0b9c6;cursor:not-allowed }
     /* ── Brand tiles ─── */
-    .brand-tile { display:flex;flex-direction:column;align-items:center;gap:8px;padding:18px 10px 14px;border-radius:18px;border:2px solid #edf1f7;background:#fff;cursor:pointer;transition:all .18s;position:relative;min-width:0 }
-    .brand-tile:hover { border-color:#006874;background:#f7fdfd;box-shadow:0 4px 14px rgba(0,104,116,.13);transform:translateY(-2px) }
-    .brand-tile.selected { border-color:#006874;background:#edf9fb;box-shadow:0 4px 16px rgba(0,104,116,.18) }
-    .brand-logo { width:64px;height:64px;border-radius:14px;display:flex;align-items:center;justify-content:center;background:#f4f7fd }
-    .brand-tile.selected .brand-logo { background:#ddf2f5 }
-    .brand-abbr { width:64px;height:64px;border-radius:14px;display:flex;align-items:center;justify-content:center;font-size:13px;font-weight:900;letter-spacing:.04em;background:#f4f7fd;color:#435d98 }
+    .brand-tile { display:flex;flex-direction:column;align-items:stretch;border-radius:18px;border:2px solid #edf1f7;background:transparent;cursor:pointer;transition:all .18s;position:relative;min-width:0;overflow:hidden }
+    .brand-tile:hover { border-color:#006874;box-shadow:0 4px 14px rgba(0,104,116,.13);transform:translateY(-2px) }
+    .brand-tile.selected { border-color:#006874;box-shadow:0 4px 16px rgba(0,104,116,.18) }
+    .brand-logo { width:100%;aspect-ratio:1;background-size:contain;background-repeat:no-repeat;background-position:center;background-color:#f4f7fd;position:relative }
+    .brand-tile.selected .brand-logo { background-color:#ddf2f5 }
+    .brand-abbr { width:100%;aspect-ratio:1;display:flex;align-items:center;justify-content:center;font-size:12px;font-weight:900;letter-spacing:.04em;background:#f4f7fd;color:#435d98 }
     .brand-tile.selected .brand-abbr { background:#ddf2f5;color:#006874 }
-    .brand-name { font-size:12px;font-weight:700;color:#5a6270;text-align:center;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;max-width:100% }
+    .brand-name { font-size:11px;font-weight:700;color:#5a6270;text-align:center;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;padding:5px 6px;background:transparent }
     .brand-tile.selected .brand-name { color:#006874;font-weight:800 }
     .check-badge { position:absolute;top:7px;right:7px;width:18px;height:18px;border-radius:50%;background:#006874;display:flex;align-items:center;justify-content:center;box-shadow:0 2px 6px rgba(0,104,116,.4) }
     /* ── Dialog ─── */
@@ -125,7 +138,7 @@ function makeAbbr(name: string): string {
   `],
   template: `
 <div style="background:#f0f4fd;font-family:'Noto Sans Thai',sans-serif;min-height:calc(100vh - 4rem)">
-  <div class="max-w-6xl mx-auto px-6 py-10 md:py-14">
+  <div class="max-w-6xl mx-auto px-4 md:px-6 py-10 md:py-14">
 
     <!-- ── Hero ──────────────────────────────────────────────────────── -->
     <div class="mb-2">
@@ -145,159 +158,285 @@ function makeAbbr(name: string): string {
     </div>
 
     <!-- ── 2-column: form + sidebar ──────────────────────────────────── -->
-    <div class="grid gap-5 mt-7" style="grid-template-columns:1fr 272px;align-items:start">
+    <div class="grid grid-cols-1 md:grid-cols-[1fr_272px] gap-5 mt-7" style="align-items:start">
 
       <!-- ── Form card ─────────────────────────────────────────────── -->
       <div class="rounded-2xl p-6" style="background:#ffffff;box-shadow:0 2px 20px rgba(17,48,105,0.07)">
 
-        <!-- Brand section header -->
-        <div class="mb-4">
-          <span class="text-[13px] font-extrabold" style="color:#171c22;font-family:'Plus Jakarta Sans',sans-serif">ยี่ห้อยอดนิยม</span>
+        <!-- ── Step indicator ──────────────────────────────────────── -->
+        <div class="flex items-center mb-6">
+          @for (s of steps; track s.n; let last = $last) {
+            <div class="flex items-center" [class.flex-1]="!last">
+              <button class="flex items-center gap-2" (click)="goToStep(s.n)" [disabled]="!canGoToStep(s.n)">
+                <div class="w-7 h-7 rounded-full flex items-center justify-center text-[12px] font-bold flex-shrink-0 transition-all"
+                     [style]="currentStep() > s.n
+                       ? 'background:#006874;color:#fff'
+                       : currentStep() === s.n
+                         ? 'background:#006874;color:#fff;box-shadow:0 0 0 3px rgba(0,104,116,0.15)'
+                         : 'background:#f0f4fd;color:#9aa5b4;border:2px solid #e2e8f0'">
+                  @if (currentStep() > s.n) {
+                    <svg viewBox="0 0 20 20" fill="currentColor" style="width:11px;height:11px">
+                      <path fill-rule="evenodd" d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z" clip-rule="evenodd"/>
+                    </svg>
+                  } @else {
+                    {{ s.n }}
+                  }
+                </div>
+                <span class="text-[12px] font-semibold hidden sm:block transition-colors"
+                      [style]="currentStep() >= s.n ? 'color:#006874' : 'color:#9aa5b4'">
+                  {{ s.label }}
+                </span>
+              </button>
+              @if (!last) {
+                <div class="flex-1 h-px mx-3 transition-all"
+                     [style]="currentStep() > s.n ? 'background:#006874' : 'background:#e2e8f0'"></div>
+              }
+            </div>
+          }
         </div>
 
-        <!-- Popular brand grid -->
-        <div class="grid gap-3 mb-5" style="grid-template-columns:repeat(5,1fr)">
-          @for (m of popularMakes(); track m.id) {
-            <button class="brand-tile" [class.selected]="selectedMakeId === m.id"
-                    (click)="selectMake(m.id)">
-              @if (selectedMakeId === m.id) {
+        <!-- ── Step 1: เลือกยี่ห้อ ──────────────────────────────────── -->
+        @if (currentStep() === 1) {
+          <div class="mb-4">
+            <span class="text-[13px] font-extrabold" style="color:#171c22;font-family:'Plus Jakarta Sans',sans-serif">ยี่ห้อยอดนิยม</span>
+          </div>
+          <div class="grid gap-3" style="grid-template-columns:repeat(5,1fr)">
+            @for (m of popularMakes(); track m.id) {
+              <button class="brand-tile" [class.selected]="selectedMakeId === m.id"
+                      (click)="selectMakeStep(m.id)">
+                @if (selectedMakeId === m.id) {
+                  <span class="check-badge">
+                    <svg viewBox="0 0 20 20" fill="white" style="width:11px;height:11px">
+                      <path fill-rule="evenodd" d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z" clip-rule="evenodd"/>
+                    </svg>
+                  </span>
+                }
+                @if (makeLogo(m.name); as logo) {
+                  <div class="brand-logo" [style.background-image]="'url(' + logo + ')'"></div>
+                } @else {
+                  <div class="brand-abbr">{{ makeAbbr(m.name) }}</div>
+                }
+                <span class="brand-name">{{ m.name }}</span>
+              </button>
+            }
+            <button class="brand-tile" [class.selected]="selectedMakeId && !isPopularMake()"
+                    (click)="openBrandDialog()">
+              @if (selectedMakeId && !isPopularMake()) {
                 <span class="check-badge">
                   <svg viewBox="0 0 20 20" fill="white" style="width:11px;height:11px">
                     <path fill-rule="evenodd" d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z" clip-rule="evenodd"/>
                   </svg>
                 </span>
-              }
-              @if (makeLogo(m.name); as logo) {
-                <div class="brand-logo">
-                  <img [src]="logo" [alt]="m.name" style="width:48px;height:48px;object-fit:contain"/>
-                </div>
+                <div class="brand-abbr">{{ makeAbbr(selectedMakeName()) }}</div>
+                <span class="brand-name">{{ selectedMakeName() }}</span>
               } @else {
-                <div class="brand-abbr">{{ makeAbbr(m.name) }}</div>
+                <div class="brand-abbr" style="font-size:22px;font-weight:400;letter-spacing:0">···</div>
+                <span class="brand-name">ยี่ห้ออื่นๆ</span>
               }
-              <span class="brand-name">{{ m.name }}</span>
             </button>
-          }
-          <!-- ยี่ห้ออื่นๆ tile → opens dialog -->
-          <button class="brand-tile" [class.selected]="selectedMakeId && !isPopularMake()"
-                  (click)="openBrandDialog()">
-            @if (selectedMakeId && !isPopularMake()) {
-              <span class="check-badge">
-                <svg viewBox="0 0 20 20" fill="white" style="width:11px;height:11px">
-                  <path fill-rule="evenodd" d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z" clip-rule="evenodd"/>
-                </svg>
-              </span>
-              <div class="brand-abbr">{{ makeAbbr(selectedMakeName()) }}</div>
-              <span class="brand-name">{{ selectedMakeName() }}</span>
+          </div>
+        }
+
+        <!-- ── Step 2: รุ่นและปี ────────────────────────────────────── -->
+        @if (currentStep() === 2) {
+          <!-- Selected make summary -->
+          <div class="flex items-center gap-3 mb-5 pb-4" style="border-bottom:1px solid #f0f4fd">
+            @if (makeLogo(selectedMakeName()); as logo) {
+              <div class="w-10 h-10 rounded-xl flex-shrink-0"
+                   [style.background-image]="'url(' + logo + ')'"
+                   style="background-size:contain;background-repeat:no-repeat;background-position:center;background-color:#f4f7fd"></div>
             } @else {
-              <div class="brand-abbr" style="font-size:22px;font-weight:400;letter-spacing:0">···</div>
-              <span class="brand-name">ยี่ห้ออื่นๆ</span>
+              <div class="w-10 h-10 rounded-xl flex-shrink-0 flex items-center justify-center text-[12px] font-black"
+                   style="background:#f4f7fd;color:#435d98">{{ makeAbbr(selectedMakeName()) }}</div>
             }
-          </button>
-        </div>
-
-        <!-- Model + Year (show after brand selected) -->
-        @if (selectedMakeId) {
-          <div style="border-top:1px solid #f0f4fd;padding-top:16px">
-            <div class="grid grid-cols-3 gap-4 mb-4">
-              <div>
-                <label class="fl">เลือกรุ่น (MODEL)</label>
-                <select class="fs"
-                        [ngModel]="selectedModelName()"
-                        (ngModelChange)="onModelChange($event)"
-                        [disabled]="loadingModels()">
-                  <option value="">{{ loadingModels() ? 'กำลังโหลด...' : 'กรุณาเลือก' }}</option>
-                  @for (g of modelGroups(); track g.name) {
-                    <option [value]="g.name">{{ g.name }}</option>
-                  }
-                </select>
-              </div>
-              <div>
-                <label class="fl">ปีรถยนต์ (YEAR)</label>
-                <select class="fs"
-                        [ngModel]="selectedYear()"
-                        (ngModelChange)="selectedYear.set(+$event)"
-                        [disabled]="yearOptions().length === 0">
-                  <option [value]="0">{{ selectedModelName() ? 'ทุกปี' : 'กรุณาเลือกรุ่นก่อน' }}</option>
-                  @for (yr of yearOptions(); track yr) {
-                    <option [value]="yr">{{ yr }}</option>
-                  }
-                </select>
-              </div>
-              <div>
-                <label class="fl">รุ่นย่อย / Trim</label>
-                <select class="fs"
-                        [ngModel]="selectedVariantId()"
-                        (ngModelChange)="selectedVariantId.set($event)"
-                        [disabled]="!selectedModelName()">
-                  @if (!selectedModelName()) {
-                    <option value="">กรุณาเลือกรุ่นก่อน</option>
-                  }
-                  @for (v of variantOptions(); track v.id) {
-                    <option [value]="v.id">{{ v.label }}</option>
-                  }
-                </select>
-              </div>
+            <div>
+              <div class="text-[13px] font-extrabold" style="color:#171c22">{{ selectedMakeName() }}</div>
+              <button (click)="goToStep(1)" class="text-[11px] font-semibold" style="color:#006874;background:none;border:none;cursor:pointer;padding:0">เปลี่ยนยี่ห้อ</button>
             </div>
+          </div>
 
-            <!-- ── Province section ─────────────────────────────────────── -->
-            <div style="border-top:1px solid #f0f4fd;padding-top:16px;margin-top:4px">
-              <div class="flex items-center gap-2 mb-3">
-                <span class="text-[13px] font-extrabold" style="color:#171c22;font-family:'Plus Jakarta Sans',sans-serif">จังหวัดจดทะเบียน</span>
-                <span class="text-[11px]" style="color:#9aa5b4">(ไม่บังคับ)</span>
-                @if (selectedProvinceId()) {
-                  <button (click)="selectedProvinceId.set('')"
-                          style="margin-left:auto;font-size:11px;color:#006874;font-weight:700;background:none;border:none;cursor:pointer;padding:0">
-                    ล้างการเลือก
-                  </button>
-                }
+          @if (loadingModels()) {
+            <div class="py-8 text-center text-[13px]" style="color:#9aa5b4">กำลังโหลดรุ่นรถ…</div>
+          } @else {
+            @if (popularModelTiles().length > 0) {
+              <div class="mb-4">
+                <span class="text-[13px] font-extrabold" style="color:#171c22;font-family:'Plus Jakarta Sans',sans-serif">รุ่นยอดนิยม</span>
               </div>
-
-              <div class="grid gap-3 mb-1" style="grid-template-columns:repeat(5,1fr)">
-                @for (p of popularProvinces; track p.id) {
-                  <button class="brand-tile" [class.selected]="selectedProvinceId() === p.id"
-                          (click)="selectProvince(p.id)">
-                    @if (selectedProvinceId() === p.id) {
+              <div class="grid gap-3" style="grid-template-columns:repeat(5,1fr)">
+                @for (tile of popularModelTiles(); track tile.name) {
+                  <button class="brand-tile" [class.selected]="selectedModelName() === tile.groupName"
+                          (click)="onModelChange(tile.groupName)">
+                    @if (selectedModelName() === tile.groupName) {
                       <span class="check-badge">
                         <svg viewBox="0 0 20 20" fill="white" style="width:11px;height:11px">
                           <path fill-rule="evenodd" d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z" clip-rule="evenodd"/>
                         </svg>
                       </span>
                     }
-                    <span class="brand-name" style="font-size:13px;font-weight:700;white-space:normal;text-align:center;line-height:1.3">{{ p.shortName }}</span>
+                    <div class="brand-abbr"
+                         style="font-size:10px;font-weight:800;letter-spacing:0;white-space:normal;text-align:center;padding:8px 4px;line-height:1.3;word-break:break-word">
+                      {{ tile.name }}
+                    </div>
                   </button>
                 }
-                <!-- อื่น ๆ tile → opens province dialog -->
-                <button class="brand-tile" [class.selected]="isOtherProvince()"
-                        (click)="openProvinceDialog()">
-                  @if (isOtherProvince()) {
+                <!-- Other / รุ่นอื่นๆ -->
+                <button class="brand-tile" [class.selected]="selectedModelName() && !isPopularModel()"
+                        (click)="openModelDialog()">
+                  @if (selectedModelName() && !isPopularModel()) {
                     <span class="check-badge">
                       <svg viewBox="0 0 20 20" fill="white" style="width:11px;height:11px">
                         <path fill-rule="evenodd" d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z" clip-rule="evenodd"/>
                       </svg>
                     </span>
-                    <span class="brand-name" style="font-size:12px;font-weight:700;white-space:normal;text-align:center;line-height:1.3">{{ selectedProvinceId() }}</span>
+                    <div class="brand-abbr"
+                         style="font-size:10px;font-weight:800;letter-spacing:0;white-space:normal;text-align:center;padding:8px 4px;line-height:1.3;word-break:break-word">
+                      {{ selectedModelName() }}
+                    </div>
                   } @else {
-                    <span class="brand-name" style="font-size:13px;font-weight:700;white-space:normal;text-align:center;line-height:1.3">อื่น ๆ</span>
+                    <div class="brand-abbr" style="font-size:22px;font-weight:400;letter-spacing:0">···</div>
                   }
+                  <span class="brand-name">รุ่นอื่นๆ</span>
                 </button>
               </div>
-            </div>
-          </div>
+            } @else {
+              <!-- Fallback: no popular models configured for this brand → dropdown -->
+              <div class="mb-4">
+                <label class="fl">เลือกรุ่น (MODEL)</label>
+                <select class="fs" [ngModel]="selectedModelName()" (ngModelChange)="onModelChange($event)">
+                  <option value="">กรุณาเลือก</option>
+                  @for (g of modelGroups(); track g.name) { <option [value]="g.name">{{ g.name }}</option> }
+                </select>
+              </div>
+            }
+
+            <!-- Year + Trim — shown only after a model is selected -->
+            @if (selectedModelName()) {
+              <div class="grid grid-cols-2 gap-4 mt-5">
+                <div>
+                  <label class="fl">ปีรถยนต์ (YEAR)</label>
+                  <select class="fs" [ngModel]="selectedYear()" (ngModelChange)="selectedYear.set(+$event)"
+                          [disabled]="yearOptions().length === 0">
+                    <option [value]="0">ทุกปี</option>
+                    @for (yr of yearOptions(); track yr) { <option [value]="yr">{{ yr }}</option> }
+                  </select>
+                </div>
+                <div>
+                  <label class="fl">รุ่นย่อย / Trim</label>
+                  <select class="fs" [ngModel]="selectedVariantId()" (ngModelChange)="selectedVariantId.set($event)">
+                    @for (v of variantOptions(); track v.id) { <option [value]="v.id">{{ v.label }}</option> }
+                  </select>
+                </div>
+              </div>
+            }
+          }
+
+          <button (click)="goToStep(3)" [disabled]="!selectedModelId()"
+                  class="w-full mt-4 py-3.5 rounded-xl text-[14px] font-bold text-white flex items-center justify-center gap-2 transition-all disabled:opacity-40"
+                  style="background:#006874;box-shadow:0 4px 14px rgba(0,104,116,0.25)">
+            ถัดไป
+            <svg viewBox="0 0 256 256" fill="currentColor" style="width:16px;height:16px">
+              <path d="M221.66,133.66l-72,72a8,8,0,0,1-11.32-11.32L196.69,136H40a8,8,0,0,1,0-16H196.69L138.34,61.66a8,8,0,0,1,11.32-11.32l72,72A8,8,0,0,1,221.66,133.66Z"/>
+            </svg>
+          </button>
         }
 
-        <!-- Search button -->
-        <button (click)="onSearch()" [disabled]="!selectedModelId()"
-                class="w-full py-4 rounded-xl text-[15px] font-bold text-white flex items-center justify-center gap-3 transition-all disabled:opacity-40 disabled:cursor-not-allowed active:scale-[0.99]"
-                [style]="selectedMakeId ? 'background:#006874;box-shadow:0 4px 16px rgba(0,104,116,0.3)' : 'background:#b0b9c6'">
-          เช็คเบี้ยประกัน
-          <svg viewBox="0 0 256 256" fill="currentColor" style="width:18px;height:18px">
-            <path d="M221.66,133.66l-72,72a8,8,0,0,1-11.32-11.32L196.69,136H40a8,8,0,0,1,0-16H196.69L138.34,61.66a8,8,0,0,1,11.32-11.32l72,72A8,8,0,0,1,221.66,133.66Z"/>
-          </svg>
-        </button>
+        <!-- ── Step 3: ข้อมูลเพิ่มเติม ──────────────────────────────── -->
+        @if (currentStep() === 3) {
+
+          <!-- Plan type -->
+          <div class="mb-5">
+            <div class="text-[12px] font-bold mb-3 uppercase tracking-widest" style="color:#6b7a8d">ประเภทประกัน</div>
+            <div class="flex flex-wrap gap-2">
+              @for (pt of planTypeOptions; track pt.value) {
+                <button (click)="selectedPlanType.set(selectedPlanType() === pt.value ? '' : pt.value)"
+                        class="px-4 py-2 rounded-full text-[13px] font-bold transition-all"
+                        [style]="selectedPlanType() === pt.value
+                          ? 'background:#006874;color:#fff;box-shadow:0 2px 8px rgba(0,104,116,0.25)'
+                          : 'background:#f0f4fd;color:#435d98;border:1.5px solid #e2e8f0'">
+                  {{ pt.label }}
+                </button>
+              }
+            </div>
+            @if (!selectedPlanType()) {
+              <p class="text-[11px] mt-2" style="color:#9aa5b4">ไม่เลือก = แสดงทุกประเภท</p>
+            }
+          </div>
+
+          <!-- Repair type -->
+          <div class="mb-5">
+            <div class="text-[12px] font-bold mb-3 uppercase tracking-widest" style="color:#6b7a8d">ประเภทการซ่อม</div>
+            <div class="flex gap-2">
+              @for (rt of repairTypeOptions; track rt.value) {
+                <button (click)="selectedRepairType.set(rt.value)"
+                        class="flex-1 py-2.5 rounded-xl text-[13px] font-bold transition-all"
+                        [style]="selectedRepairType() === rt.value
+                          ? 'background:#006874;color:#fff;box-shadow:0 2px 8px rgba(0,104,116,0.2)'
+                          : 'background:#f0f4fd;color:#435d98;border:1.5px solid #e2e8f0'">
+                  {{ rt.label }}
+                </button>
+              }
+            </div>
+          </div>
+
+          <!-- Province -->
+          <div class="mb-5" style="border-top:1px solid #f0f4fd;padding-top:16px">
+            <div class="flex items-center gap-2 mb-3">
+              <span class="text-[12px] font-bold uppercase tracking-widest" style="color:#6b7a8d">จังหวัดจดทะเบียน</span>
+              <span class="text-[11px]" style="color:#9aa5b4">(ไม่บังคับ)</span>
+              @if (selectedProvinceId()) {
+                <button (click)="selectedProvinceId.set('')"
+                        style="margin-left:auto;font-size:11px;color:#006874;font-weight:700;background:none;border:none;cursor:pointer;padding:0">ล้าง</button>
+              }
+            </div>
+            <div class="grid gap-2" style="grid-template-columns:repeat(5,1fr)">
+              @for (p of popularProvinces; track p.id) {
+                <button class="brand-tile" [class.selected]="selectedProvinceId() === p.id" (click)="selectProvince(p.id)">
+                  @if (selectedProvinceId() === p.id) {
+                    <span class="check-badge">
+                      <svg viewBox="0 0 20 20" fill="white" style="width:11px;height:11px">
+                        <path fill-rule="evenodd" d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z" clip-rule="evenodd"/>
+                      </svg>
+                    </span>
+                  }
+                  <span class="brand-name" style="font-size:12px;font-weight:700;white-space:normal;text-align:center;line-height:1.3;padding:8px 4px">{{ p.shortName }}</span>
+                </button>
+              }
+              <button class="brand-tile" [class.selected]="isOtherProvince()" (click)="openProvinceDialog()">
+                @if (isOtherProvince()) {
+                  <span class="check-badge">
+                    <svg viewBox="0 0 20 20" fill="white" style="width:11px;height:11px">
+                      <path fill-rule="evenodd" d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z" clip-rule="evenodd"/>
+                    </svg>
+                  </span>
+                  <span class="brand-name" style="font-size:11px;font-weight:700;white-space:normal;text-align:center;line-height:1.3;padding:8px 4px">{{ selectedProvinceId() }}</span>
+                } @else {
+                  <span class="brand-name" style="font-size:12px;font-weight:700;white-space:normal;text-align:center;line-height:1.3;padding:8px 4px">อื่น ๆ</span>
+                }
+              </button>
+            </div>
+          </div>
+
+          <!-- Actions -->
+          <div class="flex gap-3">
+            <button (click)="goToStep(2)"
+                    class="px-5 py-3.5 rounded-xl text-[13px] font-bold transition-all"
+                    style="background:#f0f4fd;color:#435d98">
+              ← ย้อนกลับ
+            </button>
+            <button (click)="onSearch()" [disabled]="!selectedModelId()"
+                    class="flex-1 py-3.5 rounded-xl text-[15px] font-bold text-white flex items-center justify-center gap-2 transition-all disabled:opacity-40"
+                    style="background:#006874;box-shadow:0 4px 16px rgba(0,104,116,0.3)">
+              เช็คเบี้ยประกัน
+              <svg viewBox="0 0 256 256" fill="currentColor" style="width:18px;height:18px">
+                <path d="M221.66,133.66l-72,72a8,8,0,0,1-11.32-11.32L196.69,136H40a8,8,0,0,1,0-16H196.69L138.34,61.66a8,8,0,0,1,11.32-11.32l72,72A8,8,0,0,1,221.66,133.66Z"/>
+              </svg>
+            </button>
+          </div>
+        }
       </div>
 
       <!-- ── Right sidebar ───────────────────────────────────────────── -->
-      <div class="flex flex-col gap-4">
+      <div class="hidden md:flex flex-col gap-4">
         <div class="rounded-2xl overflow-hidden relative text-white"
              style="background:linear-gradient(150deg,#004d58,#006874 50%,#1a7a6e);min-height:200px;box-shadow:0 4px 20px rgba(0,104,116,0.3)">
           <div class="absolute inset-0 opacity-20"
@@ -493,6 +632,69 @@ function makeAbbr(name: string): string {
     </div>
   </div>
 }
+
+<!-- ── Model picker dialog (step 2 "รุ่นอื่นๆ") ─────────────────────────── -->
+@if (showModelDialog()) {
+  <div class="dlg-overlay" (click)="closeModelDialog()">
+    <div class="dlg-card" (click)="$event.stopPropagation()">
+
+      <!-- Dialog header -->
+      <div class="flex items-center justify-between px-5 py-4" style="border-bottom:1px solid #f0f4fd">
+        <div>
+          <div class="text-[15px] font-extrabold" style="color:#171c22;font-family:'Plus Jakarta Sans',sans-serif">เลือกรุ่นรถยนต์</div>
+          <div class="text-[11px] mt-0.5" style="color:#9aa5b4">{{ modelGroups().length }} รุ่นในระบบ</div>
+        </div>
+        <button (click)="closeModelDialog()"
+                style="width:30px;height:30px;border-radius:8px;border:none;background:#f0f4fd;cursor:pointer;display:flex;align-items:center;justify-content:center;color:#6b7a8d;font-size:14px;font-weight:700">✕</button>
+      </div>
+
+      <!-- Search input -->
+      <div class="px-5 py-3" style="border-bottom:1px solid #f7f9fc">
+        <div style="position:relative">
+          <svg viewBox="0 0 256 256" fill="#9aa5b4" style="width:15px;height:15px;position:absolute;left:10px;top:50%;transform:translateY(-50%);pointer-events:none">
+            <path d="M229.66,218.34l-50.07-50.06a88.21,88.21,0,1,0-11.31,11.31l50.06,50.07a8,8,0,0,0,11.32-11.32ZM40,112a72,72,0,1,1,72,72A72.08,72.08,0,0,1,40,112Z"/>
+          </svg>
+          <input class="dlg-search" type="text" placeholder="ค้นหารุ่นรถ..."
+                 [ngModel]="modelDialogSearch()" (ngModelChange)="modelDialogSearch.set($event)"/>
+          @if (modelDialogSearch()) {
+            <button (click)="modelDialogSearch.set('')"
+                    style="position:absolute;right:10px;top:50%;transform:translateY(-50%);background:none;border:none;cursor:pointer;color:#9aa5b4;font-size:13px;font-weight:700;padding:0;line-height:1">✕</button>
+          }
+        </div>
+      </div>
+
+      <!-- Model list -->
+      <div style="overflow-y:auto;flex:1">
+        @if (modelDialogResults().length === 0) {
+          <div class="py-8 text-center text-[13px]" style="color:#b0b9c6">ไม่พบรุ่นที่ค้นหา</div>
+        } @else {
+          @for (g of modelDialogResults(); track g.name) {
+            <button (click)="selectModelFromDialog(g.name)"
+                    style="width:100%;display:flex;align-items:center;justify-content:space-between;padding:11px 20px;border:none;border-bottom:1px solid #f5f7fa;cursor:pointer;text-align:left;font-family:'Noto Sans Thai',sans-serif;transition:background .1s"
+                    [style.background]="selectedModelName() === g.name ? '#e8f7f9' : '#fff'">
+              <span style="font-size:14px;font-weight:600;"
+                    [style.color]="selectedModelName() === g.name ? '#006874' : '#171c22'">{{ g.name }}</span>
+              @if (selectedModelName() === g.name) {
+                <svg viewBox="0 0 20 20" fill="#006874" style="width:16px;height:16px;flex-shrink:0">
+                  <path fill-rule="evenodd" d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z" clip-rule="evenodd"/>
+                </svg>
+              }
+            </button>
+          }
+        }
+      </div>
+
+      <!-- Dialog footer -->
+      <div class="px-5 py-3 flex justify-end" style="border-top:1px solid #f0f4fd">
+        <button (click)="closeModelDialog()"
+                style="padding:.5rem 1.25rem;border-radius:8px;border:1.5px solid #e2e8f0;background:#fff;font-size:13px;font-weight:600;color:#6b7a8d;cursor:pointer;font-family:'Noto Sans Thai',sans-serif">
+          ปิด
+        </button>
+      </div>
+
+    </div>
+  </div>
+}
   `
 })
 export class SearchHomeComponent implements OnInit {
@@ -505,6 +707,46 @@ export class SearchHomeComponent implements OnInit {
   models = signal<VehicleModel[]>([]);
   loadingModels = signal(false);
   recentVehicles = signal<RecentVehicle[]>([]);
+
+  // ── Wizard state ──────────────────────────────────────────────────────────
+  readonly currentStep = signal(1);
+  readonly selectedPlanType = signal('');
+  readonly selectedRepairType = signal('Garage');
+
+  readonly steps = [
+    { n: 1, label: 'เลือกยี่ห้อ' },
+    { n: 2, label: 'รุ่นและปี' },
+    { n: 3, label: 'ข้อมูลเพิ่มเติม' },
+  ];
+
+  readonly planTypeOptions = [
+    { value: 'Type1',    label: 'ชั้น 1' },
+    { value: 'Type2Plus', label: 'ชั้น 2+' },
+    { value: 'Type2',    label: 'ชั้น 2' },
+    { value: 'Type3Plus', label: 'ชั้น 3+' },
+    { value: 'Type3',    label: 'ชั้น 3' },
+  ];
+
+  readonly repairTypeOptions = [
+    { value: 'Garage', label: 'ซ่อมอู่' },
+    { value: 'Dealer', label: 'ซ่อมศูนย์' },
+  ];
+
+  goToStep(n: number): void {
+    if (this.canGoToStep(n)) this.currentStep.set(n);
+  }
+
+  canGoToStep(n: number): boolean {
+    if (n === 1) return true;
+    if (n === 2) return !!this.selectedMakeId;
+    if (n === 3) return !!this.selectedMakeId && !!this.selectedModelId();
+    return false;
+  }
+
+  selectMakeStep(makeId: string): void {
+    this.selectMake(makeId);
+    this.currentStep.set(2);
+  }
 
   // ── Form state ────────────────────────────────────────────────────────────
   selectedMakeId = '';
@@ -574,6 +816,56 @@ export class SearchHomeComponent implements OnInit {
     return this.makes().filter(m => m.name.toLowerCase().includes(q));
   });
 
+  // ── Popular model tiles (step 2) ──────────────────────────────────────────
+  /**
+   * Returns up to 9 popular model tiles for the selected brand.
+   * Matches entries from POPULAR_MODELS against the API model groups by name
+   * (case-insensitive). Only includes models that exist in the database.
+   *
+   * To update popular models per brand, edit the POPULAR_MODELS constant above.
+   */
+  readonly popularModelTiles = computed(() => {
+    const makeName = this.selectedMakeName().toLowerCase();
+    const popularNames = POPULAR_MODELS[makeName] ?? [];
+    const groups = this.modelGroups();
+    return popularNames
+      .map(popName => {
+        const group = groups.find(g => g.name.toLowerCase() === popName.toLowerCase());
+        return { name: popName, groupName: group?.name ?? null };
+      })
+      .filter((t): t is { name: string; groupName: string } => t.groupName !== null)
+      .slice(0, 9);
+  });
+
+  // ── Model search dialog (step 2 "รุ่นอื่นๆ") ──────────────────────────────
+  readonly showModelDialog = signal(false);
+  readonly modelDialogSearch = signal('');
+  readonly modelDialogResults = computed(() => {
+    const q = this.modelDialogSearch().toLowerCase().trim();
+    if (!q) return this.modelGroups();
+    return this.modelGroups().filter(g => g.name.toLowerCase().includes(q));
+  });
+
+  isPopularModel(): boolean {
+    const name = this.selectedModelName();
+    return !!name && this.popularModelTiles().some(t => t.groupName === name);
+  }
+
+  openModelDialog(): void {
+    this.modelDialogSearch.set('');
+    this.showModelDialog.set(true);
+  }
+
+  closeModelDialog(): void {
+    this.showModelDialog.set(false);
+    this.modelDialogSearch.set('');
+  }
+
+  selectModelFromDialog(name: string): void {
+    this.onModelChange(name);
+    this.closeModelDialog();
+  }
+
   // Expose module-level helpers to template
   readonly makeAbbr = makeAbbr;
   readonly makeLogo = (name: string) => MAKE_LOGO[name.toLowerCase()] ?? null;
@@ -608,6 +900,7 @@ export class SearchHomeComponent implements OnInit {
     this.selectedMakeId = makeId;
     this.closeBrandDialog();
     this.onMakeChange(makeId);
+    this.currentStep.set(2);
   }
 
   // ── Computed options ─────────────────────────────────────────────────────
@@ -740,8 +1033,8 @@ export class SearchHomeComponent implements OnInit {
       allVariants: !variantId || undefined,   // true when "All Variants" selected
       vehicleYear: year,
       province: this.selectedProvinceId() || undefined,
-      planType: '',
-      repairType: 'Garage',
+      planType: this.selectedPlanType(),
+      repairType: this.selectedRepairType(),
     });
 
     // Save to recently viewed

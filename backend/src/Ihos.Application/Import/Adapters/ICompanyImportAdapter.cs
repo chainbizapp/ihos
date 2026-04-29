@@ -10,8 +10,11 @@ public record NormalizedPlanRow(
     string RawVehicleModel,
     string RawPlanType,
     string RepairType,
-    string MinYear,
-    string MaxYear,
+    /// <summary>
+    /// Actual vehicle registration year (e.g. "2022").
+    /// Empty string / "0" means "applies to all years".
+    /// </summary>
+    string RegistrationYear,
     string SumInsured,
     string PremiumTotal,
     string ExcessAmount,
@@ -43,7 +46,13 @@ public record NormalizedPlanRow(
     /// <summary>Medical Expenses — ค่ารักษาพยาบาล</summary>
     string MedicalExpenses = "",
     /// <summary>Bail Bond — ประกันตัวผู้ขับขี่</summary>
-    string BailBond = ""
+    string BailBond = "",
+    /// <summary>
+    /// Vehicle type code from the insurer's file (e.g. Viriyah vehicle_type_code).
+    /// Empty string for companies that don't use this field.
+    /// Part of the business unique key.
+    /// </summary>
+    string VehicleTypeCode = ""
 )
 {
     /// <summary>
@@ -54,8 +63,7 @@ public record NormalizedPlanRow(
         ["vehicle_model"]       = RawVehicleModel,
         ["plan_type"]           = RawPlanType,
         ["repair_type"]         = RepairType,
-        ["min_year"]            = MinYear,
-        ["max_year"]            = MaxYear,
+        ["registration_year"]   = RegistrationYear,
         ["sum_insured"]         = SumInsured,
         ["premium_total"]       = PremiumTotal,
         ["excess_amount"]       = ExcessAmount,
@@ -69,7 +77,8 @@ public record NormalizedPlanRow(
         ["personal_accident"]   = PersonalAccident,
         ["passenger_accident"]  = PassengerAccident,
         ["medical_expenses"]    = MedicalExpenses,
-        ["bail_bond"]           = BailBond
+        ["bail_bond"]           = BailBond,
+        ["vehicle_type_code"]   = VehicleTypeCode
     };
 }
 

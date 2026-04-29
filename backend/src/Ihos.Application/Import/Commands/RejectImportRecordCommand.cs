@@ -42,11 +42,11 @@ public class RejectImportRecordCommandHandler : IRequestHandler<RejectImportReco
         record.ReviewedAt = DateTime.UtcNow;
         record.RejectionReason = request.Reason;
 
-        // Update batch counts
+        // Sync batch counters from actual record state
         var batch = await _batches.GetByIdAsync(record.BatchId, ct);
         if (batch != null)
         {
-            batch.RejectedRows++;
+            await _batches.RecalculateCountersAsync(batch.Id, ct);
         }
 
         await _records.SaveChangesAsync(ct);

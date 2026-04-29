@@ -47,8 +47,7 @@ public class ApproveAllResolvedCommandHandler
         if (approvedCount == 0)
             return new ApproveAllResolvedResult(true, 0);
 
-        batch.ApprovedRows += approvedCount;
-        await _batches.SaveChangesAsync(ct);
+        await _batches.RecalculateCountersAsync(batch.Id, ct);
 
         await _audit.AddAsync(new AuditLog
         {

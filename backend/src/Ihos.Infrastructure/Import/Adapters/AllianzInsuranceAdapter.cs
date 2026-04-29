@@ -158,6 +158,12 @@ public sealed class AllianzInsuranceAdapter : ICompanyImportAdapter
 
         var rawVehicleModel = modelName;
 
+        // Parse MODEL_NAME to extract sub-components used as hints in the mapping dialog.
+        // Pattern: "<ModelRoot> <X.X> <BodyVariant>"
+        // e.g. "BT-50 2.2 2 Doors" → root="BT-50", cc="2.2", variant="2 Doors"
+        // e.g. "D9"                 → root="D9",    cc=null,  variant=null
+        var (parsedModelRoot, parsedEngineCC, parsedVariant) = ParseModelName(modelName);
+
         var coverType  = get("COVER_TYPE").Trim();
         var planType   = MapCoverType(coverType);
         var repairType = MapGarageType(get("GARAGE_TYPE"));
@@ -165,23 +171,20 @@ public sealed class AllianzInsuranceAdapter : ICompanyImportAdapter
         var dd         = get("DD").Trim();
         var grossTotal = get("GROSS_TOTAL").Trim();
 
-        // Convert MODEL_YEAR (absolute calendar year, e.g. 2025) → vehicle age in years.
-        // All other adapters use age-in-years for min/max year, so we must do the same.
-        // Age = pricingYear − MODEL_YEAR.  A brand-new 2025 car priced in 2026 → age 1.
-        // Clamp to ≥ 0 to guard against future-dated model years in the file.
+        // MODEL_YEAR is the vehicle registration year (absolute calendar year, e.g. 2025).
+        // Store it directly as RegistrationYear — no age conversion needed.
         var modelYearStr = get("MODEL_YEAR").Trim();
-        int vehicleAge = 0;
-        if (int.TryParse(modelYearStr, out var modelYear) && modelYear > 2000)
-            vehicleAge = Math.Max(0, pricingYear - modelYear);
-        var vehicleAgeStr = vehicleAge.ToString();
 
         // Build coverage_details: all supplementary columns retained for downstream use.
-        // model_year (original calendar year) is kept here for reference even though
-        // min/max year are stored as vehicle age (pricingYear − MODEL_YEAR).
+        // parsed_model_root / parsed_engine_cc / parsed_variant are hints shown to admins
+        // in the mapping dialog so they know which EngineCC to set on the canonical model.
         var coverageDetails = JsonSerializer.Serialize(new
         {
             package_id          = packageId,
             brand_name          = brandName,   // BRAND_NAME kept here for admin context
+            parsed_model_root   = parsedModelRoot,
+            parsed_engine_cc    = parsedEngineCC,
+            parsed_variant      = parsedVariant,
             model_year          = modelYearStr,
             region_group        = get("REGION_GROUP"),
             usage               = get("USAGE"),
@@ -208,8 +211,7 @@ public sealed class AllianzInsuranceAdapter : ICompanyImportAdapter
             RawVehicleModel   : rawVehicleModel,
             RawPlanType       : planType,
             RepairType        : repairType,
-            MinYear           : vehicleAgeStr,
-            MaxYear           : vehicleAgeStr,
+            RegistrationYear  : modelYearStr,
             SumInsured        : od,
             PremiumTotal      : grossTotal,
             ExcessAmount      : dd,
@@ -227,6 +229,40 @@ public sealed class AllianzInsuranceAdapter : ICompanyImportAdapter
     }
 
     // ── helpers ───────────────────────────────────────────────────────────────
+
+    /// <summary>
+    /// Parses an Allianz MODEL_NAME string into (modelRoot, engineCC, bodyVariant).
+    ///
+    /// Pattern: "&lt;ModelRoot&gt; &lt;X.X&gt; &lt;BodyVariant&gt;"
+    ///   "BT-50 2.2 2 Doors"     → ("BT-50",     "2.2", "2 Doors")
+    ///   "BT-50 PRO 2.2 2 Doors" → ("BT-50 PRO", "2.2", "2 Doors")
+    ///   "D9"                    → ("D9",         null,  null)
+    ///
+    /// The first \d+\.\d+ token is treated as engine CC; everything before it is the
+    /// model root (sub-model); everything after is the body variant descriptor.
+    /// </summary>
+    private static readonly Regex _ccPattern =
+        new(@"^(.*?)\s+(\d+\.\d+)(?:\s+(.+))?$", RegexOptions.Compiled);
+
+    private static (string ModelRoot, string? EngineCC, string? Variant) ParseModelName(string modelName)
+    {
+        var m = _ccPattern.Match(modelName.Trim());
+        if (!m.Success) return (modelName.Trim(), null, null);
+
+        // Convert litre notation (e.g. "2.8") to actual CC ("2800") so the value is
+        // consistent with Viriyah's master file which stores integer cc values.
+        var litre = m.Groups[2].Value;
+        var engineCC = decimal.TryParse(litre, System.Globalization.NumberStyles.Any,
+            System.Globalization.CultureInfo.InvariantCulture, out var litreVal)
+            ? ((int)(litreVal * 1000)).ToString()
+            : litre;
+
+        return (
+            ModelRoot: m.Groups[1].Value.Trim(),
+            EngineCC : engineCC,
+            Variant  : m.Groups[3].Success ? m.Groups[3].Value.Trim() : null
+        );
+    }
 
     /// <summary>
     /// Extracts the pricing effective year from the filename.

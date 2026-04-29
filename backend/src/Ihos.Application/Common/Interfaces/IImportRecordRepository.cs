@@ -6,8 +6,7 @@ public record DuplicateRecordGroup(
     int    Count,
     int    FirstRowNumber,
     string RepairType,
-    string MinYear,
-    string MaxYear,
+    string RegistrationYear,
     string SumInsured,
     string ExternalPackageId,
     /// <summary>Distinct carname_codes (vehicle_model raw values) that share this key.</summary>
@@ -39,6 +38,7 @@ public interface IImportRecordRepository
     /// Returns the number of rows updated.
     /// </summary>
     Task<int> BulkRejectUnresolvedAsync(Guid batchId, Guid? userId, DateTime now, string reason, CancellationToken ct = default);
+    Task<int> BulkRejectAllPendingAsync(Guid batchId, Guid? userId, DateTime now, string reason, CancellationToken ct = default);
     /// <summary>
     /// Returns all non-deleted records for a batch with only the mapping FK navigation needed for publish.
     /// Avoids the deep ThenInclude(CanonicalModel) join used by the review UI.
