@@ -1,0 +1,41 @@
+# ── MTI Rest Service — Car APIs ───────────────────────────────────────────────
+# Base URL (UAT)
+@baseUrl = https://api-uat.muangthaiinsurance.com/MtiRestService/api
+
+# Credentials (replace with values provided by MTI)
+@apiKey        = cUdeOtG1obd77d63ZBvnqt56WSxOM7kT
+@authorization = Basic TW9ja3VwQFJFU1Q6VEVTVCRNb2NrdXA=
+
+# ── GET BRAND (ยี่ห้อรถ) ──────────────────────────────────────────────────────
+### GetBrand
+# Response: MakeCode (4 chars), Description (30 chars)
+# Example: { "MakeCode": "TOYO", "Description": "Toyota" }
+POST {{baseUrl}}/Car/GetBrand
+apikey: {{apiKey}}
+Authorization: {{authorization}}
+Content-Type: application/json
+
+{}
+
+# ── GET MODEL (รุ่นรถ) ────────────────────────────────────────────────────────
+### GetModel — replace MakeCode with value from GetBrand
+POST {{baseUrl}}/Car/GetModel
+apikey: {{apiKey}}
+Authorization: {{authorization}}
+Content-Type: application/json
+
+{
+  "MakeCode": "TOYO"
+}
+
+# ── GET YEAR (ปีรถ) ───────────────────────────────────────────────────────────
+### GetYear — replace MakeCode + ModelCode as needed
+POST {{baseUrl}}/Car/GetYear
+apikey: {{apiKey}}
+Authorization: {{authorization}}
+Content-Type: application/json
+
+{
+  "MakeCode": "TOYO",
+  "ModelCode": ""
+}
