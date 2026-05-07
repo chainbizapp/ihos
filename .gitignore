@@ -48,3 +48,4 @@ TestResults/
 
 # Reports (user-generated, not templates)
 reports/output/
+.deploy_build/

@@ -30,23 +30,48 @@ public static class DbInitializer
             // Auto-heal the broken hash from the previous bug
             existingAdmin.PasswordHash = hasher.Hash(defaultPassword);
             await db.SaveChangesAsync();
-            return;
+        }
+        else
+        {
+            logger.LogInformation("Seeding bootstrap admin user (admin@ihos.local)...");
+
+            var admin = new User
+            {
+                Email        = "admin@ihos.local",
+                PasswordHash = hasher.Hash(defaultPassword),
+                FullName     = "System Administrator",
+                Role         = UserRole.Admin,
+                Status       = UserStatus.Active
+            };
+
+            await db.Users.AddAsync(admin);
+            await db.SaveChangesAsync();
+
+            logger.LogInformation("Bootstrap admin seeded. Email: admin@ihos.local | Password: {Pwd}", defaultPassword);
         }
 
-        logger.LogInformation("Seeding bootstrap admin user (admin@ihos.local)...");
+        // Always run — seeds are skipped internally if data already exists
+        await SeedCompaniesAsync(db, logger);
+    }
 
-        var admin = new User
+    private static async Task SeedCompaniesAsync(ApplicationDbContext db, ILogger logger)
+    {
+        if (await db.InsuranceCompanies.AnyAsync())
+            return;
+
+        logger.LogInformation("Seeding insurance companies...");
+
+        var companies = new[]
         {
-            Email        = "admin@ihos.local",
-            PasswordHash = hasher.Hash(defaultPassword),
-            FullName     = "System Administrator",
-            Role         = UserRole.Admin,
-            Status       = UserStatus.Active
+            new InsuranceCompany { Id = new Guid("11111111-0000-0000-0000-000000000001"), Name = "Bangkok Insurance",                 ShortCode = "BKI", IsActive = true },
+            new InsuranceCompany { Id = new Guid("11111111-0000-0000-0000-000000000002"), Name = "Muang Thai Life",                   ShortCode = "MTL", IsActive = true },
+            new InsuranceCompany { Id = new Guid("11111111-0000-0000-0000-000000000003"), Name = "Viriyah Insurance",                 ShortCode = "VRY", IsActive = true },
+            new InsuranceCompany { Id = new Guid("11111111-0000-0000-0000-000000000004"), Name = "Allianz Ayudhya General Insurance", ShortCode = "ALZ", IsActive = true },
         };
 
-        await db.Users.AddAsync(admin);
+        await db.InsuranceCompanies.AddRangeAsync(companies);
         await db.SaveChangesAsync();
 
-        logger.LogInformation("Bootstrap admin seeded. Email: admin@ihos.local | Password: {Pwd}", defaultPassword);
+        logger.LogInformation("Insurance companies seeded ({Count}).", companies.Length);
     }
 }
