@@ -39,3 +39,18 @@ Content-Type: application/json
   "MakeCode": "TOYO",
   "ModelCode": ""
 }
+
+# ── GET ENGINE (ขนาดเครื่องยนต์) ──────────────────────────────────────────────
+### GetEngineSizeAfterYear
+# Request: MakeCode (4), Family (15), YearGroupID (int, Redbook)
+# Response: EngineSize (int), FuelType (string e.g. เบนซิน)
+POST {{baseUrl}}/Car/GetEngineSizeAfterYear
+apikey: {{apiKey}}
+Authorization: {{authorization}}
+Content-Type: application/json
+
+{
+  "MakeCode": "TOYO",
+  "Family": "CHR",
+  "YearGroupID": 2018
+}
