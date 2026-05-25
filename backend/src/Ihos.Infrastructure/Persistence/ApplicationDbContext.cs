@@ -43,6 +43,9 @@ public class ApplicationDbContext : DbContext
     public DbSet<Province> Provinces => Set<Province>();
     public DbSet<RegionGroupMapping> RegionGroupMappings => Set<RegionGroupMapping>();
 
+    // Multi-provider integration (002-multi-provider-integration)
+    public DbSet<VehicleSyncLog> VehicleSyncLogs => Set<VehicleSyncLog>();
+
     public override async Task<int> SaveChangesAsync(CancellationToken cancellationToken = default)
     {
         var now = DateTime.UtcNow;
@@ -126,8 +129,35 @@ public class ApplicationDbContext : DbContext
             entity.Property(e => e.Id).HasDefaultValueSql("gen_random_uuid()");
             entity.Property(e => e.Name).HasMaxLength(255).IsRequired();
             entity.Property(e => e.ShortCode).HasMaxLength(20).IsRequired();
+            entity.Property(e => e.DataSource)
+                .HasConversion<int>()
+                .HasDefaultValue(DataSourceType.Import)
+                .IsRequired();
             entity.HasIndex(e => e.Name).IsUnique();
             entity.HasIndex(e => e.ShortCode).IsUnique();
+        });
+
+        // ── VehicleSyncLog (feature 002-multi-provider-integration) ──────────
+        modelBuilder.Entity<VehicleSyncLog>(entity =>
+        {
+            entity.ToTable("vehicle_sync_logs");
+            entity.HasKey(e => e.Id);
+            entity.Property(e => e.Id).HasDefaultValueSql("gen_random_uuid()");
+
+            entity.Property(e => e.Trigger).HasConversion<int>().IsRequired();
+            entity.Property(e => e.Status).HasConversion<int>().IsRequired();
+            entity.Property(e => e.StartedAtUtc).IsRequired();
+            entity.Property(e => e.ErrorMessage).HasMaxLength(2000);
+
+            entity.HasOne(e => e.Company)
+                .WithMany(c => c.VehicleSyncLogs)
+                .HasForeignKey(e => e.CompanyId)
+                .OnDelete(DeleteBehavior.Restrict);
+
+            entity.HasIndex(e => new { e.CompanyId, e.StartedAtUtc })
+                .HasDatabaseName("ix_vehicle_sync_logs_company_started_desc")
+                .IsDescending(false, true);
+            entity.HasIndex(e => e.Status);
         });
 
         modelBuilder.Entity<VehicleMake>(entity =>

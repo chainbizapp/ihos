@@ -1,12 +1,20 @@
 using Ihos.Application.Common.Interfaces;
 using Ihos.Application.Import.Adapters;
 using Ihos.Application.Import.Services;
+using Ihos.Application.Providers;
+using Ihos.Domain.Entities;
+using Ihos.Domain.Enums;
+using Ihos.Infrastructure.Caching;
 using Ihos.Infrastructure.Import;
 using Ihos.Infrastructure.Import.Adapters;
 using Ihos.Infrastructure.Persistence;
+using Ihos.Infrastructure.Providers.Mti;
+using Ihos.Infrastructure.Providers.Viriyah;
 using Ihos.Infrastructure.Reporting;
 using Ihos.Infrastructure.Repositories;
+using Ihos.Infrastructure.Resilience;
 using Ihos.Infrastructure.Services;
+using Microsoft.Extensions.Http.Resilience;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
@@ -67,6 +75,56 @@ public static class DependencyInjection
         services.AddScoped<IJwtTokenService, JwtTokenService>();
         services.AddScoped<IEmailService, MailKitEmailService>();
         services.AddSingleton<IAppSettings, AppSettings>();
+
+        // ── Multi-provider integration (feature 002) ─────────────────────────
+        // Cache: in-memory distributed cache for SWR quote caching (research.md §3).
+        // Swap to Redis later by replacing this registration; QuoteCacheService stays unchanged.
+        services.AddDistributedMemoryCache();
+
+        // Per-provider resilience pipelines (timeout + breaker + retry).
+        services.AddSingleton<PollyPolicyFactory>();
+
+        // SWR cache wrapper used by API-sourced provider adapters.
+        services.AddSingleton<QuoteCacheService>();
+
+        // Provider abstraction: registry resolves DI-registered providers by ShortCode against
+        // the active InsuranceCompany rows. Adapters for MTI/Viriyah land in US1 (Phase 3).
+        services.AddScoped<IProviderRegistry, ProviderRegistry>();
+
+        // ImportQuoteProvider is NOT registered in DI directly — each instance is bound to a
+        // specific InsuranceCompany row. ProviderRegistry constructs one on the fly for every
+        // active Import-source company (i.e. companies with DataSource = Import that have no
+        // API IInsurerQuoteProvider registered). See ProviderRegistry.GetActiveQuoteProvidersAsync.
+
+        // ── MTI provider (Muang Thai Insurance) — feature 002 ─────────────────
+        services.Configure<MtiOptions>(configuration.GetSection(MtiOptions.SectionName));
+        services.AddHttpClient<MtiHttpClient>()
+            .AddStandardResilienceHandler(o =>
+            {
+                o.AttemptTimeout.Timeout = TimeSpan.FromSeconds(10);
+                o.TotalRequestTimeout.Timeout = TimeSpan.FromSeconds(20);
+                o.CircuitBreaker.FailureRatio = 0.5;
+                o.CircuitBreaker.MinimumThroughput = 5;
+                o.CircuitBreaker.BreakDuration = TimeSpan.FromSeconds(60);
+                o.Retry.MaxRetryAttempts = 1;
+            });
+        services.AddScoped<IInsurerQuoteProvider, MtiApiQuoteProvider>();
+
+        // ── Viriyah provider — feature 002 ─────────────────────────────────────
+        services.Configure<ViriyahOptions>(configuration.GetSection(ViriyahOptions.SectionName));
+        services.AddSingleton<ViriyahTokenCache>();
+        services.AddHttpClient(ViriyahTokenCache.TokenHttpClientName);
+        services.AddHttpClient<ViriyahHttpClient>()
+            .AddStandardResilienceHandler(o =>
+            {
+                o.AttemptTimeout.Timeout = TimeSpan.FromSeconds(10);
+                o.TotalRequestTimeout.Timeout = TimeSpan.FromSeconds(20);
+                o.CircuitBreaker.FailureRatio = 0.5;
+                o.CircuitBreaker.MinimumThroughput = 5;
+                o.CircuitBreaker.BreakDuration = TimeSpan.FromSeconds(60);
+                o.Retry.MaxRetryAttempts = 1;
+            });
+        services.AddScoped<IInsurerQuoteProvider, ViriyahVmiQuoteProvider>();
 
         return services;
     }

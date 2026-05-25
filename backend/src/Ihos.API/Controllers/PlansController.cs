@@ -62,6 +62,45 @@ public class PlansController : ControllerBase
     }
 
     /// <summary>
+    /// Multi-provider aggregated search. Fans out to every active insurance company in parallel:
+    /// Import-source companies (e.g. Allianz) are served from the local DB; API-source companies
+    /// (e.g. MTI, Viriyah) are quoted live with a 3 s per-provider timeout + circuit breaker.
+    /// Response is per-provider — partial failure is a first-class result, not an exception.
+    /// </summary>
+    [HttpGet("search-aggregated")]
+    [AllowAnonymous]
+    public async Task<IActionResult> SearchAggregated(
+        [FromQuery] Guid vehicleModelId,
+        [FromQuery] int registrationYear,
+        [FromQuery] string planType = "Type1",
+        [FromQuery] string repairType = "Garage",
+        [FromQuery] decimal sumInsured = 0,
+        [FromQuery] decimal deductible = 0,
+        [FromQuery] string? driverAgeBand = null,
+        [FromQuery] string? usageType = null,
+        [FromQuery] string? regionGroup = null,
+        CancellationToken ct = default)
+    {
+        if (vehicleModelId == Guid.Empty)
+            return BadRequest(new { error = "vehicleModelId is required." });
+
+        if (!Enum.TryParse<PlanType>(planType, true, out var pt))
+            return BadRequest(new { error = $"Invalid planType '{planType}'." });
+
+        if (!Enum.TryParse<RepairType>(repairType, true, out var rt))
+            return BadRequest(new { error = $"Invalid repairType '{repairType}'." });
+
+        if (registrationYear < 1900 || registrationYear > DateTime.UtcNow.Year)
+            return BadRequest(new { error = "registrationYear is invalid." });
+
+        var result = await _mediator.Send(new SearchPlansAggregatedQuery(
+            vehicleModelId, registrationYear, pt, rt,
+            sumInsured, deductible, driverAgeBand, usageType, regionGroup), ct);
+
+        return Ok(result);
+    }
+
+    /// <summary>
     /// Get single published plan detail.
     /// </summary>
     [HttpGet("{id:guid}")]

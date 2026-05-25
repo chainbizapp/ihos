@@ -7,6 +7,10 @@ obj/
 *.sln.docstates
 .vs/
 packages/
+
+# C# Dev Kit / Roslyn language server cache
+*.lscache
+*.lscache.v*
 appsettings.Development.json
 appsettings.*.json
 !appsettings.json
