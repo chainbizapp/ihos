@@ -1,4 +1,5 @@
 using Ihos.Domain.Entities;
+using Ihos.Domain.Enums;
 
 namespace Ihos.Application.Providers;
 
@@ -11,6 +12,13 @@ public sealed record ProviderQuoteResult
     public required string CompanyShortCode { get; init; }
     public required string CompanyDisplayName { get; init; }
     public required ProviderQuoteStatus Status { get; init; }
+
+    /// <summary>
+    /// Indicates whether this provider's plans came from a pre-loaded local store (Import,
+    /// e.g. Allianz Excel) or a live API call (Api, e.g. MTI/Viriyah). Used by the UI to show
+    /// the user where the data ultimately came from.
+    /// </summary>
+    public DataSourceType DataSource { get; init; }
 
     /// <summary>True when the plans came from cache after the upstream call failed/skipped.</summary>
     public bool IsStale { get; init; }
@@ -29,12 +37,14 @@ public sealed record ProviderQuoteResult
         string displayName,
         IReadOnlyList<InsurancePlan> plans,
         long latencyMs,
+        DataSourceType dataSource = DataSourceType.Api,
         bool isStale = false) => new()
         {
             CompanyShortCode = shortCode,
             CompanyDisplayName = displayName,
             Status = plans.Count == 0 ? ProviderQuoteStatus.NoMatch : ProviderQuoteStatus.Success,
             Plans = plans,
+            DataSource = dataSource,
             IsStale = isStale,
             ProviderLatencyMs = latencyMs,
         };
@@ -45,6 +55,7 @@ public sealed record ProviderQuoteResult
         ProviderQuoteStatus status,
         string errorMessage,
         long latencyMs,
+        DataSourceType dataSource = DataSourceType.Api,
         string? errorCode = null) => new()
         {
             CompanyShortCode = shortCode,
@@ -52,6 +63,7 @@ public sealed record ProviderQuoteResult
             Status = status,
             ErrorMessage = errorMessage,
             ErrorCode = errorCode,
+            DataSource = dataSource,
             ProviderLatencyMs = latencyMs,
         };
 }

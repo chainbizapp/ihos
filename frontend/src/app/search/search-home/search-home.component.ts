@@ -920,6 +920,10 @@ export class SearchHomeComponent implements OnInit {
     this.modelGroups().find(g => g.name === this.selectedModelName())
   );
 
+  /**
+   * Year dropdown options. Backend returns actual registration years (e.g. 2020, 2026)
+   * via min/maxYear — NOT vehicle ages — so we list them directly.
+   */
   readonly yearOptions = computed<number[]>(() => {
     const g = this.selectedGroup();
     if (!g) return [];
@@ -927,25 +931,24 @@ export class SearchHomeComponent implements OnInit {
     const mins = all.map(m => m.minYear).filter((y): y is number => y != null);
     const maxs = all.map(m => m.maxYear).filter((y): y is number => y != null);
     if (mins.length === 0 || maxs.length === 0) return [];
-    const lo = Math.min(...mins);   // smallest age → newest car
-    const hi = Math.max(...maxs);   // largest age  → oldest car
-    const currentYear = new Date().getFullYear();
+    const lo = Math.min(...mins);   // earliest registration year for this model
+    const hi = Math.max(...maxs);   // latest   registration year for this model
     const years: number[] = [];
-    for (let age = lo; age <= hi; age++) years.push(currentYear - age);
-    return years.sort((a, b) => b - a);
+    for (let y = lo; y <= hi; y++) years.push(y);
+    return years.sort((a, b) => b - a); // newest first
   });
 
   readonly variantOptions = computed(() => {
     const g = this.selectedGroup();
     if (!g) return [];
     const yr = this.selectedYear();
-    const currentYear = new Date().getFullYear();
 
+    // minYear/maxYear are real registration years from the backend.
     const coversYear = (m: VehicleModel) => {
       if (!yr) return true;
-      const newest = m.minYear != null ? currentYear - m.minYear : 9999;
-      const oldest = m.maxYear != null ? currentYear - m.maxYear : 0;
-      return yr <= newest && yr >= oldest;
+      const lo = m.minYear ?? 0;
+      const hi = m.maxYear ?? 9999;
+      return yr >= lo && yr <= hi;
     };
 
     let trims = g.trims.filter(coversYear);
@@ -955,8 +958,18 @@ export class SearchHomeComponent implements OnInit {
     const opts: { id: string; label: string }[] = [];
     // Empty string = "All Variants" sentinel (maps to umbrella/first model in selectedModelId)
     opts.push({ id: '', label: 'All Variants' });
-    for (const t of trims)
-      opts.push({ id: t.id, label: [t.subModel, t.gearType].filter(Boolean).join(' · ') });
+    for (const t of trims) {
+      // Label format: "<SubModel> · <CC>cc · <GearType>" — CC is the key disambiguator
+      // between trims (e.g. Civic E MODULO 1500 vs 1800), critical for matching against
+      // the live MTI/Viriyah catalog. Skip parts that are empty.
+      const cc = t.engineCC
+        ? `${t.engineCC}${/^\d+$/.test(t.engineCC) ? 'cc' : ''}`
+        : '';
+      opts.push({
+        id: t.id,
+        label: [t.subModel, cc, t.gearType].filter(Boolean).join(' · '),
+      });
+    }
     return opts;
   });
 

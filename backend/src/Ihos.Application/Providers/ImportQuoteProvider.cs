@@ -1,6 +1,7 @@
 using System.Diagnostics;
 using Ihos.Application.Common.Interfaces;
 using Ihos.Domain.Entities;
+using Ihos.Domain.Enums;
 
 namespace Ihos.Application.Providers;
 
@@ -49,21 +50,24 @@ public sealed class ImportQuoteProvider : IInsurerQuoteProvider
 
             sw.Stop();
             return ProviderQuoteResult.Success(
-                _company.ShortCode, _company.Name, items, sw.ElapsedMilliseconds);
+                _company.ShortCode, _company.Name, items, sw.ElapsedMilliseconds,
+                dataSource: DataSourceType.Import);
         }
         catch (OperationCanceledException)
         {
             sw.Stop();
             return ProviderQuoteResult.Failure(
                 _company.ShortCode, _company.Name,
-                ProviderQuoteStatus.Timeout, "Cancelled", sw.ElapsedMilliseconds);
+                ProviderQuoteStatus.Timeout, "Cancelled", sw.ElapsedMilliseconds,
+                dataSource: DataSourceType.Import);
         }
         catch (Exception ex)
         {
             sw.Stop();
             return ProviderQuoteResult.Failure(
                 _company.ShortCode, _company.Name,
-                ProviderQuoteStatus.Failed, ex.Message, sw.ElapsedMilliseconds);
+                ProviderQuoteStatus.Failed, ex.Message, sw.ElapsedMilliseconds,
+                dataSource: DataSourceType.Import);
         }
     }
 }

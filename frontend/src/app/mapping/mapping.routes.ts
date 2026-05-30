@@ -12,6 +12,11 @@ export const MAPPING_ROUTES: Routes = [
       import('./plan-types/plan-types.component').then(m => m.PlanTypesComponent)
   },
   {
+    path: 'sync',
+    loadComponent: () =>
+      import('./sync/sync.component').then(m => m.MappingSyncComponent)
+  },
+  {
     path: '',
     redirectTo: 'vehicle-models',
     pathMatch: 'full'

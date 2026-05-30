@@ -6,6 +6,7 @@ using Ihos.Application.Common.Interfaces;
 using Ihos.Application.Providers;
 using Ihos.Domain.Entities;
 using Ihos.Domain.Enums;
+using Ihos.Infrastructure.Caching;
 using Microsoft.Extensions.Logging;
 using Polly.CircuitBreaker;
 using Polly.Timeout;
@@ -45,6 +46,7 @@ public sealed class MtiApiQuoteProvider : IInsurerQuoteProvider
     private readonly IInsuranceCompanyRepository _companies;
     private readonly IVehicleModelRepository _vehicles;
     private readonly IVehicleModelMappingRepository _mappings;
+    private readonly QuoteCacheService _cache;
     private readonly ILogger<MtiApiQuoteProvider> _logger;
 
     public MtiApiQuoteProvider(
@@ -52,12 +54,14 @@ public sealed class MtiApiQuoteProvider : IInsurerQuoteProvider
         IInsuranceCompanyRepository companies,
         IVehicleModelRepository vehicles,
         IVehicleModelMappingRepository mappings,
+        QuoteCacheService cache,
         ILogger<MtiApiQuoteProvider> logger)
     {
         _http = http;
         _companies = companies;
         _vehicles = vehicles;
         _mappings = mappings;
+        _cache = cache;
         _logger = logger;
     }
 
@@ -108,75 +112,109 @@ public sealed class MtiApiQuoteProvider : IInsurerQuoteProvider
             Fund = CoverageFundMagicValue,
         };
 
+        // ── SWR cache lookup (Phase 7) ───────────────────────────────────────────
+        // Fresh hit (< 15 min) → return immediately, isStale=false, came from cache
+        // Stale hit (< 24 h) → return immediately, isStale=true, schedule bg refresh
+        // Miss → live call below, cache result on success
+        var cacheKey = QuoteCacheMapper.BuildKey(CompanyShortCode, request);
+
         try
         {
-            using var resp = await _http.HttpClient.PostAsJsonAsync(
-                "MTIMotor/GetCoverage", payload, JsonOpts, cancellationToken);
+            var lookup = await _cache.GetOrCallAsync<QuoteCachePayload>(cacheKey,
+                async innerCt => await CallMtiLiveAsync(payload, company, vehicle, request, innerCt),
+                cancellationToken);
 
-            if (!resp.IsSuccessStatusCode)
-            {
-                sw.Stop();
-                var body = await resp.Content.ReadAsStringAsync(cancellationToken);
-                _logger.LogWarning("MTI GetCoverage returned {Status}: {Body}", resp.StatusCode,
-                    body.Length > 500 ? body[..500] : body);
-
-                return ProviderQuoteResult.Failure(CompanyShortCode, company.Name,
-                    ProviderQuoteStatus.Failed,
-                    $"MTI returned HTTP {(int)resp.StatusCode}",
-                    sw.ElapsedMilliseconds, errorCode: ((int)resp.StatusCode).ToString());
-            }
-
-            var raw = await resp.Content.ReadAsStringAsync(cancellationToken);
-            using var doc = JsonDocument.Parse(raw);
-
-            var plans = MapCoveragesToPlans(doc.RootElement, company, vehicle, request);
             sw.Stop();
-
-            if (plans.Count == 0)
-            {
-                // Help debug NoMatch outcomes — log the first 400 chars of the response and
-                // the request payload so we can see what MTI thought of our parameters.
-                _logger.LogInformation(
-                    "MTI returned 0 plans. Request payload: {Payload}. Response head: {Head}",
-                    System.Text.Json.JsonSerializer.Serialize(payload, JsonOpts),
-                    raw.Length > 400 ? raw[..400] : raw);
-            }
-
+            var plans = QuoteCacheMapper.ToInsurancePlans(lookup.Value);
             return ProviderQuoteResult.Success(CompanyShortCode, company.Name, plans,
-                sw.ElapsedMilliseconds);
+                sw.ElapsedMilliseconds,
+                dataSource: DataSourceType.Api,
+                isStale: lookup.IsStale);
         }
-        catch (TimeoutRejectedException)
-        {
-            sw.Stop();
-            return ProviderQuoteResult.Failure(CompanyShortCode, company.Name,
-                ProviderQuoteStatus.Timeout, "MTI request timed out", sw.ElapsedMilliseconds);
-        }
-        catch (BrokenCircuitException)
-        {
-            sw.Stop();
-            return ProviderQuoteResult.Failure(CompanyShortCode, company.Name,
-                ProviderQuoteStatus.BreakerOpen, "MTI circuit breaker open",
-                sw.ElapsedMilliseconds);
-        }
+        catch (TimeoutRejectedException) { return await StaleFallbackOrFailureAsync(
+            cacheKey, company, sw, ProviderQuoteStatus.Timeout, "MTI request timed out", cancellationToken); }
+        catch (BrokenCircuitException)   { return await StaleFallbackOrFailureAsync(
+            cacheKey, company, sw, ProviderQuoteStatus.BreakerOpen, "MTI circuit breaker open", cancellationToken); }
         catch (OperationCanceledException) when (cancellationToken.IsCancellationRequested)
         {
             sw.Stop();
             return ProviderQuoteResult.Failure(CompanyShortCode, company.Name,
-                ProviderQuoteStatus.Timeout, "Cancelled", sw.ElapsedMilliseconds);
+                ProviderQuoteStatus.Timeout, "Cancelled", sw.ElapsedMilliseconds,
+                dataSource: DataSourceType.Api);
         }
         catch (HttpRequestException ex) when (ex.StatusCode == HttpStatusCode.RequestTimeout)
         {
-            sw.Stop();
-            return ProviderQuoteResult.Failure(CompanyShortCode, company.Name,
-                ProviderQuoteStatus.Timeout, ex.Message, sw.ElapsedMilliseconds);
+            return await StaleFallbackOrFailureAsync(cacheKey, company, sw,
+                ProviderQuoteStatus.Timeout, ex.Message, cancellationToken);
         }
         catch (Exception ex)
         {
-            sw.Stop();
             _logger.LogError(ex, "MTI GetCoverage failed");
-            return ProviderQuoteResult.Failure(CompanyShortCode, company.Name,
-                ProviderQuoteStatus.Failed, ex.Message, sw.ElapsedMilliseconds);
+            return await StaleFallbackOrFailureAsync(cacheKey, company, sw,
+                ProviderQuoteStatus.Failed, ex.Message, cancellationToken);
         }
+    }
+
+    /// <summary>
+    /// Single live MTI call — extracted so the SWR cache wrapper can invoke it on miss
+    /// and on background refresh. Returns the cache-friendly <see cref="QuoteCachePayload"/>;
+    /// throws on HTTP/transport failure so the cache layer can fall back to stale data.
+    /// </summary>
+    private async Task<QuoteCachePayload> CallMtiLiveAsync(
+        object payload, InsuranceCompany company, VehicleModel vehicle,
+        ProviderQuoteRequest request, CancellationToken ct)
+    {
+        using var resp = await _http.HttpClient.PostAsJsonAsync(
+            "MTIMotor/GetCoverage", payload, JsonOpts, ct);
+
+        if (!resp.IsSuccessStatusCode)
+        {
+            var body = await resp.Content.ReadAsStringAsync(ct);
+            _logger.LogWarning("MTI GetCoverage returned {Status}: {Body}", resp.StatusCode,
+                body.Length > 500 ? body[..500] : body);
+            throw new HttpRequestException(
+                $"MTI returned HTTP {(int)resp.StatusCode}", null, resp.StatusCode);
+        }
+
+        var raw = await resp.Content.ReadAsStringAsync(ct);
+        using var doc = JsonDocument.Parse(raw);
+        var plans = MapCoveragesToPlans(doc.RootElement, company, vehicle, request);
+
+        if (plans.Count == 0)
+        {
+            _logger.LogInformation(
+                "MTI returned 0 plans. Request payload: {Payload}. Response head: {Head}",
+                JsonSerializer.Serialize(payload, JsonOpts),
+                raw.Length > 400 ? raw[..400] : raw);
+        }
+
+        return QuoteCacheMapper.ToPayload(
+            CompanyShortCode, company.Name, company.Id, vehicle, plans);
+    }
+
+    /// <summary>
+    /// Last-resort fallback: live call failed — try a stale cache entry (up to 24 h old).
+    /// If found, return Success with isStale=true; otherwise return the original failure
+    /// status. This is the "API down → still show something useful" path.
+    /// </summary>
+    private async Task<ProviderQuoteResult> StaleFallbackOrFailureAsync(
+        string cacheKey, InsuranceCompany company, Stopwatch sw,
+        ProviderQuoteStatus failureStatus, string failureMessage, CancellationToken ct)
+    {
+        var stale = await _cache.TryGetStaleAsync<QuoteCachePayload>(cacheKey, ct);
+        sw.Stop();
+        if (stale is not null)
+        {
+            _logger.LogInformation("MTI live call failed ({Status}) — serving stale cache",
+                failureStatus);
+            return ProviderQuoteResult.Success(CompanyShortCode, company.Name,
+                QuoteCacheMapper.ToInsurancePlans(stale), sw.ElapsedMilliseconds,
+                dataSource: DataSourceType.Api,
+                isStale: true);
+        }
+        return ProviderQuoteResult.Failure(CompanyShortCode, company.Name,
+            failureStatus, failureMessage, sw.ElapsedMilliseconds,
+            dataSource: DataSourceType.Api);
     }
 
     private (string makeCode, string family, int engineSize) ResolveMtiVehicleParams(

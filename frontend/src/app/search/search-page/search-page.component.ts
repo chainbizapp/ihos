@@ -2,10 +2,11 @@ import { Component, computed, inject, OnInit, signal } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { Router } from '@angular/router';
-import { SearchApiService, SearchResult } from '../../core/search-api.service';
+import { AggregatedSearchResult, SearchApiService, SearchResult } from '../../core/search-api.service';
 import { SearchStateService } from '../../core/search-state.service';
 import { SearchPreferencesService } from '../../core/search-preferences.service';
 import { ResultsComponent } from '../results/results.component';
+import { ProviderStatusBannerComponent } from '../provider-status-banner/provider-status-banner.component';
 import { VehicleSelectorComponent, VehicleSelection } from '../../shared/vehicle-selector/vehicle-selector.component';
 
 // ── Design tokens ─────────────────────────────────────────────────────────────
@@ -82,7 +83,7 @@ function svg(path: string, cls = 'w-4 h-4'): string {
 @Component({
   selector: 'app-search-page',
   standalone: true,
-  imports: [CommonModule, FormsModule, VehicleSelectorComponent, ResultsComponent],
+  imports: [CommonModule, FormsModule, VehicleSelectorComponent, ResultsComponent, ProviderStatusBannerComponent],
   styles: [`
     .filter-select {
       appearance: none; -webkit-appearance: none;
@@ -267,6 +268,7 @@ function svg(path: string, cls = 'w-4 h-4'): string {
             {{ error() }}
           </div>
         }
+        <app-provider-status-banner [aggregated]="aggregated()" />
         <app-search-results
           [result]="result()"
           [loading]="loading()"
@@ -313,6 +315,9 @@ export class SearchPageComponent implements OnInit {
 
   vehicleSelection = signal<VehicleSelection | null>(null);
   result           = signal<SearchResult | null>(null);
+  /** Per-provider outcome of the latest aggregated search (feature 002). Null until the
+   *  first multi-provider call completes — banner is hidden when null. */
+  aggregated       = signal<AggregatedSearchResult | null>(null);
   loading          = signal(false);
   error            = signal<string | null>(null);
   showSelector     = signal(false);
@@ -411,10 +416,15 @@ export class SearchPageComponent implements OnInit {
     this.loading.set(true);
     this.error.set(null);
     this.result.set(null);
+    this.aggregated.set(null);
     try {
-      const data = await this.searchApi.search(params);
-      this.result.set(data);
-      this.searchState.save(params, data, this.currentSort(), this.currentPage());
+      // Multi-provider aggregated search (feature 002): fans out to MTI, Viriyah, Allianz
+      // in parallel. Banner shows per-provider status; results component renders the
+      // flattened plan list across all providers.
+      const view = await this.searchApi.searchAggregated(params);
+      this.aggregated.set(view.aggregated);
+      this.result.set(view.flat);
+      this.searchState.save(params, view.flat, this.currentSort(), this.currentPage());
       const sel = this.vehicleSelection()!;
       this.prefs.save({
         makeId: sel.makeId, makeName: sel.makeName,

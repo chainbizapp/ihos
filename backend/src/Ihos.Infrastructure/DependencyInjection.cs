@@ -2,8 +2,10 @@ using Ihos.Application.Common.Interfaces;
 using Ihos.Application.Import.Adapters;
 using Ihos.Application.Import.Services;
 using Ihos.Application.Providers;
+using Ihos.Application.Sync;
 using Ihos.Domain.Entities;
 using Ihos.Domain.Enums;
+using Ihos.Infrastructure.BackgroundServices;
 using Ihos.Infrastructure.Caching;
 using Ihos.Infrastructure.Import;
 using Ihos.Infrastructure.Import.Adapters;
@@ -14,6 +16,7 @@ using Ihos.Infrastructure.Reporting;
 using Ihos.Infrastructure.Repositories;
 using Ihos.Infrastructure.Resilience;
 using Ihos.Infrastructure.Services;
+using Ihos.Infrastructure.Sync;
 using Microsoft.Extensions.Http.Resilience;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Configuration;
@@ -109,9 +112,12 @@ public static class DependencyInjection
                 o.Retry.MaxRetryAttempts = 1;
             });
         services.AddScoped<IInsurerQuoteProvider, MtiApiQuoteProvider>();
+        services.AddScoped<IVehicleMasterSyncer, MtiVehicleMasterSyncer>();
 
         // ── Viriyah provider — feature 002 ─────────────────────────────────────
         services.Configure<ViriyahOptions>(configuration.GetSection(ViriyahOptions.SectionName));
+        services.Configure<ViriyahMasterOptions>(
+            configuration.GetSection(ViriyahMasterOptions.SectionName));
         services.AddSingleton<ViriyahTokenCache>();
         services.AddHttpClient(ViriyahTokenCache.TokenHttpClientName);
         services.AddHttpClient<ViriyahHttpClient>()
@@ -125,6 +131,19 @@ public static class DependencyInjection
                 o.Retry.MaxRetryAttempts = 1;
             });
         services.AddScoped<IInsurerQuoteProvider, ViriyahVmiQuoteProvider>();
+        services.AddScoped<IVehicleMasterSyncer, ViriyahCsvMasterImporter>();
+
+        // ── Sync orchestration + audit reader (Phase 5 US3) ────────────────────
+        services.AddSingleton<ISyncOrchestrator, SyncOrchestrator>();
+        services.AddScoped<IVehicleSyncLogReader, VehicleSyncLogReader>();
+
+        // ── Scheduled daily sync (Phase 6 US4) ─────────────────────────────────
+        services.Configure<SyncScheduleOptions>(
+            configuration.GetSection(SyncScheduleOptions.SectionName));
+        services.AddHostedService<VehicleSyncBackgroundService>();
+
+        // ── Recover orphan Running rows after process restart (Phase 7+) ───────
+        services.AddHostedService<OrphanSyncRecoveryService>();
 
         return services;
     }

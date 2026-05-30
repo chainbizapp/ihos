@@ -33,6 +33,8 @@ public record SearchPlansAggregatedResult(
 public record ProviderSearchResultDto(
     string CompanyShortCode,
     string CompanyDisplayName,
+    /// <summary>"Import" or "Api" — surfaced from <see cref="ProviderQuoteResult.DataSource"/>.</summary>
+    string DataSource,
     string Status,
     bool IsStale,
     long ProviderLatencyMs,
@@ -168,6 +170,7 @@ public class SearchPlansAggregatedQueryHandler
         return new ProviderSearchResultDto(
             CompanyShortCode: r.CompanyShortCode,
             CompanyDisplayName: r.CompanyDisplayName,
+            DataSource: r.DataSource.ToString(),
             Status: r.Status.ToString(),
             IsStale: r.IsStale,
             ProviderLatencyMs: r.ProviderLatencyMs,

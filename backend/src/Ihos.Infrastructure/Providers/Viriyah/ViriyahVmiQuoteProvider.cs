@@ -4,6 +4,7 @@ using Ihos.Application.Common.Interfaces;
 using Ihos.Application.Providers;
 using Ihos.Domain.Entities;
 using Ihos.Domain.Enums;
+using Ihos.Infrastructure.Caching;
 using Microsoft.Extensions.Logging;
 using Polly.CircuitBreaker;
 using Polly.Timeout;
@@ -28,6 +29,8 @@ public sealed class ViriyahVmiQuoteProvider : IInsurerQuoteProvider
     private readonly ViriyahTokenCache _tokens;
     private readonly IInsuranceCompanyRepository _companies;
     private readonly IVehicleModelRepository _vehicles;
+    private readonly IVehicleModelMappingRepository _mappings;
+    private readonly QuoteCacheService _cache;
     private readonly ILogger<ViriyahVmiQuoteProvider> _logger;
 
     public ViriyahVmiQuoteProvider(
@@ -35,12 +38,16 @@ public sealed class ViriyahVmiQuoteProvider : IInsurerQuoteProvider
         ViriyahTokenCache tokens,
         IInsuranceCompanyRepository companies,
         IVehicleModelRepository vehicles,
+        IVehicleModelMappingRepository mappings,
+        QuoteCacheService cache,
         ILogger<ViriyahVmiQuoteProvider> logger)
     {
         _http = http;
         _tokens = tokens;
         _companies = companies;
         _vehicles = vehicles;
+        _mappings = mappings;
+        _cache = cache;
         _logger = logger;
     }
 
@@ -70,85 +77,153 @@ public sealed class ViriyahVmiQuoteProvider : IInsurerQuoteProvider
                 $"Vehicle model {request.VehicleModelId} not found", sw.ElapsedMilliseconds);
         }
 
+        // Resolve Viriyah's exact brand/model/submodel triple via VehicleModelMapping.
+        // RawName format: "BRAND|MODEL|SUBMODEL" (populated by ViriyahCsvMasterImporter).
+        // Falls back to local VehicleModel fields when no mapping exists — works for vehicles
+        // whose names already match Viriyah's catalog format.
+        var (carBrand, carModel, carSubModel) = await ResolveViriyahTripleAsync(
+            company.Id, vehicle, cancellationToken);
+
         var body = new
         {
             agentCode = _http.Options.AgentCode,
             energyType = "C", // C = gasoline. TODO: derive from VehicleModel
-            carBrand = vehicle.Make?.Name ?? string.Empty,
-            carModel = vehicle.Name,
-            carSubModel = vehicle.SubModel ?? string.Empty,
+            carBrand,
+            carModel,
+            carSubModel,
             registrationYear = request.RegistrationYear.ToString(),
             vehicleTypeCode = new[] { "110" }, // 110 = passenger car
         };
 
+        // ── SWR cache (Phase 7) ──────────────────────────────────────────────────
+        var cacheKey = QuoteCacheMapper.BuildKey(CompanyShortCode, request);
+
         try
         {
-            // First attempt + one retry on 401.
-            for (var attempt = 1; attempt <= 2; attempt++)
-            {
-                var token = await _tokens.GetTokenAsync(cancellationToken);
-                using var req = ViriyahQuoteRequestBuilder.Build(
-                    "api/policy/motor/vmi/v3/quotation", body, token, _http.Options);
-                using var resp = await _http.HttpClient.SendAsync(req, cancellationToken);
-
-                if (resp.StatusCode == System.Net.HttpStatusCode.Unauthorized && attempt == 1)
-                {
-                    _logger.LogInformation("Viriyah VMI returned 401 — refreshing token and retrying");
-                    _tokens.Invalidate();
-                    continue;
-                }
-
-                if (!resp.IsSuccessStatusCode)
-                {
-                    sw.Stop();
-                    var text = await resp.Content.ReadAsStringAsync(cancellationToken);
-                    _logger.LogWarning("Viriyah VMI quotation returned {Status}: {Body}",
-                        resp.StatusCode, text.Length > 500 ? text[..500] : text);
-                    return ProviderQuoteResult.Failure(CompanyShortCode, company.Name,
-                        ProviderQuoteStatus.Failed,
-                        $"Viriyah returned HTTP {(int)resp.StatusCode}",
-                        sw.ElapsedMilliseconds, errorCode: ((int)resp.StatusCode).ToString());
-                }
-
-                using var doc = JsonDocument.Parse(
-                    await resp.Content.ReadAsStreamAsync(cancellationToken));
-                var plans = MapVmiResponseToPlans(doc.RootElement, company, vehicle, request);
-                sw.Stop();
-                return ProviderQuoteResult.Success(CompanyShortCode, company.Name, plans,
-                    sw.ElapsedMilliseconds);
-            }
+            var lookup = await _cache.GetOrCallAsync<QuoteCachePayload>(cacheKey,
+                async innerCt => await CallViriyahLiveAsync(body, company, vehicle, request, innerCt),
+                cancellationToken);
 
             sw.Stop();
-            return ProviderQuoteResult.Failure(CompanyShortCode, company.Name,
-                ProviderQuoteStatus.Failed, "Auth retry exhausted", sw.ElapsedMilliseconds);
+            var plans = QuoteCacheMapper.ToInsurancePlans(lookup.Value);
+            return ProviderQuoteResult.Success(CompanyShortCode, company.Name, plans,
+                sw.ElapsedMilliseconds,
+                dataSource: DataSourceType.Api,
+                isStale: lookup.IsStale);
         }
-        catch (TimeoutRejectedException)
-        {
-            sw.Stop();
-            return ProviderQuoteResult.Failure(CompanyShortCode, company.Name,
-                ProviderQuoteStatus.Timeout, "Viriyah VMI request timed out",
-                sw.ElapsedMilliseconds);
-        }
-        catch (BrokenCircuitException)
-        {
-            sw.Stop();
-            return ProviderQuoteResult.Failure(CompanyShortCode, company.Name,
-                ProviderQuoteStatus.BreakerOpen, "Viriyah VMI circuit breaker open",
-                sw.ElapsedMilliseconds);
-        }
+        catch (TimeoutRejectedException) { return await StaleFallbackOrFailureAsync(
+            cacheKey, company, sw, ProviderQuoteStatus.Timeout, "Viriyah VMI request timed out", cancellationToken); }
+        catch (BrokenCircuitException)   { return await StaleFallbackOrFailureAsync(
+            cacheKey, company, sw, ProviderQuoteStatus.BreakerOpen, "Viriyah VMI circuit breaker open", cancellationToken); }
         catch (OperationCanceledException) when (cancellationToken.IsCancellationRequested)
         {
             sw.Stop();
             return ProviderQuoteResult.Failure(CompanyShortCode, company.Name,
-                ProviderQuoteStatus.Timeout, "Cancelled", sw.ElapsedMilliseconds);
+                ProviderQuoteStatus.Timeout, "Cancelled", sw.ElapsedMilliseconds,
+                dataSource: DataSourceType.Api);
         }
         catch (Exception ex)
         {
-            sw.Stop();
             _logger.LogError(ex, "Viriyah VMI quotation failed");
-            return ProviderQuoteResult.Failure(CompanyShortCode, company.Name,
-                ProviderQuoteStatus.Failed, ex.Message, sw.ElapsedMilliseconds);
+            return await StaleFallbackOrFailureAsync(cacheKey, company, sw,
+                ProviderQuoteStatus.Failed, ex.Message, cancellationToken);
         }
+    }
+
+    /// <summary>
+    /// Single live Viriyah VMI quote — extracted so the SWR cache can wrap it. Handles
+    /// 401 → token refresh + single retry. Throws on transport / non-2xx failure so the
+    /// cache layer can fall back to stale data.
+    /// </summary>
+    private async Task<QuoteCachePayload> CallViriyahLiveAsync(
+        object body, InsuranceCompany company, VehicleModel vehicle,
+        ProviderQuoteRequest request, CancellationToken ct)
+    {
+        for (var attempt = 1; attempt <= 2; attempt++)
+        {
+            var token = await _tokens.GetTokenAsync(ct);
+            using var req = ViriyahQuoteRequestBuilder.Build(
+                "api/policy/motor/vmi/v3/quotation", body, token, _http.Options);
+            using var resp = await _http.HttpClient.SendAsync(req, ct);
+
+            if (resp.StatusCode == System.Net.HttpStatusCode.Unauthorized && attempt == 1)
+            {
+                _logger.LogInformation("Viriyah VMI returned 401 — refreshing token and retrying");
+                _tokens.Invalidate();
+                continue;
+            }
+
+            if (!resp.IsSuccessStatusCode)
+            {
+                var text = await resp.Content.ReadAsStringAsync(ct);
+                _logger.LogWarning("Viriyah VMI quotation returned {Status}: {Body}",
+                    resp.StatusCode, text.Length > 500 ? text[..500] : text);
+                throw new HttpRequestException(
+                    $"Viriyah returned HTTP {(int)resp.StatusCode}", null, resp.StatusCode);
+            }
+
+            using var doc = JsonDocument.Parse(await resp.Content.ReadAsStreamAsync(ct));
+            var plans = MapVmiResponseToPlans(doc.RootElement, company, vehicle, request);
+            return QuoteCacheMapper.ToPayload(
+                CompanyShortCode, company.Name, company.Id, vehicle, plans);
+        }
+
+        throw new InvalidOperationException("Auth retry exhausted");
+    }
+
+    /// <summary>
+    /// Live call failed — try a stale cache entry (up to 24 h old). If found, return
+    /// Success with isStale=true so the UI can show "Cached" badge. Else return the
+    /// original failure status.
+    /// </summary>
+    private async Task<ProviderQuoteResult> StaleFallbackOrFailureAsync(
+        string cacheKey, InsuranceCompany company, Stopwatch sw,
+        ProviderQuoteStatus failureStatus, string failureMessage, CancellationToken ct)
+    {
+        var stale = await _cache.TryGetStaleAsync<QuoteCachePayload>(cacheKey, ct);
+        sw.Stop();
+        if (stale is not null)
+        {
+            _logger.LogInformation("Viriyah live call failed ({Status}) — serving stale cache",
+                failureStatus);
+            return ProviderQuoteResult.Success(CompanyShortCode, company.Name,
+                QuoteCacheMapper.ToInsurancePlans(stale), sw.ElapsedMilliseconds,
+                dataSource: DataSourceType.Api,
+                isStale: true);
+        }
+        return ProviderQuoteResult.Failure(CompanyShortCode, company.Name,
+            failureStatus, failureMessage, sw.ElapsedMilliseconds,
+            dataSource: DataSourceType.Api);
+    }
+
+    /// <summary>
+    /// Looks up the Viriyah-specific brand/model/submodel strings for a canonical
+    /// VehicleModel via <see cref="VehicleModelMapping"/>. Returns the first matching
+    /// mapping; falls back to the raw VehicleModel fields when no mapping is registered
+    /// (best-effort — Viriyah may still respond "Quotation not found" in that case).
+    /// </summary>
+    private async Task<(string brand, string model, string submodel)> ResolveViriyahTripleAsync(
+        Guid companyId, VehicleModel vehicle, CancellationToken ct)
+    {
+        var mappings = await _mappings.GetByCompanyAsync(companyId, ct);
+        var match = mappings
+            .Where(m => m.CanonicalModelId == vehicle.Id &&
+                        m.RawName.Contains(ViriyahCsvMasterImporter.Separator))
+            .Select(m => m.RawName)
+            .FirstOrDefault();
+
+        if (match is not null)
+        {
+            var parts = match.Split(ViriyahCsvMasterImporter.Separator);
+            if (parts.Length >= 3)
+                return (parts[0], parts[1], parts[2]);
+        }
+
+        // Fallback — uppercase brand to match Viriyah's catalog convention.
+        return (
+            (vehicle.Make?.Name ?? string.Empty).ToUpperInvariant(),
+            vehicle.Name.ToUpperInvariant(),
+            vehicle.SubModel ?? string.Empty);
     }
 
     /// <summary>

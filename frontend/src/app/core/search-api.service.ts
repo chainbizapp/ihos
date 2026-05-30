@@ -45,6 +45,40 @@ export interface InsurancePlanDetail extends InsurancePlanSummary {
   isPublished: boolean;
 }
 
+/**
+ * Per-provider result inside the aggregated multi-provider search response.
+ * Feature 002 — see backend contracts/search.md.
+ */
+export interface ProviderSearchResult {
+  companyShortCode: string;
+  companyDisplayName: string;
+  /** "Import" (local DB) | "Api" (live insurer call). */
+  dataSource: 'Import' | 'Api';
+  /** "Success" | "NoMatch" | "Timeout" | "BreakerOpen" | "Failed" */
+  status: string;
+  /** When true, plans came from cache (either fresh-but-cached or stale-after-failure). */
+  isStale: boolean;
+  providerLatencyMs: number;
+  plans: InsurancePlanSummary[];
+  errorCode?: string | null;
+  errorMessage?: string | null;
+}
+
+export interface AggregatedSearchResult {
+  requestId: string;
+  elapsedMs: number;
+  results: ProviderSearchResult[];
+}
+
+/**
+ * Convenience wrapper combining the raw aggregated response with a flattened
+ * SearchResult shape so the existing results component can render unchanged.
+ */
+export interface AggregatedSearchView {
+  aggregated: AggregatedSearchResult;
+  flat: SearchResult;
+}
+
 export interface VehicleMake {
   id: string;
   name: string;
@@ -108,6 +142,38 @@ export class SearchApiService {
     if (params.pageSize) p = p.set('pageSize', params.pageSize);
 
     return firstValueFrom(this.http.get<SearchResult>(`${this.api}/plans/search`, { params: p }));
+  }
+
+  /**
+   * Multi-provider aggregated search (feature 002). Fans out to every active provider:
+   * import-source companies (Allianz) read pre-loaded plans from DB; API-source companies
+   * (MTI, Viriyah) are quoted live with per-provider timeout + circuit breaker.
+   * Returns BOTH the raw per-provider result (for status banners) AND a flattened
+   * SearchResult so the existing results component renders unchanged.
+   */
+  async searchAggregated(params: SearchParams): Promise<AggregatedSearchView> {
+    let p = new HttpParams()
+      .set('vehicleModelId', params.vehicleModelId)
+      .set('registrationYear', params.registrationYear)
+      .set('repairType', params.repairType);
+
+    if (params.planType) p = p.set('planType', params.planType);
+    // The aggregated endpoint accepts a single primary planType — fall back to Type1
+    // when the user picked "ทุกชั้น" (empty) so providers always have a valid value.
+    else                  p = p.set('planType', 'Type1');
+
+    const agg = await firstValueFrom(
+      this.http.get<AggregatedSearchResult>(`${this.api}/plans/search-aggregated`, { params: p })
+    );
+
+    const items = agg.results.flatMap(r => r.plans);
+    const flat: SearchResult = {
+      items,
+      totalCount: items.length,
+      page: 1,
+      pageSize: Math.max(items.length, 1),
+    };
+    return { aggregated: agg, flat };
   }
 
   async getDetail(id: string): Promise<InsurancePlanDetail> {

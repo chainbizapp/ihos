@@ -90,7 +90,8 @@ public class PlansController : ControllerBase
         if (!Enum.TryParse<RepairType>(repairType, true, out var rt))
             return BadRequest(new { error = $"Invalid repairType '{repairType}'." });
 
-        if (registrationYear < 1900 || registrationYear > DateTime.UtcNow.Year)
+        // 0 = "All Years" sentinel (matches the legacy /search endpoint behavior).
+        if (registrationYear != 0 && (registrationYear < 1900 || registrationYear > DateTime.UtcNow.Year))
             return BadRequest(new { error = "registrationYear is invalid." });
 
         var result = await _mediator.Send(new SearchPlansAggregatedQuery(

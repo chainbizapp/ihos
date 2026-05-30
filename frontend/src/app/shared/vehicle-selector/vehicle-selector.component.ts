@@ -139,8 +139,9 @@ export class VehicleSelectorComponent implements OnInit {
 
   /**
    * Year dropdown options for the selected model group.
-   * Derived from the min/max year across all trims + umbrella that have plan data.
-   * Empty when no plans exist yet for any model in this group.
+   * Derived from the min/max registration year across all trims + umbrella that have plan data.
+   * Backend returns actual registration years (e.g. 2020, 2026) — NOT ages — so we list them
+   * directly without subtracting from the current year. Empty when no plans exist yet.
    */
   readonly yearOptions = computed<number[]>(() => {
     const g = this.selectedGroup();
@@ -152,12 +153,8 @@ export class VehicleSelectorComponent implements OnInit {
     const lo = Math.min(...mins);
     const hi = Math.max(...maxs);
     const years: number[] = [];
-    const currentYear = new Date().getFullYear();
-    for (let age = lo; age <= hi; age++) {
-      years.push(currentYear - age);
-    }
-    // Sort descending (latest years first)
-    return years.sort((a, b) => b - a);
+    for (let y = lo; y <= hi; y++) years.push(y);
+    return years.sort((a, b) => b - a); // latest year first
   });
 
   /**
@@ -197,8 +194,18 @@ export class VehicleSelectorComponent implements OnInit {
       opts.push({ id: 'ALL_VARIANTS', label: 'All variants', isAllVariants: true });
     }
     
-    for (const t of trims)
-      opts.push({ id: t.id, label: t.subModel!, isAllVariants: false });
+    for (const t of trims) {
+      // Label "<SubModel> · <CC>cc · <GearType>" — CC disambiguates trims with the same
+      // SubModel name but different engines (e.g. Civic E MODULO 1500 vs 1800).
+      const cc = t.engineCC
+        ? `${t.engineCC}${/^\d+$/.test(t.engineCC) ? 'cc' : ''}`
+        : '';
+      opts.push({
+        id: t.id,
+        label: [t.subModel, cc, t.gearType].filter(Boolean).join(' · '),
+        isAllVariants: false,
+      });
+    }
     return opts;
   });
 
@@ -327,18 +334,15 @@ export class VehicleSelectorComponent implements OnInit {
 
   // ── helpers ───────────────────────────────────────────────────────────────
 
-  /** Returns true if this model's plan year range covers the given year (0 = no filter). */
+  /** Returns true if this model's plan year range covers the given year (0 = no filter).
+   *  Backend's minYear/maxYear are actual registration years (e.g. 2020), not ages. */
   private modelCoversYear(m: VehicleModel, yr: number): boolean {
     if (!yr) return true;
     const lo = m.minYear ?? null;
     const hi = m.maxYear ?? null;
     // If model has no year data at all, keep it visible (don't hide due to missing data)
     if (lo == null && hi == null) return true;
-
-    const currentYear = new Date().getFullYear();
-    const age = currentYear - yr;
-
-    return (lo == null || age >= lo) && (hi == null || age <= hi);
+    return (lo == null || yr >= lo) && (hi == null || yr <= hi);
   }
 
   /** Auto-select the sub-model when exactly one option remains after a filter change. */
