@@ -45,6 +45,7 @@ public class ApplicationDbContext : DbContext
 
     // Multi-provider integration (002-multi-provider-integration)
     public DbSet<VehicleSyncLog> VehicleSyncLogs => Set<VehicleSyncLog>();
+    public DbSet<ProviderBrandAlias> ProviderBrandAliases => Set<ProviderBrandAlias>();
 
     public override async Task<int> SaveChangesAsync(CancellationToken cancellationToken = default)
     {
@@ -207,6 +208,26 @@ public class ApplicationDbContext : DbContext
             entity.HasIndex(e => e.CompanyId);
             entity.HasIndex(e => e.CanonicalModelId);
             entity.HasIndex(new[] { nameof(VehicleModelMapping.CompanyId), nameof(VehicleModelMapping.RawName) }).IsUnique();
+        });
+
+        modelBuilder.Entity<ProviderBrandAlias>(entity =>
+        {
+            entity.ToTable("provider_brand_aliases");
+            entity.HasKey(e => e.Id);
+            entity.Property(e => e.Id).HasDefaultValueSql("gen_random_uuid()");
+            entity.Property(e => e.ProviderCode).HasMaxLength(20).IsRequired();
+            entity.Property(e => e.RawValue).HasMaxLength(200).IsRequired();
+            entity.Property(e => e.Source).HasConversion<string>().HasMaxLength(20).IsRequired();
+
+            entity.HasOne(e => e.CanonicalMake)
+                .WithMany()
+                .HasForeignKey(e => e.CanonicalMakeId)
+                .OnDelete(DeleteBehavior.SetNull);
+
+            entity.HasIndex(e => e.CanonicalMakeId);
+            // One alias per (provider, raw value). Resolver does case-insensitive lookup,
+            // so the raw value is stored as the provider sends it but matched UPPER().
+            entity.HasIndex(new[] { nameof(ProviderBrandAlias.ProviderCode), nameof(ProviderBrandAlias.RawValue) }).IsUnique();
         });
 
         modelBuilder.Entity<PlanTypeMapping>(entity =>

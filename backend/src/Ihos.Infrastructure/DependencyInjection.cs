@@ -46,6 +46,8 @@ public static class DependencyInjection
         services.AddScoped<IInsuranceCompanyRepository, InsuranceCompanyRepository>();
         services.AddScoped<IVehicleModelRepository, VehicleModelRepository>();
         services.AddScoped<IVehicleModelMappingRepository, VehicleModelMappingRepository>();
+        services.AddScoped<IBrandAliasRepository, BrandAliasRepository>();
+        services.AddScoped<Application.Brands.BrandAliasResolver>();
         services.AddScoped<IPlanTypeMappingRepository, PlanTypeMappingRepository>();
         services.AddScoped<IImportBatchRepository, ImportBatchRepository>();
         services.AddScoped<IImportRecordRepository, ImportRecordRepository>();
