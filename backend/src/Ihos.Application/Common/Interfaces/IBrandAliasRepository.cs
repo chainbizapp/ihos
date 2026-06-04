@@ -21,6 +21,13 @@ public interface IBrandAliasRepository
 
     Task<ProviderBrandAlias?> GetByIdAsync(Guid id, CancellationToken ct = default);
 
+    /// <summary>All aliases across every provider — for the admin list view (optionally filtered).</summary>
+    Task<IReadOnlyList<ProviderBrandAlias>> GetAllAsync(
+        string? providerCode, bool? verifiedOnly, CancellationToken ct = default);
+
+    /// <summary>Distinct provider codes that have at least one alias — for the filter dropdown.</summary>
+    Task<IReadOnlyList<string>> GetProviderCodesAsync(CancellationToken ct = default);
+
     /// <summary>All active canonical makes — used by the fuzzy fallback to score candidates.</summary>
     Task<IReadOnlyList<VehicleMake>> GetAllMakesAsync(CancellationToken ct = default);
 

@@ -17,6 +17,11 @@ export const MAPPING_ROUTES: Routes = [
       import('./sync/sync.component').then(m => m.MappingSyncComponent)
   },
   {
+    path: 'brand-aliases',
+    loadComponent: () =>
+      import('./brand-aliases/brand-aliases.component').then(m => m.BrandAliasesComponent)
+  },
+  {
     path: '',
     redirectTo: 'vehicle-models',
     pathMatch: 'full'

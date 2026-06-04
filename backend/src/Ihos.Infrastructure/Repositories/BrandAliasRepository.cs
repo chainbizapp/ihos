@@ -34,6 +34,29 @@ public sealed class BrandAliasRepository : IBrandAliasRepository
             .Include(a => a.CanonicalMake)
             .FirstOrDefaultAsync(a => a.Id == id && !a.IsDeleted, ct);
 
+    public async Task<IReadOnlyList<ProviderBrandAlias>> GetAllAsync(
+        string? providerCode, bool? verifiedOnly, CancellationToken ct = default)
+    {
+        var q = _db.ProviderBrandAliases
+            .Include(a => a.CanonicalMake)
+            .Where(a => !a.IsDeleted);
+        if (!string.IsNullOrWhiteSpace(providerCode))
+            q = q.Where(a => a.ProviderCode == providerCode);
+        if (verifiedOnly == true)
+            q = q.Where(a => a.IsVerified);
+        return await q
+            .OrderBy(a => a.ProviderCode).ThenBy(a => a.RawValue)
+            .ToListAsync(ct);
+    }
+
+    public async Task<IReadOnlyList<string>> GetProviderCodesAsync(CancellationToken ct = default) =>
+        await _db.ProviderBrandAliases
+            .Where(a => !a.IsDeleted)
+            .Select(a => a.ProviderCode)
+            .Distinct()
+            .OrderBy(c => c)
+            .ToListAsync(ct);
+
     public async Task<IReadOnlyList<VehicleMake>> GetAllMakesAsync(CancellationToken ct = default) =>
         await _db.VehicleMakes
             .AsNoTracking()

@@ -32,6 +32,16 @@ public class BrandAliasResolverTests
         public Task<ProviderBrandAlias?> GetByIdAsync(Guid id, CancellationToken ct = default)
             => Task.FromResult(Aliases.FirstOrDefault(a => a.Id == id));
 
+        public Task<IReadOnlyList<ProviderBrandAlias>> GetAllAsync(
+            string? p, bool? verifiedOnly, CancellationToken ct = default)
+            => Task.FromResult<IReadOnlyList<ProviderBrandAlias>>(Aliases
+                .Where(a => p == null || a.ProviderCode == p)
+                .Where(a => verifiedOnly != true || a.IsVerified)
+                .ToList());
+
+        public Task<IReadOnlyList<string>> GetProviderCodesAsync(CancellationToken ct = default)
+            => Task.FromResult<IReadOnlyList<string>>(Aliases.Select(a => a.ProviderCode).Distinct().ToList());
+
         public Task<IReadOnlyList<VehicleMake>> GetAllMakesAsync(CancellationToken ct = default)
             => Task.FromResult<IReadOnlyList<VehicleMake>>(Makes);
 

@@ -34,15 +34,18 @@ public sealed class MtiVehicleMasterSyncer : IVehicleMasterSyncer
 
     private readonly MtiHttpClient _http;
     private readonly Persistence.ApplicationDbContext _db;
+    private readonly Application.Brands.BrandAliasResolver _brandResolver;
     private readonly ILogger<MtiVehicleMasterSyncer> _logger;
 
     public MtiVehicleMasterSyncer(
         MtiHttpClient http,
         Persistence.ApplicationDbContext db,
+        Application.Brands.BrandAliasResolver brandResolver,
         ILogger<MtiVehicleMasterSyncer> logger)
     {
         _http = http;
         _db = db;
+        _brandResolver = brandResolver;
         _logger = logger;
     }
 
@@ -75,8 +78,9 @@ public sealed class MtiVehicleMasterSyncer : IVehicleMasterSyncer
                 $"MTI GetBrand failed: {ex.Message}");
         }
 
-        var localMakes = await _db.VehicleMakes
-            .ToDictionaryAsync(m => m.Name.ToUpperInvariant(), m => m.Id, cancellationToken);
+        var allMakes = await _db.VehicleMakes
+            .Where(m => !m.IsDeleted)
+            .ToListAsync(cancellationToken);
 
         var localModels = (await _db.VehicleModels
             .AsNoTracking()
@@ -98,23 +102,26 @@ public sealed class MtiVehicleMasterSyncer : IVehicleMasterSyncer
         int inserted = 0, updated = 0, errors = 0;
         var seen = new HashSet<string>();
 
-        // ── Phase 1: pre-filter brands to ones that exist in local DB ──────────
-        // Brands MTI knows about but we don't carry locally are skipped without an HTTP
-        // call, so we don't waste round-trips on data we'd discard anyway.
-        var brandsToFetch = brands
-            .Select(b =>
-            {
-                var key = (b.Description ?? "").ToUpperInvariant();
-                if (!localMakes.TryGetValue(key, out var makeId)) return ((MtiBrand brand, Guid makeId, List<VehicleModel> candidates)?)null;
-                if (!localModels.TryGetValue(makeId, out var candidates) || candidates.Count == 0) return null;
-                return (b, makeId, candidates);
-            })
-            .Where(x => x.HasValue)
-            .Select(x => x!.Value)
-            .ToList();
+        // ── Phase 1: resolve each MTI brand → canonical make via BrandAliasResolver ──
+        // Replaces the old exact-name dictionary lookup. The resolver applies (1) verified
+        // alias table → (2) length-guarded fuzzy, so "ISUZ"→Isuzu, "GEELY"→Geely now match
+        // where exact comparison failed. Brands that don't resolve to a make we carry models
+        // for are skipped without an HTTP call (no wasted round-trips). The pre-loaded
+        // allMakes list is passed in so the resolver doesn't re-query per brand.
+        var brandsToFetch = new List<(MtiBrand brand, Guid makeId, List<VehicleModel> candidates)>();
+        foreach (var b in brands)
+        {
+            var res = await _brandResolver.ResolveAsync(
+                CompanyShortCode, b.Description ?? string.Empty, allMakes, cancellationToken);
+            // Only act on confidently-resolved brands; guesses/pending are left for the
+            // admin alias-review queue and don't auto-create model mappings.
+            if (!res.IsUsable || res.CanonicalMakeId is not { } makeId) continue;
+            if (!localModels.TryGetValue(makeId, out var candidates) || candidates.Count == 0) continue;
+            brandsToFetch.Add((b, makeId, candidates));
+        }
 
         _logger.LogInformation(
-            "MTI sync: {Matched} of {Total} brands match local DB — fetching models in parallel",
+            "MTI sync: {Matched} of {Total} brands resolved to a local make — fetching models in parallel",
             brandsToFetch.Count, brands.Count);
 
         // ── Phase 2: parallel HTTP fetch (5 in flight) ─────────────────────────
