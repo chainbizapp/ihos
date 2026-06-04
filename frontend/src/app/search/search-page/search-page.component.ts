@@ -331,6 +331,7 @@ export class SearchPageComponent implements OnInit {
   excessIndex      = 0;
   sortValue        = 'price_asc';
   provinceValue    = '';
+  regionGroupValue = '';   // ThaiRegion enum name forwarded as aggregated `regionGroup`
   readonly allProvinces = ALL_PROVINCES;
 
   vehicleDisplayName = computed(() => {
@@ -358,6 +359,7 @@ export class SearchPageComponent implements OnInit {
       year:        savedPrefs.vehicleYear,
     });
     this.provinceValue = savedPrefs.province ?? '';
+    this.regionGroupValue = savedPrefs.regionGroup ?? '';
 
     // Seed filters from prefs before comparing cache
     const prefPlanType   = savedPrefs.planType   ?? '';
@@ -405,6 +407,7 @@ export class SearchPageComponent implements OnInit {
       gearType:         sel.gearType  || undefined,
       allVariants:      sel.allVariants || undefined,
       province:         this.provinceValue || undefined,
+      regionGroup:      this.regionGroupValue || undefined,
       sort:             this.currentSort(),
       page:             this.currentPage(),
     };

@@ -12,6 +12,8 @@ export interface SearchPreferences {
   allVariants?: boolean;
   vehicleYear?: number;
   province?: string;
+  /** ThaiRegion enum name (Central/North/…) for the aggregated `regionGroup` param. */
+  regionGroup?: string;
   planType: string;
   repairType: string;
 }

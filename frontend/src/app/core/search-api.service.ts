@@ -115,6 +115,8 @@ export interface SearchParams {
   gearType?: string;
   allVariants?: boolean;
   province?: string;
+  /** ThaiRegion enum name (Central/North/…). Forwarded to the aggregated search. */
+  regionGroup?: string;
 }
 
 @Injectable({ providedIn: 'root' })
@@ -161,6 +163,11 @@ export class SearchApiService {
     // The aggregated endpoint accepts a single primary planType — fall back to Type1
     // when the user picked "ทุกชั้น" (empty) so providers always have a valid value.
     else                  p = p.set('planType', 'Type1');
+
+    // TODO(backend): regionGroup vocabulary unconfirmed — we forward the ThaiRegion enum
+    // name (Central/North/…); backend RegionGroupMapping uses pricing-tier codes (BKK/NE/UPC).
+    // Confirm the expected values with the backend team. "รวมทุกพื้นที่" sends nothing.
+    if (params.regionGroup) p = p.set('regionGroup', params.regionGroup);
 
     const agg = await firstValueFrom(
       this.http.get<AggregatedSearchResult>(`${this.api}/plans/search-aggregated`, { params: p })

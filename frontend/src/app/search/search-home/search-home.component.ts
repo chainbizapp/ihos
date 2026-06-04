@@ -5,6 +5,7 @@ import { Router } from '@angular/router';
 import { SearchApiService, VehicleMake, VehicleModel } from '../../core/search-api.service';
 import { SearchPreferencesService } from '../../core/search-preferences.service';
 import { ButtonComponent } from '../../shared/ui';
+import { REGIONS, RegionKey, provincesForRegion, regionOfProvince } from '../thai-regions';
 
 // ── Recently Viewed ───────────────────────────────────────────────────────────
 
@@ -61,40 +62,6 @@ const MAKE_LOGO: Record<string, string> = {
   mg: 'logos/mg.png',
 };
 
-// ── Province data ─────────────────────────────────────────────────────────────
-
-export interface Province { id: string; name: string; shortName: string; count: number }
-
-const POPULAR_PROVINCES: Province[] = [
-  { id: 'กรุงเทพมหานคร', name: 'กรุงเทพมหานคร', shortName: 'กทม.',       count: 10_244_144 },
-  { id: 'ชลบุรี',         name: 'ชลบุรี',         shortName: 'ชลบุรี',      count:  1_570_782 },
-  { id: 'เชียงใหม่',      name: 'เชียงใหม่',      shortName: 'เชียงใหม่',   count:  1_457_217 },
-  { id: 'นครราชสีมา',    name: 'นครราชสีมา',    shortName: 'โคราช',       count:  1_368_421 },
-  { id: 'ขอนแก่น',        name: 'ขอนแก่น',        shortName: 'ขอนแก่น',     count:    866_989 },
-  { id: 'สงขลา',          name: 'สงขลา',          shortName: 'สงขลา',       count:    829_239 },
-  { id: 'ระยอง',          name: 'ระยอง',          shortName: 'ระยอง',       count:    744_140 },
-  { id: 'อุบลราชธานี',   name: 'อุบลราชธานี',   shortName: 'อุบลฯ',       count:    738_943 },
-  { id: 'เชียงราย',       name: 'เชียงราย',       shortName: 'เชียงราย',    count:    738_735 },
-];
-
-const ALL_PROVINCES: string[] = [
-  'กรุงเทพมหานคร','กระบี่','กาญจนบุรี','กาฬสินธุ์','กำแพงเพชร',
-  'ขอนแก่น','จันทบุรี','ฉะเชิงเทรา','ชลบุรี','ชัยนาท',
-  'ชัยภูมิ','ชุมพร','เชียงราย','เชียงใหม่','ตรัง',
-  'ตราด','ตาก','นครนายก','นครปฐม','นครพนม',
-  'นครราชสีมา','นครศรีธรรมราช','นครสวรรค์','นนทบุรี','นราธิวาส',
-  'น่าน','บึงกาฬ','บุรีรัมย์','ปทุมธานี','ประจวบคีรีขันธ์',
-  'ปราจีนบุรี','ปัตตานี','พระนครศรีอยุธยา','พะเยา','พังงา',
-  'พัทลุง','พิจิตร','พิษณุโลก','เพชรบุรี','เพชรบูรณ์',
-  'แพร่','ภูเก็ต','มหาสารคาม','มุกดาหาร','แม่ฮ่องสอน',
-  'ยโสธร','ยะลา','ร้อยเอ็ด','ระนอง','ระยอง',
-  'ราชบุรี','ลพบุรี','ลำปาง','ลำพูน','เลย',
-  'ศรีสะเกษ','สกลนคร','สงขลา','สตูล','สมุทรปราการ',
-  'สมุทรสงคราม','สมุทรสาคร','สระแก้ว','สระบุรี','สิงห์บุรี',
-  'สุโขทัย','สุพรรณบุรี','สุราษฎร์ธานี','สุรินทร์','หนองคาย',
-  'หนองบัวลำภู','อ่างทอง','อำนาจเจริญ','อุดรธานี','อุตรดิตถ์',
-  'อุทัยธานี','อุบลราชธานี',
-];
 
 // ── Helpers ───────────────────────────────────────────────────────────────────
 
@@ -378,42 +345,42 @@ function makeAbbr(name: string): string {
             </div>
           </div>
 
-          <!-- Province -->
+          <!-- พื้นที่ใช้งาน (region) — drives regionGroup + filters province list -->
           <div class="mb-5" style="border-top:1px solid var(--color-surface-low);padding-top:16px">
             <div class="flex items-center gap-2 mb-3">
-              <span class="text-[12px] font-bold uppercase tracking-widest" style="color:var(--color-mute)">จังหวัดจดทะเบียน</span>
-              <span class="text-[11px]" style="color:var(--color-mute-light)">(ไม่บังคับ)</span>
-              @if (selectedProvinceId()) {
-                <button (click)="selectedProvinceId.set('')"
-                        style="margin-left:auto;font-size:11px;color:var(--color-primary);font-weight:700;background:none;border:none;cursor:pointer;padding:0">ล้าง</button>
-              }
+              <span class="text-[12px] font-bold uppercase tracking-widest" style="color:var(--color-mute)">พื้นที่ใช้งาน</span>
+              <span class="text-[11px]" style="color:var(--color-mute-light)">(เลือกก่อน แล้วระบบจะ filter จังหวัด)</span>
             </div>
-            <div class="grid gap-2" style="grid-template-columns:repeat(5,1fr)">
-              @for (p of popularProvinces; track p.id) {
-                <button class="brand-tile" [class.selected]="selectedProvinceId() === p.id" (click)="selectProvince(p.id)">
-                  @if (selectedProvinceId() === p.id) {
-                    <span class="check-badge">
-                      <svg viewBox="0 0 20 20" fill="white" style="width:11px;height:11px">
-                        <path fill-rule="evenodd" d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z" clip-rule="evenodd"/>
-                      </svg>
-                    </span>
-                  }
-                  <span class="brand-name" style="font-size:12px;font-weight:700;white-space:normal;text-align:center;line-height:1.3;padding:8px 4px">{{ p.shortName }}</span>
+            <select class="fs" [ngModel]="selectedRegion()" (ngModelChange)="onRegionChange($event)">
+              @for (r of regions; track r.key) { <option [value]="r.key">{{ r.label }}</option> }
+            </select>
+            <div class="flex flex-wrap gap-2 mt-3">
+              @for (r of regions; track r.key) {
+                <button (click)="onRegionChange(r.key)"
+                        class="px-3 py-1.5 rounded-full text-[11px] font-bold transition-all"
+                        [style]="selectedRegion() === r.key
+                          ? 'background:var(--color-primary);color:var(--color-surface-lowest)'
+                          : 'background:var(--color-surface-low);color:var(--color-tertiary);border:1.5px solid var(--color-border)'">
+                  {{ r.label }}
                 </button>
               }
-              <button class="brand-tile" [class.selected]="isOtherProvince()" (click)="openProvinceDialog()">
-                @if (isOtherProvince()) {
-                  <span class="check-badge">
-                    <svg viewBox="0 0 20 20" fill="white" style="width:11px;height:11px">
-                      <path fill-rule="evenodd" d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z" clip-rule="evenodd"/>
-                    </svg>
-                  </span>
-                  <span class="brand-name" style="font-size:11px;font-weight:700;white-space:normal;text-align:center;line-height:1.3;padding:8px 4px">{{ selectedProvinceId() }}</span>
-                } @else {
-                  <span class="brand-name" style="font-size:12px;font-weight:700;white-space:normal;text-align:center;line-height:1.3;padding:8px 4px">อื่น ๆ</span>
-                }
-              </button>
             </div>
+          </div>
+
+          <!-- จังหวัดจดทะเบียน (province) — filtered from selected region -->
+          <div class="mb-5">
+            <div class="flex items-center gap-2 mb-3">
+              <span class="text-[12px] font-bold uppercase tracking-widest" style="color:var(--color-mute)">จังหวัดจดทะเบียน</span>
+              @if (selectedRegion() !== 'all') {
+                <span class="text-[11px]" style="color:var(--color-mute-light)">(filtered จาก{{ selectedRegionLabel() }})</span>
+              } @else {
+                <span class="text-[11px]" style="color:var(--color-mute-light)">(ไม่บังคับ)</span>
+              }
+            </div>
+            <select class="fs" [ngModel]="selectedProvinceId()" (ngModelChange)="selectedProvinceId.set($event)">
+              <option value="">ทุกจังหวัด</option>
+              @for (p of provincesInRegion(); track p) { <option [value]="p">{{ p }}</option> }
+            </select>
           </div>
 
           <!-- Actions -->
@@ -499,75 +466,6 @@ function makeAbbr(name: string): string {
 
   </div>
 </div>
-
-<!-- ── Province picker dialog ─────────────────────────────────────────────── -->
-@if (showProvinceDialog()) {
-  <div class="dlg-overlay" (click)="closeProvinceDialog()">
-    <div class="dlg-card" (click)="$event.stopPropagation()">
-
-      <!-- Dialog header -->
-      <div class="flex items-center justify-between px-5 py-4" style="border-bottom:1px solid var(--color-surface-low)">
-        <div>
-          <div class="text-[15px] font-extrabold" style="color:var(--color-on-surface);font-family:'Plus Jakarta Sans',sans-serif">เลือกจังหวัดจดทะเบียน</div>
-          <div class="text-[11px] mt-0.5" style="color:var(--color-mute-light)">77 จังหวัดทั่วประเทศ</div>
-        </div>
-        <button (click)="closeProvinceDialog()"
-                style="width:30px;height:30px;border-radius:8px;border:none;background:var(--color-surface-low);cursor:pointer;display:flex;align-items:center;justify-content:center;color:var(--color-mute);font-size:14px;font-weight:700">✕</button>
-      </div>
-
-      <!-- Search input -->
-      <div class="px-5 py-3" style="border-bottom:1px solid var(--color-surface-low)">
-        <div style="position:relative">
-          <svg viewBox="0 0 256 256" style="fill:var(--color-mute-light);width:15px;height:15px;position:absolute;left:10px;top:50%;transform:translateY(-50%);pointer-events:none">
-            <path d="M229.66,218.34l-50.07-50.06a88.21,88.21,0,1,0-11.31,11.31l50.06,50.07a8,8,0,0,0,11.32-11.32ZM40,112a72,72,0,1,1,72,72A72.08,72.08,0,0,1,40,112Z"/>
-          </svg>
-          <input class="dlg-search" type="text" placeholder="ค้นหาจังหวัด..."
-                 [ngModel]="dialogProvinceSearch()" (ngModelChange)="dialogProvinceSearch.set($event)"/>
-          @if (dialogProvinceSearch()) {
-            <button (click)="dialogProvinceSearch.set('')"
-                    style="position:absolute;right:10px;top:50%;transform:translateY(-50%);background:none;border:none;cursor:pointer;color:var(--color-mute-light);font-size:13px;font-weight:700;padding:0;line-height:1">✕</button>
-          }
-        </div>
-      </div>
-
-      <!-- Province list -->
-      <div style="overflow-y:auto;flex:1">
-        @if (provinceDialogResults().length === 0) {
-          <div class="py-8 text-center text-[13px]" style="color:var(--color-mute)">ไม่พบจังหวัดที่ค้นหา</div>
-        } @else {
-          @for (name of provinceDialogResults(); track name) {
-            <button (click)="selectProvinceFromDialog(name)"
-                    style="width:100%;display:flex;align-items:center;justify-content:space-between;padding:11px 20px;border:none;border-bottom:1px solid var(--color-surface-low);cursor:pointer;text-align:left;font-family:'Noto Sans Thai',sans-serif;transition:background .1s"
-                    [style.background]="selectedProvinceId() === name ? 'var(--color-primary-pale)' : 'var(--color-surface-lowest)'">
-              <span style="font-size:14px;font-weight:600;"
-                    [style.color]="selectedProvinceId() === name ? 'var(--color-primary)' : 'var(--color-on-surface)'">{{ name }}</span>
-              @if (selectedProvinceId() === name) {
-                <svg viewBox="0 0 20 20" style="fill:var(--color-primary);width:16px;height:16px;flex-shrink:0">
-                  <path fill-rule="evenodd" d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z" clip-rule="evenodd"/>
-                </svg>
-              }
-            </button>
-          }
-        }
-      </div>
-
-      <!-- Dialog footer -->
-      <div class="px-5 py-3 flex justify-end gap-3" style="border-top:1px solid var(--color-surface-low)">
-        @if (selectedProvinceId()) {
-          <button (click)="selectedProvinceId.set(''); closeProvinceDialog()"
-                  style="padding:.5rem 1.25rem;border-radius:8px;border:1.5px solid var(--color-danger-bg);background:var(--color-danger-bg);font-size:13px;font-weight:600;color:var(--color-danger);cursor:pointer;font-family:'Noto Sans Thai',sans-serif">
-            ล้างการเลือก
-          </button>
-        }
-        <button (click)="closeProvinceDialog()"
-                style="padding:.5rem 1.25rem;border-radius:8px;border:1.5px solid var(--color-border);background:var(--color-surface-lowest);font-size:13px;font-weight:600;color:var(--color-mute);cursor:pointer;font-family:'Noto Sans Thai',sans-serif">
-          ปิด
-        </button>
-      </div>
-
-    </div>
-  </div>
-}
 
 <!-- ── Brand picker dialog ────────────────────────────────────────────────── -->
 @if (showBrandDialog()) {
@@ -760,40 +658,30 @@ export class SearchHomeComponent implements OnInit {
   showBrandDialog = signal(false);
   dialogSearch = signal('');
 
-  // ── Province ──────────────────────────────────────────────────────────────
-  readonly popularProvinces = POPULAR_PROVINCES;
+  // ── Region + Province (cascade: ภาค → จังหวัด) ─────────────────────────────
+  readonly regions = REGIONS;
+  readonly selectedRegion = signal<RegionKey>('all');
   readonly selectedProvinceId = signal('');
-  readonly showProvinceDialog = signal(false);
-  readonly dialogProvinceSearch = signal('');
 
-  readonly provinceDialogResults = computed(() => {
-    const q = this.dialogProvinceSearch().toLowerCase().trim();
-    if (!q) return ALL_PROVINCES;
-    return ALL_PROVINCES.filter(p => p.toLowerCase().includes(q));
-  });
+  /** Provinces shown in the dropdown for the currently-selected region. */
+  readonly provincesInRegion = computed(() => provincesForRegion(this.selectedRegion()));
 
-  isOtherProvince(): boolean {
-    const id = this.selectedProvinceId();
-    return !!id && !POPULAR_PROVINCES.some(p => p.id === id);
-  }
+  readonly selectedRegionLabel = computed(() =>
+    REGIONS.find(r => r.key === this.selectedRegion())?.label ?? ''
+  );
 
-  selectProvince(id: string): void {
-    this.selectedProvinceId.set(this.selectedProvinceId() === id ? '' : id);
-  }
+  /** regionGroup value sent to the aggregated search for the selected region. */
+  readonly selectedRegionGroup = computed(() =>
+    REGIONS.find(r => r.key === this.selectedRegion())?.regionGroup
+  );
 
-  openProvinceDialog(): void {
-    this.dialogProvinceSearch.set('');
-    this.showProvinceDialog.set(true);
-  }
-
-  closeProvinceDialog(): void {
-    this.showProvinceDialog.set(false);
-    this.dialogProvinceSearch.set('');
-  }
-
-  selectProvinceFromDialog(name: string): void {
-    this.selectedProvinceId.set(name);
-    this.closeProvinceDialog();
+  onRegionChange(key: RegionKey): void {
+    this.selectedRegion.set(key);
+    // Clear the province if it no longer belongs to the chosen region.
+    const province = this.selectedProvinceId();
+    if (province && !this.provincesInRegion().includes(province)) {
+      this.selectedProvinceId.set('');
+    }
   }
 
   readonly popularMakes = computed(() => {
@@ -998,6 +886,7 @@ export class SearchHomeComponent implements OnInit {
     }
     if (saved?.province) {
       this.selectedProvinceId.set(saved.province);
+      this.selectedRegion.set(regionOfProvince(saved.province));
     }
   }
 
@@ -1045,6 +934,7 @@ export class SearchHomeComponent implements OnInit {
       allVariants: !variantId || undefined,   // true when "All Variants" selected
       vehicleYear: year,
       province: this.selectedProvinceId() || undefined,
+      regionGroup: this.selectedRegionGroup(),
       planType: this.selectedPlanType(),
       repairType: this.selectedRepairType(),
     });
