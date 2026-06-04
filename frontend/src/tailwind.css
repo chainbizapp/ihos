@@ -9,6 +9,7 @@
   /* ----- Brand / primary ----- */
   --color-primary: #006874;
   --color-primary-dark: #005a64;        /* hover/active */
+  --color-primary-darker: #004d58;      /* hero h1 / dark gradient stop */
   --color-primary-container: #49b2c1;   /* disabled / lite */
   --color-primary-pale: #e6f0f1;        /* tints, badges, outline hover */
 
@@ -26,6 +27,7 @@
   /* ----- Text & lines ----- */
   --color-on-surface: #171c22;          /* primary text */
   --color-mute: #6b7a8d;                /* secondary text */
+  --color-mute-light: #9aa5b4;          /* tertiary text / muted icons */
   --color-border: #e2e8f0;              /* dividers / input borders */
 
   /* ----- Semantic status (bg + text pairs) ----- */
