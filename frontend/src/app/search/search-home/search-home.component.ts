@@ -1,4 +1,4 @@
-import { Component, inject, OnInit, signal, computed } from '@angular/core';
+import { Component, inject, OnInit, signal, computed, linkedSignal } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { Router } from '@angular/router';
@@ -72,6 +72,18 @@ function randomSearchId(): string {
 function makeAbbr(name: string): string {
   return name.slice(0, 3).toUpperCase();
 }
+
+// Common engine sizes shown in the CC dropdown (the detected variant CC is merged in).
+const COMMON_CC = ['999', '1200', '1300', '1500', '1600', '1800', '2000', '2400', '2500', '2800', '3000'];
+
+// TODO(backend): fuelType not supported on /search aggregated — mock options only.
+const FUEL_OPTIONS = ['เบนซิน', 'ดีเซล', 'ไฟฟ้า (EV)', 'ไฮบริด', 'ปลั๊กอินไฮบริด (PHEV)', 'LPG/NGV'];
+
+// TODO(backend): bodyType not supported on /search aggregated — mock options only.
+const BODY_OPTIONS = [
+  'เก๋งสองตอน · 4 ประตู', 'เก๋งสามตอน · 5 ประตู', 'กระบะตอนเดียว · 2 ประตู',
+  'กระบะแคป · 2 ประตู', 'กระบะ 4 ประตู', 'SUV · 5 ประตู', 'รถตู้ · 4 ประตู',
+];
 
 @Component({
   selector: 'app-search-home',
@@ -327,6 +339,32 @@ function makeAbbr(name: string): string {
             @if (!selectedPlanType()) {
               <p class="text-[11px] mt-2" style="color:var(--color-mute-light)">ไม่เลือก = แสดงทุกประเภท</p>
             }
+          </div>
+
+          <!-- ขนาดเครื่องยนต์ (CC) — prefilled from selected variant, editable -->
+          <div class="mb-5">
+            <label class="fl">ขนาดเครื่องยนต์ (CC)</label>
+            <select class="fs" [ngModel]="engineCCValue()" (ngModelChange)="engineCCValue.set($event)">
+              <option value="">ทุกขนาด</option>
+              @for (cc of ccOptions(); track cc) { <option [value]="cc">{{ cc }} cc</option> }
+            </select>
+            <p class="text-[11px] mt-1" style="color:var(--color-mute-light)">ดึงจากเล่มทะเบียนอัตโนมัติ · แก้ไขได้</p>
+          </div>
+
+          <!-- ประเภทเชื้อเพลิง — TODO(backend): fuelType not supported on /search aggregated (mock) -->
+          <div class="mb-5">
+            <label class="fl">ประเภทเชื้อเพลิง</label>
+            <select class="fs" [ngModel]="fuelType()" (ngModelChange)="fuelType.set($event)">
+              @for (f of fuelOptions; track f) { <option [value]="f">{{ f }}</option> }
+            </select>
+          </div>
+
+          <!-- ตัวถัง / จำนวนประตู — TODO(backend): bodyType not supported on /search aggregated (mock) -->
+          <div class="mb-5">
+            <label class="fl">ตัวถัง / จำนวนประตู</label>
+            <select class="fs" [ngModel]="bodyType()" (ngModelChange)="bodyType.set($event)">
+              @for (b of bodyOptions; track b) { <option [value]="b">{{ b }}</option> }
+            </select>
           </div>
 
           <!-- Repair type -->
@@ -629,6 +667,31 @@ export class SearchHomeComponent implements OnInit {
     { value: 'Dealer', label: 'ซ่อมศูนย์' },
   ];
 
+  // ── Vehicle attributes (CC prefilled from variant; fuel/body are mock) ─────
+  readonly fuelOptions = FUEL_OPTIONS;
+  readonly bodyOptions = BODY_OPTIONS;
+  readonly fuelType = signal(FUEL_OPTIONS[0]);   // TODO(backend): fuelType not supported
+  readonly bodyType = signal(BODY_OPTIONS[0]);   // TODO(backend): bodyType not supported
+
+  /** Engine CC of the currently-selected variant (or umbrella/first trim). */
+  readonly detectedCC = computed(() => {
+    const g = this.selectedGroup();
+    if (!g) return '';
+    const vid = this.selectedVariantId();
+    const trim = vid ? g.trims.find(t => t.id === vid) : (g.umbrella ?? g.trims[0]);
+    return trim?.engineCC ?? '';
+  });
+
+  /** CC dropdown — common sizes plus the detected one, prefilled & editable. */
+  readonly ccOptions = computed(() => {
+    const detected = this.detectedCC();
+    const set = new Set<string>(detected ? [detected, ...COMMON_CC] : COMMON_CC);
+    return [...set];
+  });
+
+  /** Editable CC that resets to the detected value when the variant changes. */
+  readonly engineCCValue = linkedSignal(() => this.detectedCC());
+
   goToStep(n: number): void {
     if (this.canGoToStep(n)) this.currentStep.set(n);
   }
@@ -929,7 +992,9 @@ export class SearchHomeComponent implements OnInit {
       makeName: make?.name ?? '',
       modelId,
       modelName: this.selectedModelName(),
-      engineCC: undefined,
+      // CC persisted for when it's wired on the aggregated path.
+      // TODO(backend): engineCC not supported on /search aggregated.
+      engineCC: this.engineCCValue() || undefined,
       gearType: undefined,
       allVariants: !variantId || undefined,   // true when "All Variants" selected
       vehicleYear: year,
