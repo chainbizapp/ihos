@@ -1,8 +1,67 @@
-/* Tailwind v4 */
+/* Tailwind CSS v4 — CSS-first config.
+   Design tokens live here in the @theme block (NOT in tailwind.config.js).
+   These generate utilities (bg-primary, text-mute, rounded-md, shadow-lift,
+   font-display, …) and matching CSS variables (--color-primary, …). */
 @import "tailwindcss";
+@plugin "@tailwindcss/forms";
+
+@theme {
+  /* ----- Brand / primary ----- */
+  --color-primary: #006874;
+  --color-primary-dark: #005a64;        /* hover/active */
+  --color-primary-container: #49b2c1;   /* disabled / lite */
+  --color-primary-pale: #e6f0f1;        /* tints, badges, outline hover */
+
+  /* ----- Secondary / accent ----- */
+  --color-secondary: #8c4f00;
+  --color-secondary-container: #f7941d;
+  --color-orange: #f7941d;
+  --color-tertiary: #435d98;            /* blue accent (Compare) */
+
+  /* ----- Surfaces ----- */
+  --color-surface: #f8f9ff;             /* page bg */
+  --color-surface-low: #f0f4fd;         /* card hover / input bg */
+  --color-surface-lowest: #ffffff;
+
+  /* ----- Text & lines ----- */
+  --color-on-surface: #171c22;          /* primary text */
+  --color-mute: #6b7a8d;                /* secondary text */
+  --color-border: #e2e8f0;              /* dividers / input borders */
+
+  /* ----- Semantic status (bg + text pairs) ----- */
+  --color-success: #0d7a52;
+  --color-success-bg: #d1fae5;
+  --color-danger: #b91c1c;
+  --color-danger-bg: #fee2e2;
+  --color-warning: #9a3412;
+  --color-warning-bg: #ffedd5;
+  --color-neutral: #6b7a8d;
+  --color-neutral-bg: #eef1f4;
+
+  /* ----- Role colors (NavBar role indicator) ----- */
+  --color-role-agent: #60a5fa;          /* staff  — blue */
+  --color-role-senior: #34d399;         /* senior — green */
+  --color-role-manager: #fbbf24;        /* manager — yellow */
+  --color-role-admin: #f87171;          /* admin  — red */
+
+  /* ----- Radius scale ----- */
+  --radius-sm: 0.25rem;
+  --radius-md: 0.75rem;
+  --radius-xl: 1.5rem;
+
+  /* ----- Elevation ----- */
+  --shadow-lift: 0px 12px 32px rgba(17, 48, 105, 0.06);
+
+  /* ----- Typography ----- */
+  --font-display: "Plus Jakarta Sans", "Noto Sans Thai", "Be Vietnam Pro", sans-serif;
+  --font-body: "Be Vietnam Pro", "Noto Sans Thai", "Inter", sans-serif;
+  --font-mono: "JetBrains Mono", "Consolas", monospace;
+}
 
 @layer base {
   body {
-    font-family: "Noto Sans Thai", sans-serif;
+    font-family: var(--font-body);
+    color: var(--color-on-surface);
+    background-color: var(--color-surface);
   }
 }

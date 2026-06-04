@@ -53,3 +53,14 @@ TestResults/
 # Reports (user-generated, not templates)
 reports/output/
 .deploy_build/
+
+# ---- Claude / design reference (kept on disk, NOT version-controlled) ----
+# Visual references exported from Figma — regenerable, so not tracked.
+wireframes/
+# Cross-session handoff & prompt notes (local working docs, not app code).
+PROJECT_HANDOFF.md
+FRONTEND_DEV_HANDOFF.md
+SCREEN_PROMPTS.md
+# Figma plugins (tooling, not part of the app build) — uncomment to ignore:
+# figma-plugin-rename-roles/
+# figma-plugin-en-to-th/
