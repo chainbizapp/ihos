@@ -421,6 +421,28 @@ const BODY_OPTIONS = [
             </select>
           </div>
 
+          <!-- อายุรถ (computed) — FR-SCH-009 -->
+          <div class="mb-5">
+            <label class="fl">อายุรถ <span style="text-transform:none;font-weight:600">(คำนวณอัตโนมัติ)</span></label>
+            @if (vehicleAge(); as va) {
+              <div class="flex items-center gap-3 rounded-xl px-4 py-3"
+                   style="background:var(--color-primary-pale);border:1.5px solid var(--color-primary-container)">
+                <span class="text-[22px]" aria-hidden="true">🚗</span>
+                <div class="flex-1">
+                  <div class="text-[16px] font-black" style="color:var(--color-primary)">{{ va.age }} ปี</div>
+                  <div class="text-[11px]" style="color:var(--color-mute)">= {{ va.currentYear }} (ปีปัจจุบัน) − {{ va.year }} (ปีผลิต) + 1 · FR-SCH-009</div>
+                </div>
+                <svg viewBox="0 0 256 256" style="width:16px;height:16px;fill:var(--color-mute-light)" aria-hidden="true">
+                  <path d="M208,80H176V56a48,48,0,0,0-96,0V80H48A16,16,0,0,0,32,96V208a16,16,0,0,0,16,16H208a16,16,0,0,0,16-16V96A16,16,0,0,0,208,80ZM96,56a32,32,0,0,1,64,0V80H96Zm40,112a8,8,0,0,1-16,0V152a8,8,0,0,1,16,0Z"/>
+                </svg>
+              </div>
+            } @else {
+              <div class="rounded-xl px-4 py-3 text-[12px]" style="background:var(--color-surface-low);color:var(--color-mute-light)">
+                เลือกปีรถยนต์ใน “รุ่นและปี” เพื่อคำนวณอายุรถ
+              </div>
+            }
+          </div>
+
           <!-- Actions -->
           <div class="flex gap-3">
             <button (click)="goToStep(2)"
@@ -691,6 +713,14 @@ export class SearchHomeComponent implements OnInit {
 
   /** Editable CC that resets to the detected value when the variant changes. */
   readonly engineCCValue = linkedSignal(() => this.detectedCC());
+
+  // ── Vehicle age (FR-SCH-009: current year − manufacture year + 1) ──────────
+  readonly currentYear = new Date().getFullYear();
+  readonly vehicleAge = computed(() => {
+    const year = this.selectedYear();
+    if (!year) return null;
+    return { age: this.currentYear - year + 1, currentYear: this.currentYear, year };
+  });
 
   goToStep(n: number): void {
     if (this.canGoToStep(n)) this.currentStep.set(n);
