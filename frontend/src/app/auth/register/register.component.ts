@@ -24,66 +24,8 @@ import { environment } from '../../../environments/environment';
     MatButtonModule,
     MatProgressSpinnerModule,
   ],
-  template: `
-    <div class="min-h-screen flex items-center justify-center bg-gray-50 px-4">
-      <mat-card class="w-full max-w-md">
-        <mat-card-header>
-          <mat-card-title class="text-2xl font-bold text-center w-full">Request Access</mat-card-title>
-        </mat-card-header>
-        <mat-card-content class="mt-4">
-          @if (submitted()) {
-            <div class="text-center py-8">
-              <p class="text-green-700 font-medium text-lg">Registration submitted!</p>
-              <p class="text-gray-600 mt-2">Your account is pending approval by a manager.</p>
-              <p class="text-gray-600">You will be notified once your account is approved.</p>
-              <a routerLink="/auth/login" class="text-blue-600 hover:underline mt-4 inline-block">Back to login</a>
-            </div>
-          } @else {
-            <form [formGroup]="form" (ngSubmit)="onSubmit()" class="flex flex-col gap-4">
-              <mat-form-field>
-                <mat-label>Full Name</mat-label>
-                <input matInput formControlName="fullName" autocomplete="name" />
-                @if (form.get('fullName')?.hasError('required') && form.get('fullName')?.touched) {
-                  <mat-error>Full name is required</mat-error>
-                }
-              </mat-form-field>
-
-              <mat-form-field>
-                <mat-label>Email</mat-label>
-                <input matInput type="email" formControlName="email" autocomplete="email" />
-                @if (form.get('email')?.hasError('required') && form.get('email')?.touched) {
-                  <mat-error>Email is required</mat-error>
-                }
-              </mat-form-field>
-
-              <mat-form-field>
-                <mat-label>Password</mat-label>
-                <input matInput type="password" formControlName="password" autocomplete="new-password" />
-                @if (form.get('password')?.hasError('minlength')) {
-                  <mat-error>Password must be at least 8 characters</mat-error>
-                }
-              </mat-form-field>
-
-              @if (errorMessage()) {
-                <div class="text-red-600 text-sm p-2 bg-red-50 rounded">{{ errorMessage() }}</div>
-              }
-
-              <button mat-raised-button color="primary" type="submit" [disabled]="loading()">
-                @if (loading()) {
-                  <mat-spinner diameter="20" class="inline-block mr-2" />
-                }
-                Submit Request
-              </button>
-
-              <a routerLink="/auth/login" class="text-sm text-center text-blue-600 hover:underline">
-                Back to login
-              </a>
-            </form>
-          }
-        </mat-card-content>
-      </mat-card>
-    </div>
-  `
+  templateUrl: './register.component.html',
+  styleUrl: './register.component.scss'
 })
 export class RegisterComponent {
   private readonly http = inject(HttpClient);

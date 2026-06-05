@@ -35,48 +35,8 @@ function passwordMatchValidator(control: AbstractControl) {
     MatButtonModule,
     MatProgressSpinnerModule,
   ],
-  template: `
-    <div class="min-h-screen flex items-center justify-center bg-gray-50 px-4">
-      <mat-card class="w-full max-w-md">
-        <mat-card-header>
-          <mat-card-title class="text-2xl font-bold text-center w-full">Set Your Password</mat-card-title>
-        </mat-card-header>
-        <mat-card-content class="mt-4">
-          <form [formGroup]="form" (ngSubmit)="onSubmit()" class="flex flex-col gap-4">
-            <mat-form-field>
-              <mat-label>New Password</mat-label>
-              <input matInput type="password" formControlName="password" autocomplete="new-password" />
-              @if (form.get('password')?.hasError('required') && form.get('password')?.touched) {
-                <mat-error>Password is required</mat-error>
-              }
-              @if (form.get('password')?.hasError('minlength')) {
-                <mat-error>Password must be at least 8 characters</mat-error>
-              }
-            </mat-form-field>
-
-            <mat-form-field>
-              <mat-label>Confirm Password</mat-label>
-              <input matInput type="password" formControlName="confirmPassword" autocomplete="new-password" />
-              @if (form.get('confirmPassword')?.hasError('mismatch')) {
-                <mat-error>Passwords do not match</mat-error>
-              }
-            </mat-form-field>
-
-            @if (errorMessage()) {
-              <div class="text-red-600 text-sm p-2 bg-red-50 rounded">{{ errorMessage() }}</div>
-            }
-
-            <button mat-raised-button color="primary" type="submit" [disabled]="loading()">
-              @if (loading()) {
-                <mat-spinner diameter="20" class="inline-block mr-2" />
-              }
-              Activate Account
-            </button>
-          </form>
-        </mat-card-content>
-      </mat-card>
-    </div>
-  `
+  templateUrl: './accept-invite.component.html',
+  styleUrl: './accept-invite.component.scss'
 })
 export class AcceptInviteComponent implements OnInit {
   private readonly http = inject(HttpClient);

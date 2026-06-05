@@ -1,0 +1,10 @@
+.card { background:#fff; border-radius:24px; box-shadow:0 12px 32px rgba(17,48,105,0.06); }
+    .status-running    { background:#fef3e8; color:#8c4f00; }
+    .status-success    { background:#e6f4f5; color:#006874; }
+    .status-partial    { background:#fff3e0; color:#a06000; }
+    .status-failed     { background:#fff2f2; color:#c0392b; }
+    .status-idle       { background:#f0f4fd; color:#5a6270; }
+    .src-import        { background:rgba(67,93,152,0.12); color:#435d98; }
+    .src-api           { background:rgba(73,178,193,0.18); color:#0a7a85; }
+    .pulse { animation: pulse 1.5s ease-in-out infinite; }
+    @keyframes pulse { 0%,100% { opacity:1 } 50% { opacity:0.5 } }

@@ -1,0 +1,10 @@
+.card { background:#fff; border-radius:24px; box-shadow:0 12px 32px rgba(17,48,105,0.06); }
+    .src-human   { background:#e6f4f5; color:#006874; }
+    .src-fuzzy   { background:rgba(73,178,193,0.18); color:#0a7a85; }
+    .src-guess   { background:#fef3e8; color:#8c4f00; }
+    .src-pending { background:#fff2f2; color:#c0392b; }
+    .fs { appearance:none;-webkit-appearance:none;background:#f0f4fd;border:none;border-radius:0.75rem;
+          padding:0.5rem 2rem 0.5rem 0.875rem;font-size:13px;font-weight:600;color:#171c22;cursor:pointer;outline:none; }
+    input.inp { background:#f0f4fd;border:none;border-radius:0.75rem;padding:0.5rem 0.875rem;font-size:13px;color:#171c22;outline:none; }
+    .btn { padding:6px 14px;border-radius:12px;font-size:12px;font-weight:700;cursor:pointer;border:none;transition:all .15s; }
+    .btn:hover { opacity:.9; }

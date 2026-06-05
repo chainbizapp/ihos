@@ -1,0 +1,415 @@
+// ── Host ──────────────────────────────────────────────────────────────────────
+:host { display: block; }
+
+// ── Page layout ───────────────────────────────────────────────────────────────
+.page-wrapper {
+  background: #f2f4f8;
+  min-height: 100vh;
+  font-family: 'Be Vietnam Pro', sans-serif;
+  color: #1a2332;
+}
+
+.page-inner {
+  max-width: 1400px;
+  margin: 0 auto;
+  padding: 32px 28px;
+}
+
+// ── Page header ───────────────────────────────────────────────────────────────
+.page-header {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  margin-bottom: 24px;
+}
+
+.page-title {
+  font-size: 26px;
+  font-weight: 700;
+  margin: 0 0 4px;
+  font-family: 'Plus Jakarta Sans', sans-serif;
+  color: #0d1520;
+}
+
+.page-breadcrumb {
+  font-size: 13px;
+  color: #6b7a99;
+
+  a { color: #435d98; text-decoration: none; }
+  .sep { margin: 0 6px; color: #b0bcd4; }
+}
+
+.btn-primary {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  padding: 11px 20px;
+  background: #006874;
+  color: #fff;
+  border-radius: 8px;
+  font-size: 13px;
+  font-weight: 600;
+  text-decoration: none;
+  border: none;
+  outline: none;
+  box-shadow: none;
+  cursor: pointer;
+  svg { flex-shrink: 0; }
+}
+
+// ── Cards ─────────────────────────────────────────────────────────────────────
+.card {
+  background: #fff;
+  border-radius: 14px;
+  border: 1px solid rgba(0, 0, 0, 0.06);
+
+  &--flex    { display: flex; flex-direction: column; }
+  &--hidden  { overflow: hidden; }
+}
+
+.card-pad { padding: 22px 24px; }
+
+.card-title {
+  font-size: 14px;
+  font-weight: 600;
+  color: #0d1520;
+
+  &--mb0  { margin-bottom: 0; }
+  &--mb4  { margin-bottom: 4px; }
+  &--mb8  { margin-bottom: 8px; }
+  &--mb16 { margin-bottom: 16px; }
+  &--mb18 { margin-bottom: 18px; }
+  &--pad  { padding: 22px 24px 14px; }  // used when card has no card-pad + title is first element
+}
+
+// ── Skeleton ──────────────────────────────────────────────────────────────────
+@keyframes pulse {
+  0%, 100% { opacity: 1; }
+  50%       { opacity: 0.45; }
+}
+
+%skeleton-base {
+  border-radius: 6px;
+  animation: pulse 1.4s infinite;
+}
+
+.skeleton {
+  @extend %skeleton-base;
+  background: #f0f2f7;
+
+  &--kpi    { height: 32px; width: 60px; }
+  &--import { height: 32px; width: 60px; }
+  &--row    { height: 14px; }
+}
+
+.skeleton-block {
+  @extend %skeleton-base;
+  background: #f8f9ff;
+
+  &--160 { height: 160px; }
+  &--170 { height: 170px; }
+  &--chart-flex { flex: 1; margin-top: 16px; }
+  &--bar  { height: 22px; margin-bottom: 10px; }
+  &--user { height: 28px; margin-bottom: 8px; }
+}
+
+.skeleton-loading-pad { padding: 0 24px 16px; }
+
+// ── KPI grid ──────────────────────────────────────────────────────────────────
+.kpi-grid {
+  display: grid;
+  grid-template-columns: 1.4fr 1fr 1fr 1fr 1fr;
+  gap: 14px;
+  margin-bottom: 18px;
+}
+
+.kpi-cta {
+  background: linear-gradient(145deg, #006874 0%, #004d57 100%);
+  border-radius: 14px;
+  padding: 22px 24px;
+  display: flex;
+  flex-direction: column;
+  justify-content: space-between;
+  min-height: 110px;
+
+  &__title { color: #fff; font-size: 15px; font-weight: 700; margin-bottom: 6px; }
+  &__desc  { color: rgba(255,255,255,0.72); font-size: 12px; line-height: 1.6; }
+  &__link  { margin-top: 12px; font-size: 12px; font-weight: 600; color: #7dd8e3; text-decoration: none; }
+}
+
+.kpi-stat {
+  &__label { font-size: 12px; color: #8896ad; margin-bottom: 10px; }
+  &__value { font-size: 32px; font-weight: 700; color: #0d1520; font-family: 'Plus Jakarta Sans', sans-serif; line-height: 1; }
+}
+
+// ── Chart rows ────────────────────────────────────────────────────────────────
+.chart-row {
+  display: grid;
+  grid-template-columns: 2fr 1fr;
+  gap: 14px;
+  margin-bottom: 14px;
+
+  &--last { margin-bottom: 28px; }
+}
+
+// ── SVG charts ────────────────────────────────────────────────────────────────
+.chart-svg {
+  width: 100%;
+  overflow: visible;
+}
+
+// ── Audit legend ──────────────────────────────────────────────────────────────
+.chart-legend {
+  display: flex;
+  gap: 16px;
+  margin-bottom: 14px;
+}
+
+.legend-item {
+  display: flex;
+  align-items: center;
+  gap: 5px;
+  font-size: 12px;
+  color: #8896ad;
+}
+
+.legend-dot {
+  display: inline-block;
+  width: 12px;
+  height: 10px;
+  border-radius: 2px;
+
+  &--success { background: #3dba7e; }
+  &--fail    { background: #e85454; }
+}
+
+// ── Donut (Users by Role) ─────────────────────────────────────────────────────
+.donut-layout {
+  flex: 1;
+  display: flex;
+  align-items: center;
+  gap: 16px;
+  padding-top: 16px;
+}
+
+.donut-svg {
+  width: 180px;
+  height: 180px;
+  flex-shrink: 0;
+}
+
+.donut-circle {
+  transform-origin: 50% 50%;
+}
+
+.donut-legend {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+
+.donut-legend-row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  font-size: 13px;
+}
+
+.donut-legend-label {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.legend-name  { color: #3a4b6b; }
+.legend-value { font-weight: 600; color: #0d1520; }
+
+// ── Dot icons ─────────────────────────────────────────────────────────────────
+.dot {
+  display: inline-block;
+  border-radius: 50%;
+  flex-shrink: 0;
+
+  &--md { width: 12px; height: 12px; }
+  &--sm { width: 9px;  height: 9px;  }
+}
+
+// ── Popular actions (horizontal bars) ────────────────────────────────────────
+.hbar-row {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  margin-bottom: 10px;
+}
+
+.hbar-label { font-size: 12px; color: #6b7a99; text-align: right; min-width: 90px; flex-shrink: 0; }
+.hbar-track { flex: 1; height: 22px; background: #f0f2f7; border-radius: 4px; overflow: hidden; }
+.hbar-fill  { height: 100%; background: #1a2a4a; border-radius: 4px; transition: width 0.3s; }
+.hbar-count { font-size: 12px; font-weight: 500; color: #435d98; min-width: 90px; flex-shrink: 0; }
+
+// ── Top users table ───────────────────────────────────────────────────────────
+.top-users-table {
+  width: 100%;
+  border-collapse: collapse;
+  font-size: 12px;
+
+  thead tr { background: #1a2332; }
+
+  th {
+    padding: 10px 12px;
+    color: #ccd4e4;
+    font-weight: 500;
+    font-size: 12px;
+    &:first-child  { text-align: left; }
+    &:nth-child(2) { text-align: center; }
+    &:last-child   { text-align: right; }
+  }
+
+  tbody tr { border-bottom: 1px solid #f8f9fb; }
+
+  td {
+    padding: 8px 12px;
+    &:first-child  { font-weight: 500; color: #0d1520; }
+    &:nth-child(2) { text-align: center; }
+    &:last-child   { text-align: right; font-weight: 600; color: #0d1520; }
+  }
+}
+
+.role-badge {
+  padding: 3px 10px;
+  border-radius: 20px;
+  font-size: 11px;
+  font-weight: 600;
+}
+
+.table-empty {
+  padding: 16px;
+  text-align: center;
+  color: #8896ad;
+
+  &--lg { padding: 40px; }
+}
+
+// ── Insurer donut ─────────────────────────────────────────────────────────────
+.insurer-wrap {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+}
+
+.insurer-svg { width: 160px; height: 160px; }
+
+.insurer-legend { width: 100%; margin-top: 6px; }
+
+.insurer-legend-item {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  font-size: 11px;
+  padding: 3px 0;
+}
+
+.insurer-legend-left {
+  display: flex;
+  align-items: center;
+  gap: 5px;
+  overflow: hidden;
+}
+
+.insurer-legend-name  { white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.insurer-legend-value { font-weight: 600; color: #0d1520; margin-left: 4px; flex-shrink: 0; }
+
+// ── Import section ────────────────────────────────────────────────────────────
+.section-title {
+  font-size: 17px;
+  font-weight: 700;
+  color: #0d1520;
+  margin: 0 0 16px;
+  font-family: 'Plus Jakarta Sans', sans-serif;
+}
+
+.import-stats-grid {
+  display: grid;
+  grid-template-columns: repeat(4, 1fr);
+  gap: 14px;
+  margin-bottom: 18px;
+}
+
+.import-stat-label { font-size: 12px; color: #8896ad; margin-bottom: 10px; line-height: 1.4; }
+.import-stat-value { font-size: 32px; font-weight: 700; font-family: 'Plus Jakarta Sans', sans-serif; line-height: 1; }
+
+// ── Import table ──────────────────────────────────────────────────────────────
+.import-table-wrap {
+  background: #fff;
+  border-radius: 14px;
+  overflow: hidden;
+  border: 1px solid rgba(0, 0, 0, 0.06);
+}
+
+.import-table {
+  width: 100%;
+  border-collapse: collapse;
+  font-size: 13px;
+
+  thead tr { background: #1a2332; }
+
+  th {
+    padding: 13px 16px;
+    color: #ccd4e4;
+    font-weight: 500;
+    font-size: 12px;
+
+    &:first-child                  { text-align: left;   padding-left: 20px; }
+    &:nth-child(2),
+    &:nth-child(3),
+    &:nth-child(4)                 { text-align: left;   }
+    &:nth-child(5),
+    &:nth-child(6),
+    &:nth-child(8)                 { text-align: center; }
+    &:nth-child(7)                 { text-align: right;  }
+  }
+
+  tbody tr {
+    border-bottom: 1px solid #f4f5f8;
+    transition: background 0.15s;
+    &:hover { background: #f8f9fb; }
+  }
+
+  td {
+    padding: 14px 16px;
+    &:first-child  { padding-left: 20px; font-weight: 600; color: #0d1520; }
+    &:nth-child(2) { color: #5a6a8a; max-width: 200px; }
+    &:nth-child(3) { color: #5a6a8a; }
+    &:nth-child(4) { color: #5a6a8a; white-space: nowrap; }
+    &:nth-child(5),
+    &:nth-child(6),
+    &:nth-child(8) { text-align: center; }
+    &:nth-child(7) { text-align: right; font-weight: 600; color: #0d1520; }
+  }
+}
+
+.filename-cell { display: block; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+
+.status-badge  { padding: 5px 14px; border-radius: 20px; font-size: 12px; font-weight: 600; }
+.elapsed-badge { padding: 5px 12px; border-radius: 20px; font-size: 12px; font-weight: 600; }
+
+.btn-inspect {
+  display: inline-block;
+  padding: 6px 18px;
+  background: #e8eaf2;
+  color: #3a4b6b;
+  border-radius: 20px;
+  font-size: 12px;
+  font-weight: 600;
+  text-decoration: none;
+  transition: background 0.15s;
+  &:hover { background: #d8dcee; }
+}
+
+.table-footer {
+  padding: 12px 20px;
+  text-align: right;
+  border-top: 1px solid #f0f2f7;
+  a { font-size: 12px; font-weight: 600; color: #435d98; text-decoration: none; }
+}

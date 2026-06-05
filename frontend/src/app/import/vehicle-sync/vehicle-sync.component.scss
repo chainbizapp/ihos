@@ -1,0 +1,5 @@
+.tab-link { display:flex;align-items:center;gap:6px;padding:12px 16px;font-size:13px;font-weight:600;border-bottom:2px solid transparent;color:#6b7a8d;text-decoration:none;transition:all .15s;white-space:nowrap }
+    .tab-link:hover { color:#006874;background:rgba(0,104,116,0.04) }
+    .tab-link.active-tab { border-bottom-color:#006874;color:#006874 }
+    .make-row:hover { background: #f8f9ff; }
+    .drop-active    { border-color: #006874 !important; background: #e6f4f5; }

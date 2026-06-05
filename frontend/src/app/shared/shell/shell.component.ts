@@ -22,92 +22,8 @@ const PHOSPHOR: Record<string, string> = {
   selector: 'app-shell',
   standalone: true,
   imports: [RouterOutlet, RouterLink, RouterLinkActive, CommonModule],
-  template: `
-    <div class="min-h-screen flex flex-col" style="background:#f8f9ff; font-family:'Noto Sans Thai',sans-serif; color:#171c22">
-
-      <!-- ── Top Header ──────────────────────────────────────────────────── -->
-      <header class="bg-white shadow-lift sticky top-0 z-50 px-6 py-0" style="border-bottom:1px solid rgba(67,93,152,0.08)">
-        <div class="w-full flex items-center h-16 gap-6">
-
-          <!-- Logo -->
-          <a routerLink="/search" class="flex flex-col leading-tight flex-shrink-0 mr-4">
-            <span class="text-xl font-bold" style="font-family:'Plus Jakarta Sans',sans-serif; color:#006874">iHOS</span>
-            <span class="text-xs" style="color:#435d98">Auto Coverage Finder</span>
-          </a>
-
-          <!-- Nav links -->
-          <nav class="hidden md:flex items-center gap-1">
-            @for (item of visibleNavItems(); track item.path) {
-              <a [routerLink]="item.path"
-                 routerLinkActive="font-semibold"
-                 #rla="routerLinkActive"
-                 class="flex items-center gap-2 px-3 py-1.5 rounded-full text-sm transition-colors"
-                 [style.color]="rla.isActive ? '#006874' : '#171c22'"
-                 [style.background]="rla.isActive ? 'rgba(0,104,116,0.08)' : 'transparent'">
-                <span class="w-4 h-4 flex-shrink-0" [innerHTML]="icon(item.icon)"></span>
-                {{ item.label }}
-              </a>
-            }
-          </nav>
-
-          <!-- Spacer -->
-          <div class="flex-1"></div>
-
-          <!-- Search bar -->
-          <div class="hidden md:flex items-center gap-2 px-4 py-2 rounded-full text-sm"
-               style="background:#f0f4fd; color:#8b96a8; min-width:220px">
-            <span class="w-4 h-4 flex-shrink-0" [innerHTML]="icon('search')"></span>
-            <span>Search plans...</span>
-          </div>
-
-          <!-- Notification bell -->
-          <button class="w-9 h-9 rounded-full flex items-center justify-center transition-colors hover:bg-surface-low"
-                  style="background:#f0f4fd; color:#435d98">
-            <span class="w-5 h-5" [innerHTML]="icon('bell')"></span>
-          </button>
-
-          <!-- User avatar + menu -->
-          @if (auth.currentUser(); as user) {
-            <div class="relative" (click)="userMenuOpen.set(!userMenuOpen())">
-              <button class="w-9 h-9 rounded-full flex items-center justify-center font-semibold text-sm text-white cursor-pointer select-none"
-                      style="background:linear-gradient(135deg,#006874,#49b2c1)">
-                {{ initials(user.fullName) }}
-              </button>
-              @if (userMenuOpen()) {
-                <div class="absolute right-0 top-12 bg-white rounded-xl shadow-lift py-2 w-48 z-50"
-                     style="box-shadow:0 12px 32px rgba(17,48,105,0.12)">
-                  <div class="px-4 py-2 border-b" style="border-color:rgba(67,93,152,0.1)">
-                    <div class="text-sm font-semibold" style="color:#171c22">{{ user.fullName }}</div>
-                    <div class="text-xs capitalize" style="color:#8b96a8">{{ user.role }}</div>
-                  </div>
-                  @for (item of adminNavItems(); track item.path) {
-                    <a [routerLink]="item.path" (click)="userMenuOpen.set(false)"
-                       class="flex items-center gap-2 px-4 py-2 text-sm hover:bg-surface-low transition-colors"
-                       style="color:#171c22">
-                      <span class="w-4 h-4 flex-shrink-0" [innerHTML]="icon(item.icon)"></span>
-                      {{ item.label }}
-                    </a>
-                  }
-                  <div class="border-t mt-1" style="border-color:rgba(67,93,152,0.1)"></div>
-                  <button (click)="logout()"
-                          class="w-full text-left flex items-center gap-2 px-4 py-2 text-sm transition-colors hover:bg-red-50"
-                          style="color:#e53e3e">
-                    <span class="w-4 h-4 flex-shrink-0" [innerHTML]="icon('signout')"></span>
-                    Sign out
-                  </button>
-                </div>
-              }
-            </div>
-          }
-        </div>
-      </header>
-
-      <!-- ── Page Content ────────────────────────────────────────────────── -->
-      <main class="flex-1">
-        <router-outlet></router-outlet>
-      </main>
-    </div>
-  `
+  templateUrl: './shell.component.html',
+  styleUrl: './shell.component.scss'
 })
 export class ShellComponent {
   readonly auth    = inject(AuthService);
@@ -115,14 +31,16 @@ export class ShellComponent {
   readonly userMenuOpen = signal(false);
 
   private readonly allNavItems = [
-    { label: 'Search',     path: '/search',     roles: null,                              icon: 'search'   },
-    { label: 'Quotations', path: '/quotation',  roles: null,                              icon: 'receipt'  },
-    { label: 'Import',     path: '/import',     roles: ['Admin','Manager','SeniorStaff'], icon: 'download' },
-    { label: 'Mapping', path: '/mapping',   roles: ['Admin','Manager'],               icon: 'table'    },
-    { label: 'Reports', path: '/reporting', roles: ['Admin','Manager'],               icon: 'chart'    },
+    { label: 'แดชบอร์ด',     path: '/admin/dashboard',     roles: ['Admin'],           icon: 'chart'     },
+    { label: 'ค้นหาแผนประกัน',     path: '/search',     roles: null,                              icon: 'search'   },
+    { label: 'รายการใบเสนอราคา', path: '/quotation',  roles: null,                              icon: 'receipt'  },
+    { label: 'นำเข้าแผนประกัน',     path: '/import',     roles: ['Admin','Manager','SeniorStaff'], icon: 'download' },
+    { label: 'การจัดการจับคู่แผนประกัน', path: '/mapping',   roles: ['Admin','Manager'],               icon: 'table'    },
+    { label: 'รายงาน', path: '/reporting', roles: ['Admin','Manager'],               icon: 'chart'    },
   ];
 
   private readonly allAdminItems = [
+    { label: 'Dashboard',     path: '/admin/dashboard',     roles: ['Admin'],           icon: 'chart'     },
     { label: 'Users',         path: '/admin/users',         roles: ['Admin','Manager'], icon: 'users'     },
     { label: 'Registrations', path: '/admin/registrations', roles: ['Admin','Manager'], icon: 'clipboard' },
     { label: 'Audit Log',     path: '/admin/audit-log',     roles: ['Admin'],           icon: 'lock'      },
