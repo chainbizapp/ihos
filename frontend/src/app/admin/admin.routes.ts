@@ -8,7 +8,7 @@ export const ADMIN_ROUTES: Routes = [
     canActivate: [authGuard, roleGuard],
     data: { roles: ['Admin'] },
     loadComponent: () =>
-      import('./dashboard/admin-dashboard.component').then(m => m.AdminDashboardComponent),
+      import('../dashboard/dashboard-admin/dashboard-admin.component').then(m => m.DashboardAdminComponent),
   },
   {
     path: 'users',

@@ -5,7 +5,7 @@
         <div class="w-full flex items-center h-16 gap-6">
 
           <!-- Logo -->
-          <a routerLink="/search" class="flex flex-col leading-tight flex-shrink-0 mr-4">
+          <a routerLink="/search" class="flex flex-col leading-tight shrink-0 mr-4">
             <span class="text-xl font-bold" style="font-family:'Plus Jakarta Sans',sans-serif; color:#006874">iHOS</span>
             <span class="text-xs" style="color:#435d98">Auto Coverage Finder</span>
           </a>
@@ -19,7 +19,7 @@
                  class="flex items-center gap-2 px-3 py-1.5 rounded-full text-sm transition-colors"
                  [style.color]="rla.isActive ? '#006874' : '#171c22'"
                  [style.background]="rla.isActive ? 'rgba(0,104,116,0.08)' : 'transparent'">
-                <span class="w-4 h-4 flex-shrink-0" [innerHTML]="icon(item.icon)"></span>
+                <span class="w-4 h-4 shrink-0" [innerHTML]="icon(item.icon)"></span>
                 {{ item.label }}
               </a>
             }
@@ -31,7 +31,7 @@
           <!-- Search bar -->
           <div class="hidden md:flex items-center gap-2 px-4 py-2 rounded-full text-sm"
                style="background:#f0f4fd; color:#8b96a8; min-width:220px">
-            <span class="w-4 h-4 flex-shrink-0" [innerHTML]="icon('search')"></span>
+            <span class="w-4 h-4 shrink-0" [innerHTML]="icon('search')"></span>
             <span>Search plans...</span>
           </div>
 
@@ -59,7 +59,7 @@
                     <a [routerLink]="item.path" (click)="userMenuOpen.set(false)"
                        class="flex items-center gap-2 px-4 py-2 text-sm hover:bg-surface-low transition-colors"
                        style="color:#171c22">
-                      <span class="w-4 h-4 flex-shrink-0" [innerHTML]="icon(item.icon)"></span>
+                      <span class="w-4 h-4 shrink-0" [innerHTML]="icon(item.icon)"></span>
                       {{ item.label }}
                     </a>
                   }
@@ -67,7 +67,7 @@
                   <button (click)="logout()"
                           class="w-full text-left flex items-center gap-2 px-4 py-2 text-sm transition-colors hover:bg-red-50"
                           style="color:#e53e3e">
-                    <span class="w-4 h-4 flex-shrink-0" [innerHTML]="icon('signout')"></span>
+                    <span class="w-4 h-4 shrink-0" [innerHTML]="icon('signout')"></span>
                     Sign out
                   </button>
                 </div>
