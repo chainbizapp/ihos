@@ -1,6 +1,6 @@
     <div [class]="layout() === 'horizontal' ? 'flex flex-row flex-nowrap w-full gap-4 items-end' : 'flex flex-col gap-6'">
       <!-- Make -->
-      <div [class]="layout() === 'horizontal' ? 'flex-1 min-w-[120px]' : ''">
+      <div [class]="layout() === 'horizontal' ? 'flex-1 min-w-30' : ''">
         <label class="block text-[11px] font-bold text-[#4a5568] mb-2 uppercase tracking-wide">Make</label>
         <select
           [ngModel]="selectedMakeId()"
@@ -14,7 +14,7 @@
       </div>
 
       <!-- Model (base name only) -->
-      <div [class]="layout() === 'horizontal' ? 'flex-[1.5] min-w-[140px]' : ''">
+      <div [class]="layout() === 'horizontal' ? 'flex-[1.5] min-w-35' : ''">
         <label class="block text-[11px] font-bold text-[#4a5568] mb-2 uppercase tracking-wide">Model</label>
         <select
           [ngModel]="selectedModelName()"
@@ -29,7 +29,7 @@
       </div>
 
       <!-- Year -->
-      <div [class]="layout() === 'horizontal' ? 'flex-1 min-w-[100px]' : ''">
+      <div [class]="layout() === 'horizontal' ? 'flex-1 min-w-25' : ''">
         <label class="block text-[11px] font-bold text-[#4a5568] mb-2 uppercase tracking-wide">Year</label>
         <select
           [ngModel]="selectedYear()"
@@ -44,7 +44,7 @@
       </div>
 
       <!-- Sub-model -->
-      <div [class]="layout() === 'horizontal' ? 'flex-[1.5] min-w-[160px]' : ''">
+      <div [class]="layout() === 'horizontal' ? 'flex-[1.5] min-w-40' : ''">
         <label class="block text-[11px] font-bold text-[#4a5568] mb-2 uppercase tracking-wide">
           Variant / Sub-model
         </label>
