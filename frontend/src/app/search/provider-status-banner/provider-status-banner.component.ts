@@ -19,69 +19,9 @@ import { AggregatedSearchResult, ProviderSearchResult } from '../../core/search-
   selector: 'app-provider-status-banner',
   standalone: true,
   imports: [CommonModule],
-  styles: [`
-    .src-pill {
-      display:inline-flex; align-items:center; gap:3px;
-      padding:1px 7px; border-radius:999px;
-      font-size:10px; font-weight:700; letter-spacing:0.02em;
-      line-height:1.3;
-    }
-  `],
-  template: `
-@if (visible()) {
-  <div class="rounded-2xl px-4 py-3 mb-4"
-       style="background:#ffffff;box-shadow:0px 4px 16px rgba(17,48,105,0.05);border:1px solid rgba(17,48,105,0.06)">
-
-    <!-- Header summary -->
-    <div class="flex items-center justify-between mb-2.5">
-      <div class="flex items-center gap-2">
-        <span class="text-[11px] font-bold uppercase tracking-widest" style="color:#8b95a6">
-          ผลจากบริษัทประกัน
-        </span>
-        <span class="text-[11px] font-semibold" style="color:#171c22">
-          {{ successCount() }}/{{ aggregated()!.results.length }} สำเร็จ
-        </span>
-        @if (totalPlans() > 0) {
-          <span class="text-[11px]" style="color:#8b95a6">·</span>
-          <span class="text-[11px] font-medium" style="color:#5a6270">
-            {{ totalPlans() }} แผน
-          </span>
-        }
-        @if (cachedCount() > 0) {
-          <span class="text-[11px]" style="color:#8b95a6">·</span>
-          <span class="text-[11px] font-medium" style="color:#8c4f00">
-            💾 {{ cachedCount() }} ใช้แคช
-          </span>
-        }
-      </div>
-      <span class="text-[10px] font-medium" style="color:#b0b9c6">
-        รวม {{ aggregated()!.elapsedMs }} ms
-      </span>
-    </div>
-
-    <!-- Per-provider chips -->
-    <div class="flex flex-wrap gap-2">
-      @for (r of aggregated()!.results; track r.companyShortCode) {
-        <div class="flex items-center gap-2 px-3 py-1.5 rounded-xl text-[12px] font-semibold"
-             [style]="chipStyle(r)"
-             [title]="tooltipFor(r)">
-          <span [innerHTML]="iconFor(r)"></span>
-          <span>{{ r.companyDisplayName }}</span>
-
-          <!-- DataSource / Cache pill -->
-          <span class="src-pill" [style]="sourcePillStyle(r)">
-            {{ sourcePillLabel(r) }}
-          </span>
-
-          <span class="opacity-75 text-[11px] font-medium">
-            {{ labelFor(r) }}
-          </span>
-        </div>
-      }
-    </div>
-  </div>
-}
-  `,
+  
+  templateUrl: './provider-status-banner.component.html',
+  styleUrl: './provider-status-banner.component.scss',
 })
 export class ProviderStatusBannerComponent {
   aggregated = input<AggregatedSearchResult | null>(null);

@@ -1,0 +1,62 @@
+    <div [class]="layout() === 'horizontal' ? 'flex flex-row flex-nowrap w-full gap-4 items-end' : 'flex flex-col gap-6'">
+      <!-- Make -->
+      <div [class]="layout() === 'horizontal' ? 'flex-1 min-w-[120px]' : ''">
+        <label class="block text-[11px] font-bold text-[#4a5568] mb-2 uppercase tracking-wide">Make</label>
+        <select
+          [ngModel]="selectedMakeId()"
+          (ngModelChange)="onMakeChange($event)"
+          class="w-full bg-white border border-gray-200 rounded-lg px-3 py-2.5 text-[14px] font-medium text-[#2d3748] focus:outline-none focus:border-[#006874] transition-colors cursor-pointer appearance-none">
+          <option value="" disabled hidden>Select Brand</option>
+          @for (make of makes(); track make.id) {
+            <option [value]="make.id">{{ make.name }}</option>
+          }
+        </select>
+      </div>
+
+      <!-- Model (base name only) -->
+      <div [class]="layout() === 'horizontal' ? 'flex-[1.5] min-w-[140px]' : ''">
+        <label class="block text-[11px] font-bold text-[#4a5568] mb-2 uppercase tracking-wide">Model</label>
+        <select
+          [ngModel]="selectedModelName()"
+          (ngModelChange)="onModelNameChange($event)"
+          [disabled]="!selectedMakeId() || loadingModels()"
+          class="w-full bg-white border border-gray-200 rounded-lg px-3 py-2.5 text-[14px] font-medium text-[#2d3748] focus:outline-none focus:border-[#006874] transition-colors cursor-pointer appearance-none disabled:opacity-50 disabled:bg-gray-50 disabled:cursor-not-allowed">
+          <option value="" disabled hidden>{{ loadingModels() ? 'Loading...' : 'Select Model' }}</option>
+          @for (group of modelGroups(); track group.name) {
+            <option [value]="group.name">{{ group.name }}</option>
+          }
+        </select>
+      </div>
+
+      <!-- Year -->
+      <div [class]="layout() === 'horizontal' ? 'flex-1 min-w-[100px]' : ''">
+        <label class="block text-[11px] font-bold text-[#4a5568] mb-2 uppercase tracking-wide">Year</label>
+        <select
+          [ngModel]="selectedYear()"
+          (ngModelChange)="onYearChange($event)"
+          [disabled]="!selectedModelName() || yearOptions().length === 0"
+          class="w-full bg-white border border-gray-200 rounded-lg px-3 py-2.5 text-[14px] font-medium text-[#2d3748] focus:outline-none focus:border-[#006874] transition-colors cursor-pointer appearance-none disabled:opacity-50 disabled:bg-gray-50 disabled:cursor-not-allowed">
+          <option [value]="0">All Years</option>
+          @for (yr of yearOptions(); track yr) {
+            <option [value]="yr">{{ yr }}</option>
+          }
+        </select>
+      </div>
+
+      <!-- Sub-model -->
+      <div [class]="layout() === 'horizontal' ? 'flex-[1.5] min-w-[160px]' : ''">
+        <label class="block text-[11px] font-bold text-[#4a5568] mb-2 uppercase tracking-wide">
+          Variant / Sub-model
+        </label>
+        <select
+          [ngModel]="selectedSubModelId()"
+          (ngModelChange)="onSubModelChange($event)"
+          [disabled]="!selectedModelName() || subModelOptions().length === 0"
+          class="w-full bg-white border border-gray-200 rounded-lg px-3 py-2.5 text-[14px] font-medium text-[#2d3748] focus:outline-none focus:border-[#006874] transition-colors cursor-pointer appearance-none disabled:opacity-50 disabled:bg-gray-50 disabled:cursor-not-allowed">
+          <option value="" disabled hidden>Select Variant</option>
+          @for (opt of subModelOptions(); track opt.id) {
+            <option [value]="opt.id">{{ opt.label }}</option>
+          }
+        </select>
+      </div>
+    </div>

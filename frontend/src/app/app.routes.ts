@@ -38,9 +38,9 @@ export const routes: Routes = [
       { path: '', redirectTo: 'search', pathMatch: 'full' },
       {
         path: '404',
-        loadComponent: () => import('./shared/shell/not-found.component').then(m => m.NotFoundComponent),
+        loadComponent: () => import('./shared/not-found/not-found.component').then(m => m.NotFoundComponent),
       },
-      { path: '**', loadComponent: () => import('./shared/shell/not-found.component').then(m => m.NotFoundComponent) },
+      { path: '**', loadComponent: () => import('./shared/not-found/not-found.component').then(m => m.NotFoundComponent) },
     ],
   },
   { path: '403', redirectTo: 'auth/login', pathMatch: 'full' },

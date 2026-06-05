@@ -1,0 +1,14 @@
+.filter-select {
+      appearance: none; -webkit-appearance: none;
+      background-color: #f0f4fd; border: none; border-radius: 0.75rem;
+      padding: 0.5rem 2.25rem 0.5rem 0.875rem;
+      font-size: 13px; font-weight: 600; color: #171c22;
+      font-family: 'Noto Sans Thai', sans-serif;
+      cursor: pointer; outline: none;
+      background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 256 256' fill='%23006874'%3E%3Cpath d='M213.66,101.66l-80,80a8,8,0,0,1-11.32,0l-80-80A8,8,0,0,1,53.66,90.34L128,164.69l74.34-74.35a8,8,0,0,1,11.32,11.32Z'/%3E%3C/svg%3E");
+      background-repeat: no-repeat; background-position: right 0.625rem center;
+      background-size: 14px; transition: background-color 0.15s;
+    }
+    .filter-select:hover { background-color: #e8eef8; }
+    .filter-select:focus { outline: 2px solid rgba(0,104,116,0.2); outline-offset: 1px; }
+    .step-connector { width: 2px; height: 24px; margin: 2px auto; border-radius: 1px; }

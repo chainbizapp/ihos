@@ -1,11 +1,3 @@
-import { Component, Input } from '@angular/core';
-import { CommonModule } from '@angular/common';
-
-@Component({
-  selector: 'app-loading-skeleton',
-  standalone: true,
-  imports: [CommonModule],
-  template: `
     <div [class]="containerClass">
       @for (row of rows; track $index) {
         <div class="animate-pulse flex gap-3 mb-3">
@@ -21,15 +13,3 @@ import { CommonModule } from '@angular/common';
         </div>
       }
     </div>
-  `
-})
-export class LoadingSkeletonComponent {
-  @Input() count = 5;
-  @Input() lines = 2;
-  @Input() showAvatar = false;
-  @Input() containerClass = '';
-
-  get rows(): number[] {
-    return Array.from({ length: this.count }, (_, i) => i);
-  }
-}

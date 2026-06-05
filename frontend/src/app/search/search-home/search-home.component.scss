@@ -1,0 +1,25 @@
+.fl { display:block;font-size:10px;font-weight:700;letter-spacing:.08em;text-transform:uppercase;color:#6b7a8d;margin-bottom:6px }
+    .fs { width:100%;background:#fff;border:1.5px solid #e2e8f0;border-radius:.625rem;padding:.625rem .875rem;font-size:14px;font-family:'Noto Sans Thai',sans-serif;color:#171c22;outline:none;transition:border-color .15s,box-shadow .15s;appearance:none;-webkit-appearance:none;cursor:pointer;
+      background-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 256 256' fill='%23006874'%3E%3Cpath d='M213.66,101.66l-80,80a8,8,0,0,1-11.32,0l-80-80A8,8,0,0,1,53.66,90.34L128,164.69l74.34-74.35a8,8,0,0,1,11.32,11.32Z'/%3E%3C/svg%3E");
+      background-repeat:no-repeat;background-position:right .75rem center;background-size:14px;padding-right:2.5rem }
+    .fs:focus { border-color:#006874;box-shadow:0 0 0 3px rgba(0,104,116,.1) }
+    .fs:disabled { background-color:#f8f9ff;color:#b0b9c6;cursor:not-allowed }
+    /* ── Brand tiles ─── */
+    .brand-tile { display:flex;flex-direction:column;align-items:stretch;border-radius:18px;border:2px solid #edf1f7;background:transparent;cursor:pointer;transition:all .18s;position:relative;min-width:0;overflow:hidden }
+    .brand-tile:hover { border-color:#006874;box-shadow:0 4px 14px rgba(0,104,116,.13);transform:translateY(-2px) }
+    .brand-tile.selected { border-color:#006874;box-shadow:0 4px 16px rgba(0,104,116,.18) }
+    .brand-logo { width:100%;aspect-ratio:1;background-size:contain;background-repeat:no-repeat;background-position:center;background-color:#f4f7fd;position:relative }
+    .brand-tile.selected .brand-logo { background-color:#ddf2f5 }
+    .brand-abbr { width:100%;aspect-ratio:1;display:flex;align-items:center;justify-content:center;font-size:12px;font-weight:900;letter-spacing:.04em;background:#f4f7fd;color:#435d98 }
+    .brand-tile.selected .brand-abbr { background:#ddf2f5;color:#006874 }
+    .brand-name { font-size:11px;font-weight:700;color:#5a6270;text-align:center;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;padding:5px 6px;background:transparent }
+    .brand-tile.selected .brand-name { color:#006874;font-weight:800 }
+    .check-badge { position:absolute;top:7px;right:7px;width:18px;height:18px;border-radius:50%;background:#006874;display:flex;align-items:center;justify-content:center;box-shadow:0 2px 6px rgba(0,104,116,.4) }
+    /* ── Dialog ─── */
+    .dlg-overlay { position:fixed;inset:0;background:rgba(17,48,105,0.45);backdrop-filter:blur(3px);z-index:200;display:flex;align-items:center;justify-content:center;padding:16px;animation:fadeIn .15s ease }
+    .dlg-card { background:#fff;border-radius:20px;width:100%;max-width:580px;max-height:88vh;display:flex;flex-direction:column;box-shadow:0 24px 60px rgba(0,0,0,0.2);animation:slideUp .18s ease }
+    .dlg-search { width:100%;background:#f5f8ff;border:1.5px solid #e2e8f0;border-radius:10px;padding:.6rem .875rem .6rem 2.4rem;font-size:14px;font-family:'Noto Sans Thai',sans-serif;color:#171c22;outline:none;transition:border-color .15s }
+    .dlg-search:focus { border-color:#006874;background:#fff;box-shadow:0 0 0 3px rgba(0,104,116,.1) }
+    .dlg-search::placeholder { color:#b0b9c6 }
+@keyframes fadeIn { from { opacity:0 } to { opacity:1 } }
+    @keyframes slideUp { from { opacity:0;transform:translateY(12px) } to { opacity:1;transform:translateY(0) } }

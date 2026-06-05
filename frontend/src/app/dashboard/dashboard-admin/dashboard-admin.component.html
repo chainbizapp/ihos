@@ -1,0 +1,342 @@
+<div class="page-wrapper">
+<div class="page-inner">
+
+  <!-- ── Page header ──────────────────────────────────────────────────────── -->
+  <div class="page-header">
+    <div>
+      <h1 class="page-title">ภาพรวมระบบ</h1>
+      <div class="page-breadcrumb">
+        <a routerLink="/admin/users">Users</a>
+        <span class="sep">·</span>
+        <span>Permissions</span>
+        <span class="sep">·</span>
+        <a routerLink="/admin/audit-log">Audit Trail</a>
+      </div>
+    </div>
+    <a routerLink="/quotation" class="btn-primary">
+      <svg width="15" height="15" viewBox="0 0 256 256" fill="currentColor">
+        <path d="M232,56V208a8,8,0,0,1-11.58,7.16L192,200.94l-28.42,14.22a8,8,0,0,1-7.16,0L128,200.94,99.58,215.16a8,8,0,0,1-7.16,0L64,200.94,35.58,215.16A8,8,0,0,1,24,208V56A16,16,0,0,1,40,40H216A16,16,0,0,1,232,56ZM216,205.06V56H40V205.06l20.42-10.22a8,8,0,0,1,7.16,0L96,209.06l28.42-14.22a8,8,0,0,1,7.16,0L160,209.06l28.42-14.22a8,8,0,0,1,7.16,0ZM80,96h96a8,8,0,0,0,0-16H80a8,8,0,0,0,0,16Zm0,32h96a8,8,0,0,0,0-16H80a8,8,0,0,0,0,16Zm0,32h96a8,8,0,0,0,0-16H80a8,8,0,0,0,0,16Z"/>
+      </svg>
+      ดูประวัติการออกใบเสนอราคา
+    </a>
+  </div>
+
+  <!-- ── KPI row ───────────────────────────────────────────────────────────── -->
+  <div class="kpi-grid">
+
+    <div class="kpi-cta">
+      <div class="kpi-cta__title">ค้นหาแผนประกัน</div>
+      <div class="kpi-cta__desc">เปรียบเทียบและเลือกแผนประกันที่ตอบโจทย์<br>ความต้องการของคุณ</div>
+      <a routerLink="/search" class="kpi-cta__link">เริ่มค้นหา →</a>
+    </div>
+
+    @for (s of kpiCards(); track s.label) {
+      <div class="card card-pad">
+        <div class="kpi-stat__label">{{ s.label }}</div>
+        @if (loading()) {
+          <div class="skeleton skeleton--kpi"></div>
+        } @else {
+          <div class="kpi-stat__value">{{ s.value | number }}</div>
+        }
+      </div>
+    }
+  </div>
+
+  <!-- ── Row 2: Audit trend + Users by Role ────────────────────────────────── -->
+  <div class="chart-row">
+
+    <!-- Audit bar chart -->
+    <div class="card card-pad">
+      <div class="card-title card-title--mb4">Audit Events Trend (14 วันล่าสุด)</div>
+      <div class="chart-legend">
+        <span class="legend-item">
+          <span class="legend-dot legend-dot--success"></span>Success
+        </span>
+        <span class="legend-item">
+          <span class="legend-dot legend-dot--fail"></span>Fail
+        </span>
+      </div>
+      @if (loading()) {
+        <div class="skeleton-block skeleton-block--160"></div>
+      } @else {
+        <svg viewBox="0 0 600 180" class="chart-svg">
+          @for (g of auditGridY(); track $index) {
+            <line [attr.x1]="44" [attr.y1]="g.y" [attr.x2]="595" [attr.y2]="g.y" stroke="#f0f2f7" stroke-width="1"/>
+            <text [attr.x]="40" [attr.y]="g.y+3.5" text-anchor="end" font-size="9" fill="#aab4c8">{{ g.v }}</text>
+          }
+          @for (d of auditDays(); track d.label; let i = $index) {
+            <rect [attr.x]="bX(i)" [attr.y]="bTop(d.success+d.fail)" [attr.width]="bW()" [attr.height]="bHt(d.success+d.fail)" fill="#3dba7e" rx="2"/>
+            @if (d.fail > 0) {
+              <rect [attr.x]="bX(i)" [attr.y]="bTop(d.success+d.fail)" [attr.width]="bW()" [attr.height]="bHt(d.fail)" fill="#e85454" rx="2"/>
+            }
+            <text [attr.x]="bX(i)+bW()/2" y="175" text-anchor="middle" font-size="9" fill="#aab4c8">{{ d.label }}</text>
+          }
+        </svg>
+      }
+    </div>
+
+    <!-- Users by Role donut -->
+    <div class="card card-pad card--flex">
+      <div class="card-title card-title--mb0">Users by Role</div>
+      @if (loading()) {
+        <div class="skeleton-block skeleton-block--chart-flex"></div>
+      } @else {
+        <div class="donut-layout">
+          <svg viewBox="0 0 200 200" class="donut-svg">
+            @for (sl of roleSlices(); track sl.label; let i = $index) {
+              <circle cx="100" cy="100" r="72" fill="none" class="donut-circle"
+                [attr.stroke]="sl.color" stroke-width="32"
+                [attr.stroke-dasharray]="dDash(sl.value, roleTotal(), 72)"
+                [attr.stroke-dashoffset]="dOff(i, roleSlices(), 72)"/>
+            }
+            <circle cx="100" cy="100" r="55" fill="white"/>
+            <text x="100" y="96" text-anchor="middle" font-size="26" font-weight="700" fill="#0d1520">{{ roleTotal() }}</text>
+            <text x="100" y="113" text-anchor="middle" font-size="11" fill="#8896ad">ผู้ใช้งาน</text>
+          </svg>
+          <div class="donut-legend">
+            @for (sl of roleSlices(); track sl.label) {
+              <div class="donut-legend-row">
+                <span class="donut-legend-label">
+                  <span class="dot dot--md" [style.background]="sl.color"></span>
+                  <span class="legend-name">{{ sl.label }}</span>
+                </span>
+                <span class="legend-value">({{ sl.value }})</span>
+              </div>
+            }
+          </div>
+        </div>
+      }
+    </div>
+  </div>
+
+  <!-- ── Row 3: Popular actions + Top users ────────────────────────────────── -->
+  <div class="chart-row">
+
+    <!-- Popular actions -->
+    <div class="card card-pad">
+      <div class="card-title card-title--mb18">การดำเนินการยอดนิยม (สัปดาห์นี้)</div>
+      @if (loading()) {
+        @for (n of [1,2,3,4,5,6]; track n) {
+          <div class="skeleton-block skeleton-block--bar"></div>
+        }
+      } @else {
+        @for (b of popularActions(); track b.label) {
+          <div class="hbar-row">
+            <span class="hbar-label">{{ b.labelTh }}</span>
+            <div class="hbar-track">
+              <div class="hbar-fill" [style.width.%]="hPct(b.count)"></div>
+            </div>
+            <span class="hbar-count">{{ b.count | number }} ดำเนินการ</span>
+          </div>
+        }
+      }
+    </div>
+
+    <!-- Top active users -->
+    <div class="card card--hidden">
+      <div class="card-title card-title--pad">ผู้ใช้งานที่ใช้งานมากที่สุด (วันนี้)</div>
+      @if (loading()) {
+        <div class="skeleton-loading-pad">
+          @for (n of [1,2,3,4,5]; track n) {
+            <div class="skeleton-block skeleton-block--user"></div>
+          }
+        </div>
+      } @else {
+        <table class="top-users-table">
+          <thead>
+            <tr>
+              <th>ผู้ใช้งาน</th>
+              <th>บทบาท</th>
+              <th>จำนวนครั้ง</th>
+            </tr>
+          </thead>
+          <tbody>
+            @for (u of topUsers(); track u.name+u.role) {
+              <tr>
+                <td>{{ u.name }}</td>
+                <td>
+                  <span class="role-badge"
+                        [style.background]="roleBg(u.role)"
+                        [style.color]="roleClr(u.role)">
+                    {{ roleLabel(u.role) }}
+                  </span>
+                </td>
+                <td>{{ u.count | number }}</td>
+              </tr>
+            }
+            @empty {
+              <tr>
+                <td colspan="3" class="table-empty">ไม่มีข้อมูล</td>
+              </tr>
+            }
+          </tbody>
+        </table>
+      }
+    </div>
+  </div>
+
+  <!-- ── Row 4: Quotation trend + Top insurers ─────────────────────────────── -->
+  <div class="chart-row chart-row--last">
+
+    <!-- Quotation area chart -->
+    <div class="card card-pad">
+      <div class="card-title card-title--mb8">แนวโน้มการออก Quotation (30 วันล่าสุด)</div>
+      @if (loading()) {
+        <div class="skeleton-block skeleton-block--170"></div>
+      } @else {
+        <svg viewBox="0 0 600 185" class="chart-svg">
+          <defs>
+            <linearGradient id="qGrad" x1="0" y1="0" x2="0" y2="1">
+              <stop offset="0%" stop-color="#006874" stop-opacity="0.20"/>
+              <stop offset="100%" stop-color="#006874" stop-opacity="0.01"/>
+            </linearGradient>
+          </defs>
+          @for (g of trendGrid(); track $index) {
+            <line [attr.x1]="38" [attr.y1]="g.y" [attr.x2]="595" [attr.y2]="g.y" stroke="#f0f2f7" stroke-width="1"/>
+            <text [attr.x]="34" [attr.y]="g.y+3.5" text-anchor="end" font-size="9" fill="#aab4c8">{{ g.v }}</text>
+          }
+          @if (trendPaths(); as p) {
+            <path [attr.d]="p.area" fill="url(#qGrad)"/>
+            <path [attr.d]="p.line" fill="none" stroke="#006874" stroke-width="2" stroke-linejoin="round" stroke-linecap="round"/>
+            @for (pt of quotationDays(); track $index; let i = $index) {
+              @if (i % 5 === 0 || i === quotationDays().length - 1) {
+                <circle [attr.cx]="tX(i)" [attr.cy]="tY(pt.value)" r="3.5" fill="#006874" stroke="#fff" stroke-width="1.5"/>
+              }
+            }
+          }
+          @for (pt of quotationDays(); track $index; let i = $index) {
+            @if (i % 5 === 0 || i === quotationDays().length - 1) {
+              <text [attr.x]="tX(i)" y="182" text-anchor="middle" font-size="9" fill="#aab4c8">{{ pt.label }}</text>
+            }
+          }
+        </svg>
+      }
+    </div>
+
+    <!-- Top 5 insurers donut -->
+    <div class="card card-pad">
+      <div class="card-title card-title--mb16">Top 5 บริษัทประกัน (สัปดาห์นี้)</div>
+      @if (loading()) {
+        <div class="skeleton-block skeleton-block--170"></div>
+      } @else {
+        <div class="insurer-wrap">
+          <svg viewBox="0 0 180 180" class="insurer-svg">
+            @for (sl of topInsurers(); track sl.label; let i = $index) {
+              <circle cx="90" cy="90" r="62" fill="none" class="donut-circle"
+                [attr.stroke]="sl.color" stroke-width="28"
+                [attr.stroke-dasharray]="dDash(sl.value, insTotal(), 62)"
+                [attr.stroke-dashoffset]="dOff(i, topInsurers(), 62)"/>
+            }
+            <circle cx="90" cy="90" r="48" fill="white"/>
+          </svg>
+          <div class="insurer-legend">
+            @for (sl of topInsurers(); track sl.label) {
+              <div class="insurer-legend-item">
+                <span class="insurer-legend-left">
+                  <span class="dot dot--sm" [style.background]="sl.color"></span>
+                  <span class="insurer-legend-name">{{ sl.label }}</span>
+                </span>
+                <span class="insurer-legend-value">({{ sl.value | number }})</span>
+              </div>
+            }
+          </div>
+        </div>
+      }
+    </div>
+  </div>
+
+  <!-- ── Import section ────────────────────────────────────────────────────── -->
+  <div>
+    <h2 class="section-title">รายการนำเข้าข้อมูลแผนประกัน</h2>
+
+    <!-- Import mini-stats -->
+    <div class="import-stats-grid">
+      @for (s of importStats(); track s.label) {
+        <div class="card card-pad">
+          <div class="import-stat-label">{{ s.label }}</div>
+          @if (loading()) {
+            <div class="skeleton skeleton--import"></div>
+          } @else {
+            <div class="import-stat-value" [style.color]="s.warn ? '#e85454' : '#0d1520'">
+              {{ s.value | number }}
+            </div>
+          }
+        </div>
+      }
+    </div>
+
+    <!-- Import table -->
+    <div class="import-table-wrap">
+      <table class="import-table">
+        <thead>
+          <tr>
+            <th>ชื่อบริษัท</th>
+            <th>ชื่อไฟล์</th>
+            <th>อัปโหลดโดย</th>
+            <th>วันที่อัปโหลด</th>
+            <th>สถานะ</th>
+            <th>ระยะเวลา</th>
+            <th>จำนวนแถวทั้งหมด</th>
+            <th>ดำเนินการ</th>
+          </tr>
+        </thead>
+        <tbody>
+          @if (loading()) {
+            @for (n of [1,2,3,4,5]; track n) {
+              <tr>
+                @for (c of [1,2,3,4,5,6,7,8]; track c) {
+                  <td><div class="skeleton skeleton--row"></div></td>
+                }
+              </tr>
+            }
+          } @else {
+            @for (b of importBatches(); track b.id) {
+              <tr>
+                <td>{{ b.companyName }}</td>
+                <td>
+                  <span class="filename-cell" [title]="b.sourceFileName">
+                    {{ b.sourceFileName.length > 32 ? b.sourceFileName.slice(0,32)+'...' : b.sourceFileName }}
+                  </span>
+                </td>
+                <td>{{ b.uploadedBy }}</td>
+                <td>{{ fmtDate(b.uploadedAt) }}</td>
+                <td>
+                  <span class="status-badge"
+                        [style.background]="sBg(b.status)"
+                        [style.color]="sClr(b.status)">
+                    {{ sLabel(b.status) }}
+                  </span>
+                </td>
+                <td>
+                  <span class="elapsed-badge"
+                        [style.background]="eBg(b.uploadedAt)"
+                        [style.color]="eClr(b.uploadedAt)">
+                    {{ elapsed(b.uploadedAt) }}
+                  </span>
+                </td>
+                <td>{{ b.totalRows | number }}</td>
+                <td>
+                  <a [routerLink]="['/import/batches', b.id]" class="btn-inspect">
+                    เข้าตรวจ
+                  </a>
+                </td>
+              </tr>
+            }
+            @empty {
+              <tr>
+                <td colspan="8" class="table-empty table-empty--lg">ไม่มีรายการนำเข้าข้อมูล</td>
+              </tr>
+            }
+          }
+        </tbody>
+      </table>
+      @if (!loading() && importBatches().length > 0) {
+        <div class="table-footer">
+          <a routerLink="/import/batches">ดูทั้งหมด →</a>
+        </div>
+      }
+    </div>
+  </div>
+
+</div>
+</div>
